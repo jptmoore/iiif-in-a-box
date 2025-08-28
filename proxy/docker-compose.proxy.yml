@@ -2,7 +2,7 @@ services:
   web:
     build: 
       context: ../../
-      dockerfile: dd/web/Dockerfile.proxy
+      dockerfile: iiif-in-a-box/web/Dockerfile.proxy
     networks:
       - appnet
 
@@ -12,7 +12,7 @@ services:
     ports:
       - "127.0.0.1:7280:7280"
     volumes:
-      - ../../annosearch/qwdata:/quickwit/qwdata
+      - ../annosearch/qwdata:/quickwit/qwdata
     networks:
       - appnet
 
@@ -60,7 +60,7 @@ services:
     ports:
       - "127.0.0.1:10000:10000"
     volumes:
-      - ../../miiify/miiify/db:/home/miiify/db
+      - ../miiify/miiify/db:/home/miiify/db
     networks:
       - appnet
 

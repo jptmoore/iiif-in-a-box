@@ -107,12 +107,15 @@ validate_project_name() {
 }
 
 # Function to create IIIF manifest file
-create_iiif_manifest_temp() {
+create_iiif_manifest() {
     local project_name="$1"
     local uri="$2"
-    local manifest_file="$3"
+    local manifest_file="web/iiif/${project_name}.json"
     
     log_info "Creating IIIF manifest file: $manifest_file"
+    
+    # Create directory if it doesn't exist
+    mkdir -p "web/iiif"
     
     if [ -n "$uri" ]; then
         # If URI is provided, fetch it
@@ -193,318 +196,33 @@ EOF
     fi
 }
 
-# Function to create HTML page
-create_html_page_temp() {
+# Function to create HTML page from template
+create_html_page() {
     local project_name="$1"
-    local page_file="$2"
+    local template_file="web/pages/demo.html"
+    local page_file="web/pages/${project_name}.html"
     
     log_info "Creating HTML page: $page_file"
     
+    # Create directory if it doesn't exist
+    mkdir -p "web/pages"
+    
+    # Check if template exists
+    if [ ! -f "$template_file" ]; then
+        log_error "Template file not found: $template_file"
+        return 1
+    fi
+    
+    # Copy template and replace project-specific content
     # Capitalize first letter for display
     local project_display_name="${project_name^}"
     
-    cat > "$page_file" << EOF
-<!DOCTYPE html>
-<html lang="en" class="tna-template">
-<head>
-  <meta charset="UTF-8">
-  <title>${project_display_name} - IIIF-in-a-Box</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Explore the ${project_display_name} collection in our interactive IIIF viewer">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400..700&family=Roboto+Mono:wght@400..500&display=swap">
-  <style>
-    /* TNA-inspired styling */
-    .tna-template {
-      font-family: "Open Sans", Arial, sans-serif;
-      color: #26262a;
-      background-color: #ffffff;
-      margin: 0;
-      padding: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tna-template * {
-      box-sizing: border-box;
-    }
-
-    /* Header styling inspired by TNA */
-    .tna-header {
-      background-color: #010101;
-      color: #ffffff;
-      padding: 1rem 0;
-      border-bottom: 4px solid #fe1d57;
-    }
-
-    .tna-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-
-    .tna-header__content {
-      display: flex;
-      justify-content: flex-start;
-      align-items: center;
-    }
-
-    .tna-header__logo {
-      height: 40px;
-      width: auto;
-    }
-
-    /* Navigation breadcrumbs */
-    .tna-breadcrumbs {
-      background-color: #f4f4f4;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #d9d9d6;
-    }
-
-    .tna-breadcrumbs__list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .tna-breadcrumbs__item {
-      display: flex;
-      align-items: center;
-    }
-
-    .tna-breadcrumbs__item:not(:last-child)::after {
-      content: "›";
-      margin: 0 0.5rem;
-      color: #8c9694;
-    }
-
-    .tna-breadcrumbs__link {
-      color: #0062a8;
-      text-decoration: underline;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 2px;
-      font-size: 0.875rem;
-    }
-
-    .tna-breadcrumbs__link:hover {
-      color: #004c7e;
-      text-decoration-thickness: 3px;
-    }
-
-    .tna-breadcrumbs__current {
-      color: #26262a;
-      font-size: 0.875rem;
-    }
-
-    /* Main content */
-    .tna-section {
-      flex: 1;
-      padding: 2rem 0;
-    }
-
-    .tna-heading-xl {
-      font-family: "Open Sans", Arial, sans-serif;
-      font-size: clamp(2rem, 4vw, 3rem);
-      font-weight: 700;
-      line-height: 1.1;
-      margin: 0 0 1.5rem 0;
-      color: #26262a;
-    }
-
-    .tna-chip {
-      display: inline-block;
-      background-color: #fe1d57;
-      color: #ffffff;
-      padding: 0.25rem 0.75rem;
-      border-radius: 0.25rem;
-      font-size: 0.875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.025em;
-      margin-bottom: 0.75rem;
-    }
-
-    .tna-large-paragraph {
-      font-size: 1.25rem;
-      line-height: 1.4;
-      color: #26262a;
-      margin-bottom: 2rem;
-      max-width: 40rem;
-    }
-
-    /* Viewer container */
-    .tna-viewer-container {
-      border: 1px solid #d9d9d6;
-      border-radius: 0.5rem;
-      overflow: hidden;
-      background-color: #ffffff;
-      box-shadow: 0 2px 8px rgba(38, 38, 42, 0.1);
-    }
-
-    .tna-viewer-container iframe {
-      width: 100%;
-      height: 70vh;
-      min-height: 500px;
-      border: none;
-      display: block;
-    }
-
-    /* Grid system */
-    .tna-column {
-      width: 100%;
-    }
-
-    .tna-column--width-2-3 {
-      width: 66.6667%;
-    }
-
-    .tna-column--width-5-6-medium {
-      width: 83.3333%;
-    }
-
-    @media (max-width: 768px) {
-      .tna-header__content {
-        justify-content: flex-start;
-      }
-
-      .tna-heading-xl {
-        font-size: 2rem;
-      }
-      
-      .tna-large-paragraph {
-        font-size: 1.125rem;
-      }
-
-      .tna-viewer-container iframe {
-        height: 60vh;
-        min-height: 400px;
-      }
-    }
-
-    /* Footer */
-    .tna-footer {
-      background-color: #26262a;
-      color: #ffffff;
-      padding: 1rem 0;
-      margin-top: auto;
-    }
-
-    .tna-footer__content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    .tna-footer__text {
-      font-size: 0.875rem;
-      color: #d9d9d6;
-    }
-
-    .tna-footer__links {
-      display: flex;
-      gap: 1.5rem;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .tna-footer__link {
-      color: #ffffff;
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-      text-underline-offset: 2px;
-      font-size: 0.875rem;
-    }
-
-    .tna-footer__link:hover {
-      text-decoration-thickness: 2px;
-    }
-
-    @media (max-width: 768px) {
-      .tna-footer__content {
-        flex-direction: column;
-        align-items: flex-start;
-      }
-
-      .tna-footer__links {
-        flex-wrap: wrap;
-      }
-    }
-  </style>
-</head>
-<body class="tna-template__body">
-  <header class="tna-header">
-    <div class="tna-container">
-      <div class="tna-header__content">
-        <img src="/assets/tna-square-logo.svg" 
-             alt="IIIF-in-a-Box" 
-             class="tna-header__logo">
-      </div>
-    </div>
-  </header>
-
-  <nav class="tna-breadcrumbs">
-    <div class="tna-container">
-      <ol class="tna-breadcrumbs__list">
-        <li class="tna-breadcrumbs__item">
-          <a href="/" class="tna-breadcrumbs__link">Home</a>
-        </li>
-        <li class="tna-breadcrumbs__item">
-          <a href="/pages/" class="tna-breadcrumbs__link">Collections</a>
-        </li>
-        <li class="tna-breadcrumbs__item">
-          <span class="tna-breadcrumbs__current">${project_display_name}</span>
-        </li>
-      </ol>
-    </div>
-  </nav>
-
-  <main id="main-content" class="tna-section">
-    <div class="tna-container">
-      <div class="tna-column">
-        <div class="tna-chip">IIIF Collection</div>
-        <h1 class="tna-heading-xl">${project_display_name}</h1>
-        <p class="tna-large-paragraph">
-          Explore the ${project_display_name} collection using our interactive IIIF viewer. 
-          Navigate through the digital materials and examine them in detail.
-        </p>
-        
-        <div class="tna-viewer-container">
-          <iframe
-            src="/viewer/?iiif-content=http://localhost:8080/iiif/${project_name}.json"
-            allowfullscreen
-            allow="clipboard-write; clipboard-read"
-            title="IIIF Viewer showing the ${project_display_name} collection"
-          ></iframe>
-        </div>
-      </div>
-    </div>
-  </main>
-
-  <footer class="tna-footer">
-    <div class="tna-container">
-      <div class="tna-footer__content">
-        <div class="tna-footer__text">
-          Powered by IIIF-in-a-Box
-        </div>
-        <ul class="tna-footer__links">
-          <li><a href="/accessibility/" class="tna-footer__link">Accessibility</a></li>
-          <li><a href="/cookies/" class="tna-footer__link">Cookies</a></li>
-          <li><a href="/" class="tna-footer__link">Home</a></li>
-        </ul>
-      </div>
-    </div>
-  </footer>
-</body>
-</html>
-EOF
+    cp "$template_file" "$page_file"
+    
+    # Replace project-specific content in the copied file
+    sed -i "s/demo\.json/${project_name}.json/g" "$page_file"
+    sed -i "s/Demo/${project_display_name}/g" "$page_file"
+    sed -i "s/demo/${project_name}/g" "$page_file"
     
     log_success "HTML page created: $page_file"
 }
@@ -521,38 +239,17 @@ setup_project_files() {
         return 1
     fi
     
-    # Create temporary files first
-    local temp_dir=$(mktemp -d)
-    local temp_manifest="$temp_dir/${project_name}.json"
-    local temp_page="$temp_dir/${project_name}.html"
-    
-    # Create IIIF manifest in temp location
-    if ! create_iiif_manifest_temp "$project_name" "$uri" "$temp_manifest"; then
+    # Create IIIF manifest
+    if ! create_iiif_manifest "$project_name" "$uri"; then
         log_error "Failed to create IIIF manifest"
-        rm -rf "$temp_dir"
         return 1
     fi
     
-    # Create HTML page in temp location  
-    if ! create_html_page_temp "$project_name" "$temp_page"; then
+    # Create HTML page from template
+    if ! create_html_page "$project_name"; then
         log_error "Failed to create HTML page"
-        rm -rf "$temp_dir"
         return 1
     fi
-    
-    # Copy files to web directory structure
-    log_info "Copying project files to web directory..."
-    
-    # Ensure web directories exist
-    mkdir -p "web/iiif"
-    mkdir -p "web/pages"
-    
-    # Copy files
-    cp "$temp_manifest" "web/iiif/${project_name}.json"
-    cp "$temp_page" "web/pages/${project_name}.html"
-    
-    # Clean up temp directory
-    rm -rf "$temp_dir"
     
     log_success "Project files created successfully for: $project_name"
     log_info "IIIF Manifest: web/iiif/${project_name}.json"
@@ -619,6 +316,44 @@ check_dependencies() {
     fi
     
     log_success "All dependencies are available"
+}
+
+# Function to rebuild web service after project file changes
+rebuild_web_service() {
+    local compose_file="docker-compose.yml"
+    
+    # Check for proxy-friendly build flag
+    if [ "$PROXY_FRIENDLY" = "true" ]; then
+        compose_file="docker-compose.proxy.yml"
+        export DOCKER_BUILDKIT=0
+        export COMPOSE_DOCKER_CLI_BUILD=0
+    fi
+    
+    log_info "Rebuilding web service to include project files..."
+    
+    cd proxy
+    
+    # Stop web service if running
+    if docker-compose -f "$compose_file" ps web 2>/dev/null | grep -q "Up"; then
+        log_info "Stopping web service..."
+        docker-compose -f "$compose_file" stop web
+    fi
+    
+    # Rebuild only the web service
+    log_info "Building web service..."
+    if [ "$PROXY_FRIENDLY" = "true" ]; then
+        docker-compose -f "$compose_file" build --no-cache web
+    else
+        docker-compose -f "$compose_file" build --no-cache web
+    fi
+    
+    # Start web service
+    log_info "Starting web service..."
+    docker-compose -f "$compose_file" up -d web
+    
+    cd - > /dev/null
+    
+    log_success "Web service rebuilt with updated project files"
 }
 
 # Function to build and start services
@@ -717,11 +452,23 @@ main() {
             log_success "Projects updated. Run './bootstrap.sh build' to build and start services."
             ;;
         "build")
+            # First build all services
             build_and_start
+            # Then rebuild web service to ensure project files are included
+            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
+                log_info "Project files were created/updated, rebuilding web service..."
+                rebuild_web_service
+            fi
             ;;
         "build-proxy")
             log_info "Building with proxy-friendly options..."
+            # First build all services with proxy options
             PROXY_FRIENDLY=true build_and_start
+            # Then rebuild web service to ensure project files are included  
+            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
+                log_info "Project files were created/updated, rebuilding web service..."
+                PROXY_FRIENDLY=true rebuild_web_service
+            fi
             ;;
         "status")
             show_status

@@ -32,19 +32,22 @@ RUN sed -i 's/#LoadModule rewrite_module/LoadModule rewrite_module/' /usr/local/
 RUN mkdir -p /usr/local/apache2/conf/conf.d
 
 # Copy Apache configuration
-COPY dd/web/apache-cors.conf /usr/local/apache2/conf/conf.d/cors.conf
+COPY iiif-in-a-box/web/apache-cors.conf /usr/local/apache2/conf/conf.d/cors.conf
 
 # Include conf.d directory
 RUN echo "IncludeOptional conf/conf.d/*.conf" >> /usr/local/apache2/conf/httpd.conf
 
-# Copy web content
-COPY dd/web /usr/local/apache2/htdocs/
+# Copy specific web content directories only
+COPY iiif-in-a-box/web/index.html /usr/local/apache2/htdocs/
+COPY iiif-in-a-box/web/iiif /usr/local/apache2/htdocs/iiif/
+COPY iiif-in-a-box/web/images /usr/local/apache2/htdocs/images/
+COPY iiif-in-a-box/web/pages /usr/local/apache2/htdocs/pages/
 
 # Copy IIIF-in-a-Box logo to web root
-COPY dd/assets/iiif-in-a-box.png /usr/local/apache2/htdocs/
+COPY iiif-in-a-box/assets/iiif-in-a-box.png /usr/local/apache2/htdocs/
 
 # Copy TNA logo to web root
-COPY dd/assets/tna-square-logo.svg /usr/local/apache2/htdocs/assets/
+COPY iiif-in-a-box/assets/tna-square-logo.svg /usr/local/apache2/htdocs/assets/
 
 # Copy built Tamerlane React app
 COPY --from=tamerlane-builder /app/build /usr/local/apache2/htdocs/viewer

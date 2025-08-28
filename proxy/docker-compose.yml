@@ -2,7 +2,7 @@ services:
   web:
     build: 
       context: ../../
-      dockerfile: dd/web/Dockerfile
+      dockerfile: iiif-in-a-box/web/Dockerfile
     networks:
       - appnet
 
@@ -29,9 +29,9 @@ services:
       - appnet
 
   cantaloupe:
-    build: ../cantaloupe
+    build: ../../iiif-in-a-box/cantaloupe
     volumes:
-      - ../web/images:/images
+      - ../../iiif-in-a-box/web/images:/images
     networks:
       - appnet
 
@@ -54,7 +54,7 @@ services:
       - appnet
 
   miiify:
-    build: ../miiify
+    build: ../../iiif-in-a-box/miiify
     ports:
       - "127.0.0.1:10000:10000"
     volumes:

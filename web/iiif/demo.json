@@ -1,0 +1,48 @@
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "http://localhost:8080/iiif/demo.json",
+  "type": "Manifest",
+  "label": {
+    "en": ["Demo Collection"]
+  },
+  "service": [
+    {
+      "id": "http://localhost:8080/annosearch/demo/search",
+      "type": "SearchService2",
+      "service": [
+        {
+          "id": "http://localhost:8080/annosearch/demo/autocomplete",
+          "type": "AutoCompleteService2"
+        }
+      ]
+    }
+  ],
+  "metadata": [
+    {
+      "label": {
+        "en": ["Project"]
+      },
+      "value": {
+        "en": ["Demo"]
+      }
+    },
+    {
+      "label": {
+        "en": ["Type"]
+      },
+      "value": {
+        "en": ["IIIF Collection"]
+      }
+    }
+  ],
+  "provider": [
+    {
+      "id": "http://localhost:8080",
+      "type": "Agent",
+      "label": {
+        "en": ["IIIF-in-a-Box"]
+      }
+    }
+  ],
+  "items": []
+}

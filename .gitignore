@@ -1,0 +1,24 @@
+# Ignore macOS metadata
+.DS_Store
+
+# Ignore Cantaloupe JAR file
+cantaloupe-5.0.7.jar
+
+# Ignore temporary data folder
+qwdata/
+
+# Ignore build output
+dist/
+build/
+*.js
+*.js.map
+
+# Ignore TypeScript cache
+*.tsbuildinfo
+
+# Ignore node dependencies
+node_modules/
+
+# Ignore local environment config
+.env
+

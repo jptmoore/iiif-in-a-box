@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIIF-In-A-Box</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .header {
+            text-align: center;
+            background: white;
+            border-radius: 15px;
+            padding: 3rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            gap: 1rem;
+        }
+        .logo {
+            max-width: 80px;
+            height: auto;
+            flex-shrink: 0;
+        }
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        h1 {
+            color: #2c3e50;
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 300;
+            line-height: 1.1;
+        }
+        .tagline {
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin: 0.2rem 0 0 0;
+            font-weight: 400;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            margin: 1.5rem 0 2rem 0;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .services {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .service-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-5px);
+        }
+        .service-card h3 {
+            color: #2c3e50;
+            margin-top: 0;
+            font-size: 1.3rem;
+        }
+        .service-card p {
+            color: #7f8c8d;
+            line-height: 1.6;
+        }
+        .service-link {
+            display: inline-block;
+            background: #3498db;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 1rem;
+            transition: background 0.3s ease;
+        }
+        .service-link:hover {
+            background: #2980b9;
+        }
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255,255,255,0.8);
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #27ae60;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        /* Responsive design for mobile */
+        @media (max-width: 768px) {
+            .logo-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .logo-text {
+                align-items: center;
+                text-align: center;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .container {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <img src="iiif-in-a-box.png" alt="IIIF-in-a-Box Logo" class="logo">
+                <div class="logo-text">
+                    <h1>IIIF-In-A-Box</h1>
+                    <span class="tagline">Complete IIIF Ecosystem</span>
+                </div>
+            </div>
+            <p class="subtitle">Everything you need for IIIF in a single container deployment</p>
+            <p><span class="status-indicator"></span> All services running</p>
+        </div>
+
+        <div class="services">
+            <div class="service-card">
+                <h3>🖼️ Image Viewer</h3>
+                <p>Tamerlane IIIF viewer for exploring manuscripts, maps, and images with deep zoom and annotation support.</p>
+                <a href="/viewer/" class="service-link">Open Viewer</a>
+            </div>
+
+            <div class="service-card">
+                <h3>🖼️ Image API</h3>
+                <p>Cantaloupe IIIF Image API server providing high-performance image delivery with IIIF Image API 3.0 compliance.</p>
+                <a href="/cantaloupe/" class="service-link">Image Server</a>
+            </div>
+
+            <div class="service-card">
+                <h3>🔍 Search API</h3>
+                <p>AnnoSearch provides full-text search across IIIF annotations and manifests powered by Quickwit.</p>
+                <a href="/annosearch/version" class="service-link">Search API</a>
+            </div>
+
+            <div class="service-card">
+                <h3>📝 Annotation Server</h3>
+                <p>Miiify web annotation server for creating, storing, and managing W3C Web Annotations with IIIF support.</p>
+                <a href="/miiify/version" class="service-link">Annotation Server</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>IIIF-In-A-Box • Powered by Docker • <a href="https://iiif.io" style="color: rgba(255,255,255,0.8);">Learn more about IIIF</a></p>
+    </div>
+</body>
+</html>

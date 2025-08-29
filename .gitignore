@@ -25,6 +25,8 @@ node_modules/
 # Ignore dynamically generated project files
 web/iiif/*.json
 web/pages/*.html
+web/images/*
+web/annotations/*
 
 # Keep the demo template file
 !web/pages/demo.html

@@ -4,7 +4,6 @@ FROM eclipse-temurin:17-jdk
 # Set working directory
 WORKDIR /cantaloupe
 
-
 # Download and extract the JAR from the ZIP
 RUN apt-get update && apt-get install -y wget unzip && \
     wget --no-check-certificate -O cantaloupe.zip https://github.com/cantaloupe-project/cantaloupe/releases/download/v5.0.7/cantaloupe-5.0.7.zip && \

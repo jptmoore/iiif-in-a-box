@@ -11,7 +11,7 @@ PROJECTS=(
 
 # Default configuration
 DEFAULT_PROJECT_NAME="demo"
-DEFAULT_URI=""
+DEFAULT_COLLECTION_DIR=""
 
 # Colors for output
 RED='\033[0;31m'
@@ -29,8 +29,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # Function to parse command line arguments
 parse_arguments() {
     PROJECT_NAME="$DEFAULT_PROJECT_NAME"
-    URI="$DEFAULT_URI"
-    COPY_IMAGES="false"
+    COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -38,13 +37,9 @@ parse_arguments() {
                 PROJECT_NAME="$2"
                 shift 2
                 ;;
-            --uri|-u)
-                URI="$2"
+            --collection|-c)
+                COLLECTION_DIR="$2"
                 shift 2
-                ;;
-            --copy-images)
-                COPY_IMAGES="true"
-                shift
                 ;;
             --help|-h)
                 show_help
@@ -72,10 +67,9 @@ IIIF-In-A-Box Bootstrap Script
 Usage: $0 [OPTIONS] [COMMAND]
 
 Options:
-  --project, -p PROJECT_NAME    Set the project name (default: demo)
-  --uri, -u URI                 Set the IIIF manifest/collection URI
-  --copy-images                 Include Cantaloupe image server for local images
-  --help, -h                    Show this help message
+  --project, -p PROJECT_NAME        Set the project name (default: demo)
+  --collection, -c COLLECTION_DIR   Directory containing IIIF resources (required)
+  --help, -h                        Show this help message
 
 Commands:
   build            - Update projects and build/start services (default)
@@ -86,12 +80,34 @@ Commands:
   logs             - Show service logs
 
 Examples:
-  $0 --project myproject --uri https://example.com/manifest.json build
-  $0 -p medieval -u https://api.example.com/collection/123 build
-  $0 --project demo --copy-images build
+  # Setup a medieval manuscripts collection
+  $0 --project medieval --collection ../medieval-manuscripts build
+  
+  # Setup with short flags
+  $0 -p newspapers -c ../newspaper-collection build
 
-Note: By default, Cantaloupe image server is excluded to speed up builds.
-      Use --copy-images only if you need to serve images locally.
+Collection Directory Structure:
+  The collection directory should contain:
+    manifests/       - IIIF manifest/collection files (.json)
+    images/          - Image files (served via Cantaloupe IIIF Image API)
+    annotations/     - Annotation files (.json)
+
+  Example layout:
+    ../your-iiif-collection/
+    ├── manifests/
+    │   ├── collection.json
+    │   └── manifest1.json
+    ├── images/
+    │   ├── page001.jpg
+    │   └── page002.jpg
+    └── annotations/
+        └── annotations.json
+
+  The system will:
+    - Look for {project-name}.json in manifests/ or use the first manifest found
+    - Serve images via Cantaloupe at http://localhost:8080/cantaloupe/
+    - Make annotations available at http://localhost:8080/annotations/
+    - Create a viewer at http://localhost:8080/pages/{project-name}.html
 
 EOF
 }
@@ -114,94 +130,79 @@ validate_project_name() {
     return 0
 }
 
-# Function to create IIIF manifest file
-create_iiif_manifest() {
+# Function to setup project from filesystem directory
+setup_project_from_directory() {
     local project_name="$1"
-    local uri="$2"
-    local manifest_file="web/iiif/${project_name}.json"
+    local collection_dir="$2"
     
-    log_info "Creating IIIF manifest file: $manifest_file"
+    log_info "Setting up project from directory: $collection_dir"
     
-    # Create directory if it doesn't exist
-    mkdir -p "web/iiif"
+    # Validate that collection directory is provided
+    if [ -z "$collection_dir" ]; then
+        log_error "Collection directory is required. Use --collection to specify a directory containing IIIF resources."
+        return 1
+    fi
     
-    if [ -n "$uri" ]; then
-        # If URI is provided, fetch it
-        log_info "Fetching IIIF resource from: $uri"
-        if command -v curl &> /dev/null; then
-            if curl -s -f "$uri" > "$manifest_file"; then
-                log_success "IIIF resource fetched successfully"
-            else
-                log_error "Failed to fetch IIIF resource from $uri"
-                return 1
-            fi
-        elif command -v wget &> /dev/null; then
-            if wget -q -O "$manifest_file" "$uri"; then
-                log_success "IIIF resource fetched successfully"
-            else
-                log_error "Failed to fetch IIIF resource from $uri"
-                return 1
-            fi
+    # Resolve relative path to absolute path
+    if [[ "$collection_dir" != /* ]]; then
+        collection_dir="$(pwd)/$collection_dir"
+    fi
+    
+    # Check if directory exists
+    if [ ! -d "$collection_dir" ]; then
+        log_error "Collection directory does not exist: $collection_dir"
+        return 1
+    fi
+    
+    # Create target directories
+    mkdir -p "web/iiif" "web/images" "web/annotations"
+    
+    # Copy manifests if they exist
+    if [ -d "$collection_dir/manifests" ]; then
+        log_info "Copying IIIF manifests..."
+        find "$collection_dir/manifests" -name "*.json" -exec cp {} "web/iiif/" \;
+        
+        # If there's a manifest with the project name, use it as the main manifest
+        if [ -f "$collection_dir/manifests/${project_name}.json" ]; then
+            log_info "Using ${project_name}.json as main manifest"
+        elif [ -f "web/iiif/${project_name}.json" ]; then
+            log_info "Found ${project_name}.json in manifests"
         else
-            log_error "Neither curl nor wget available to fetch IIIF resource"
-            return 1
+            # Use the first manifest found and rename it
+            first_manifest=$(find "web/iiif" -name "*.json" | head -1)
+            if [ -n "$first_manifest" ]; then
+                cp "$first_manifest" "web/iiif/${project_name}.json"
+                log_info "Using $(basename "$first_manifest") as main manifest for ${project_name}"
+            fi
         fi
     else
-        # Create a template manifest
-        log_info "Creating template manifest for project: $project_name"
-        cat > "$manifest_file" << EOF
-{
-  "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "http://localhost:8080/iiif/${project_name}.json",
-  "type": "Manifest",
-  "label": {
-    "en": ["${project_name^} Collection"]
-  },
-  "service": [
-    {
-      "id": "http://localhost:8080/annosearch/${project_name}/search",
-      "type": "SearchService2",
-      "service": [
-        {
-          "id": "http://localhost:8080/annosearch/${project_name}/autocomplete",
-          "type": "AutoCompleteService2"
-        }
-      ]
-    }
-  ],
-  "metadata": [
-    {
-      "label": {
-        "en": ["Project"]
-      },
-      "value": {
-        "en": ["${project_name^}"]
-      }
-    },
-    {
-      "label": {
-        "en": ["Type"]
-      },
-      "value": {
-        "en": ["IIIF Collection"]
-      }
-    }
-  ],
-  "provider": [
-    {
-      "id": "http://localhost:8080",
-      "type": "Agent",
-      "label": {
-        "en": ["IIIF-in-a-Box"]
-      }
-    }
-  ],
-  "items": []
-}
-EOF
-        log_success "Template manifest created"
-        log_warning "Template manifest created with empty items array. Add your canvas items to display content."
+        log_error "No manifests directory found in collection directory. Directory must contain a 'manifests/' subdirectory."
+        return 1
     fi
+    
+    # Copy images if they exist
+    if [ -d "$collection_dir/images" ]; then
+        log_info "Copying images..."
+        cp -r "$collection_dir/images"/* "web/images/" 2>/dev/null || log_warning "No images found or failed to copy images"
+    else
+        log_warning "No images directory found in collection directory"
+    fi
+    
+    # Copy annotations if they exist
+    if [ -d "$collection_dir/annotations" ]; then
+        log_info "Copying annotations..."
+        cp -r "$collection_dir/annotations"/* "web/annotations/" 2>/dev/null || log_warning "No annotations found or failed to copy annotations"
+    else
+        log_warning "No annotations directory found in collection directory"
+    fi
+    
+    # Ensure we have a main manifest
+    if [ ! -f "web/iiif/${project_name}.json" ]; then
+        log_error "No suitable manifest found for project ${project_name}. Expected manifests/${project_name}.json or any .json file in manifests/"
+        return 1
+    fi
+    
+    log_success "Project setup from directory completed"
 }
 
 # Function to create HTML page from template
@@ -238,7 +239,7 @@ create_html_page() {
 # Function to setup project files
 setup_project_files() {
     local project_name="$PROJECT_NAME"
-    local uri="$URI"
+    local collection_dir="$COLLECTION_DIR"
     
     log_info "Setting up project files for: $project_name"
     
@@ -247,9 +248,9 @@ setup_project_files() {
         return 1
     fi
     
-    # Create IIIF manifest
-    if ! create_iiif_manifest "$project_name" "$uri"; then
-        log_error "Failed to create IIIF manifest"
+    # Setup from filesystem directory (required)
+    if ! setup_project_from_directory "$project_name" "$collection_dir"; then
+        log_error "Failed to setup project from directory"
         return 1
     fi
     
@@ -260,9 +261,12 @@ setup_project_files() {
     fi
     
     log_success "Project files created successfully for: $project_name"
+    log_info "Collection Directory: $collection_dir"
     log_info "IIIF Manifest: web/iiif/${project_name}.json"
     log_info "HTML Page: web/pages/${project_name}.html"
     log_info "Viewer URL: http://localhost:8080/pages/${project_name}.html"
+    log_info "Images served via: http://localhost:8080/cantaloupe/"
+    log_info "Annotations available at: http://localhost:8080/annotations/"
 }
 
 # Function to clone or update a project
@@ -329,12 +333,6 @@ check_dependencies() {
 # Function to rebuild web service after project file changes
 rebuild_web_service() {
     local compose_file="docker-compose.yml"
-    local profile_args=""
-    
-    # Check for copy images flag  
-    if [ "$COPY_IMAGES" = "true" ]; then
-        profile_args="--profile images"
-    fi
     
     log_info "Rebuilding web service to include project files using $compose_file..."
     
@@ -348,11 +346,11 @@ rebuild_web_service() {
     
     # Rebuild only the web service
     log_info "Building web service..."
-    docker-compose -f "$compose_file" $profile_args build --no-cache web
+    docker-compose -f "$compose_file" build --no-cache web
     
     # Start web service
     log_info "Starting web service..."
-    docker-compose -f "$compose_file" $profile_args up -d web
+    docker-compose -f "$compose_file" up -d web
     
     cd - > /dev/null
     
@@ -362,15 +360,6 @@ rebuild_web_service() {
 # Function to build and start services
 build_and_start() {
     local compose_file="docker-compose.yml"
-    local profile_args=""
-    
-    # Check for copy images flag
-    if [ "$COPY_IMAGES" = "true" ]; then
-        profile_args="--profile images"
-        log_info "Including Cantaloupe image server (--copy-images flag set)"
-    else
-        log_info "Using minimal build (Cantaloupe excluded). Use --copy-images to include image server."
-    fi
     
     log_info "Building and starting services using $compose_file..."
     
@@ -384,11 +373,11 @@ build_and_start() {
     
     # Build services
     log_info "Building Docker services..."
-    docker-compose -f "$compose_file" $profile_args build --no-cache
+    docker-compose -f "$compose_file" build --no-cache
     
     # Start services
     log_info "Starting services..."
-    docker-compose -f "$compose_file" $profile_args up -d
+    docker-compose -f "$compose_file" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to be ready..."

@@ -22,3 +22,10 @@ node_modules/
 # Ignore local environment config
 .env
 
+# Ignore dynamically generated project files
+web/iiif/*.json
+web/pages/*.html
+
+# Keep the demo template file
+!web/pages/demo.html
+

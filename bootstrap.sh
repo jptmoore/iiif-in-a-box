@@ -30,6 +30,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 parse_arguments() {
     PROJECT_NAME="$DEFAULT_PROJECT_NAME"
     URI="$DEFAULT_URI"
+    COPY_IMAGES="false"
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -40,6 +41,10 @@ parse_arguments() {
             --uri|-u)
                 URI="$2"
                 shift 2
+                ;;
+            --copy-images)
+                COPY_IMAGES="true"
+                shift
                 ;;
             --help|-h)
                 show_help
@@ -69,11 +74,11 @@ Usage: $0 [OPTIONS] [COMMAND]
 Options:
   --project, -p PROJECT_NAME    Set the project name (default: demo)
   --uri, -u URI                 Set the IIIF manifest/collection URI
+  --copy-images                 Include Cantaloupe image server for local images
   --help, -h                    Show this help message
 
 Commands:
   build            - Update projects and build/start services (default)
-  build-proxy      - Build with proxy-friendly options (for corporate networks)
   update-only      - Only update git repositories
   status           - Show service status
   stop             - Stop all services
@@ -82,8 +87,11 @@ Commands:
 
 Examples:
   $0 --project myproject --uri https://example.com/manifest.json build
-  $0 -p medieval -u https://api.example.com/collection/123 build-proxy
-  $0 --project demo build
+  $0 -p medieval -u https://api.example.com/collection/123 build
+  $0 --project demo --copy-images build
+
+Note: By default, Cantaloupe image server is excluded to speed up builds.
+      Use --copy-images only if you need to serve images locally.
 
 EOF
 }
@@ -321,15 +329,14 @@ check_dependencies() {
 # Function to rebuild web service after project file changes
 rebuild_web_service() {
     local compose_file="docker-compose.yml"
+    local profile_args=""
     
-    # Check for proxy-friendly build flag
-    if [ "$PROXY_FRIENDLY" = "true" ]; then
-        compose_file="docker-compose.proxy.yml"
-        export DOCKER_BUILDKIT=0
-        export COMPOSE_DOCKER_CLI_BUILD=0
+    # Check for copy images flag  
+    if [ "$COPY_IMAGES" = "true" ]; then
+        profile_args="--profile images"
     fi
     
-    log_info "Rebuilding web service to include project files..."
+    log_info "Rebuilding web service to include project files using $compose_file..."
     
     cd proxy
     
@@ -341,15 +348,11 @@ rebuild_web_service() {
     
     # Rebuild only the web service
     log_info "Building web service..."
-    if [ "$PROXY_FRIENDLY" = "true" ]; then
-        docker-compose -f "$compose_file" build --no-cache web
-    else
-        docker-compose -f "$compose_file" build --no-cache web
-    fi
+    docker-compose -f "$compose_file" $profile_args build --no-cache web
     
     # Start web service
     log_info "Starting web service..."
-    docker-compose -f "$compose_file" up -d web
+    docker-compose -f "$compose_file" $profile_args up -d web
     
     cd - > /dev/null
     
@@ -358,19 +361,18 @@ rebuild_web_service() {
 
 # Function to build and start services
 build_and_start() {
-    local build_args=""
     local compose_file="docker-compose.yml"
+    local profile_args=""
     
-    # Check for proxy-friendly build flag
-    if [ "$PROXY_FRIENDLY" = "true" ]; then
-        log_warning "Using proxy-friendly build options (skip TLS verification)"
-        build_args="--build-arg BUILDKIT_INLINE_CACHE=1"
-        compose_file="docker-compose.proxy.yml"
-        export DOCKER_BUILDKIT=0
-        export COMPOSE_DOCKER_CLI_BUILD=0
+    # Check for copy images flag
+    if [ "$COPY_IMAGES" = "true" ]; then
+        profile_args="--profile images"
+        log_info "Including Cantaloupe image server (--copy-images flag set)"
+    else
+        log_info "Using minimal build (Cantaloupe excluded). Use --copy-images to include image server."
     fi
     
-    log_info "Building and starting services..."
+    log_info "Building and starting services using $compose_file..."
     
     cd proxy
     
@@ -382,16 +384,11 @@ build_and_start() {
     
     # Build services
     log_info "Building Docker services..."
-    if [ "$PROXY_FRIENDLY" = "true" ]; then
-        log_info "Building with proxy-friendly options using $compose_file..."
-        docker-compose -f "$compose_file" build --no-cache $build_args
-    else
-        docker-compose -f "$compose_file" build --no-cache
-    fi
+    docker-compose -f "$compose_file" $profile_args build --no-cache
     
     # Start services
     log_info "Starting services..."
-    docker-compose -f "$compose_file" up -d
+    docker-compose -f "$compose_file" $profile_args up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to be ready..."
@@ -416,12 +413,7 @@ build_and_start() {
 show_status() {
     log_info "Service Status:"
     cd proxy
-    # Try proxy compose file first, then regular
-    if [ -f "docker-compose.proxy.yml" ] && docker-compose -f docker-compose.proxy.yml ps 2>/dev/null | grep -q "Up\|Exit"; then
-        docker-compose -f docker-compose.proxy.yml ps
-    else
-        docker-compose ps
-    fi
+    docker-compose ps
     cd - > /dev/null
 }
 
@@ -458,16 +450,6 @@ main() {
             if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
                 log_info "Project files were created/updated, rebuilding web service..."
                 rebuild_web_service
-            fi
-            ;;
-        "build-proxy")
-            log_info "Building with proxy-friendly options..."
-            # First build all services with proxy options
-            PROXY_FRIENDLY=true build_and_start
-            # Then rebuild web service to ensure project files are included  
-            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
-                log_info "Project files were created/updated, rebuilding web service..."
-                PROXY_FRIENDLY=true rebuild_web_service
             fi
             ;;
         "status")

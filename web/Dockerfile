@@ -35,7 +35,6 @@ RUN echo "IncludeOptional conf/conf.d/*.conf" >> /usr/local/apache2/conf/httpd.c
 COPY iiif-in-a-box/web/index.html /usr/local/apache2/htdocs/
 COPY iiif-in-a-box/web/iiif /usr/local/apache2/htdocs/iiif/
 COPY iiif-in-a-box/web/images /usr/local/apache2/htdocs/images/
-COPY iiif-in-a-box/web/annotations /usr/local/apache2/htdocs/annotations/
 COPY iiif-in-a-box/web/pages /usr/local/apache2/htdocs/pages/
 
 # Copy IIIF-in-a-Box logo to web root

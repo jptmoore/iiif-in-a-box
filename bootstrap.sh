@@ -504,6 +504,72 @@ build_and_start() {
     cd - > /dev/null
 }
 
+build_core_services() {
+    local compose_file="docker-compose.yml"
+    
+    log_info "Building core services (annotation processing infrastructure)..."
+    
+    cd proxy
+    
+    # Stop any running services
+    if docker-compose -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
+        log_info "Stopping existing services..."
+        docker-compose -f "$compose_file" down
+    fi
+    
+    # Build and start only the services needed for annotation processing
+    log_info "Building annotation processing services..."
+    docker-compose -f "$compose_file" build --no-cache miiify
+    
+    log_info "Starting annotation processing services..."
+    docker-compose -f "$compose_file" up -d miiify
+    
+    # Wait for miiify to be ready
+    log_info "Waiting for annotation service to be ready..."
+    sleep 5
+    
+    log_success "Annotation processing infrastructure ready!"
+    
+    cd - > /dev/null
+}
+
+build_web_service() {
+    local compose_file="docker-compose.yml"
+    
+    log_info "Building complete IIIF service with all content..."
+    log_info "📋 Content includes: manifests (from annotations) + images + static files + viewer"
+    
+    cd proxy
+    
+    # Build all remaining services with the processed content
+    log_info "Building all services..."
+    docker-compose -f "$compose_file" build --no-cache
+    
+    # Start the complete service stack
+    log_info "Starting complete IIIF service stack..."
+    docker-compose -f "$compose_file" up -d
+    
+    # Wait for all services to be ready
+    log_info "Waiting for all services to be ready..."
+    sleep 10
+    
+    # Check service status
+    if docker-compose ps | grep -q "Exit"; then
+        log_error "Some services failed to start!"
+        docker-compose logs
+        cd - > /dev/null
+        return 1
+    fi
+    
+    log_success "🎉 Complete IIIF service is running!"
+    log_info "📚 IIIF-In-A-Box is available at: http://localhost:8080"
+    log_info "👁️  Tamerlane viewer at: http://localhost:8080/viewer/"
+    log_info "🖼️  Images served via Cantaloupe image server"
+    log_info "📝 Annotations served via Miiify annotation server"
+    
+    cd - > /dev/null
+}
+
 # Function to show service status
 show_status() {
     log_info "Service Status:"
@@ -539,19 +605,25 @@ main() {
             log_success "Projects updated. Run './bootstrap.sh build' to build and start services."
             ;;
         "build")
-            # First build all services
-            build_and_start
-            
-            # Load annotations into miiify after services are ready, but before web rebuild
+            # Simple data-driven build process:
+            # 1. Process ANNOTATIONS → generate manifests
+            # 2. Build web service with IMAGES + generated manifests + static content
             if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
-                log_info "Loading annotations into miiify annotation server..."
+                # Step 1: Set up annotation processing infrastructure and generate manifests
+                build_core_services
+                
+                log_info "📝 Processing project annotations to generate IIIF manifests..."
                 if ! load_annotations_to_miiify "$PROJECT_NAME"; then
-                    log_warning "Failed to load annotations, but continuing..."
+                    log_warning "Failed to process annotations, but continuing..."
                 fi
                 
-                # Then rebuild web service to ensure project files and generated manifests are included
-                log_info "Project files and manifests were created/updated, rebuilding web service..."
-                rebuild_web_service
+                # Step 2: Build complete IIIF service with all content
+                log_info "🏗️  Building complete IIIF service with all processed content..."
+                build_web_service
+            else
+                # Demo project: simple single build (no annotation processing needed)
+                log_info "🎯 Building demo project..."
+                build_and_start
             fi
             ;;
         "status")

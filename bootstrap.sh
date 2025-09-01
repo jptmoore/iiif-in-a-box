@@ -305,6 +305,69 @@ load_annotations_to_miiify() {
     log_success "Annotation loading completed"
 }
 
+load_annotations_from_web() {
+    local project_name="$1"
+    
+    log_info "Loading annotations from web/annotations/ directory..."
+    
+    # Check if annotations directory exists and has files
+    if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
+        log_warning "No annotations found in web/annotations/ directory"
+        return 1
+    fi
+    
+    # Find annotation files
+    local annotation_files
+    annotation_files=$(find "web/annotations" -name "*.json" -type f)
+    
+    if [ -z "$annotation_files" ]; then
+        log_warning "No JSON annotation files found in web/annotations/"
+        return 1
+    fi
+    
+    log_info "Found annotation files: $(echo "$annotation_files" | wc -l) files"
+    
+    # Ensure miiify database directory exists
+    mkdir -p "miiify/db"
+    
+    # Copy annotation files to miiify directory for processing
+    local annotation_file=$(echo "$annotation_files" | head -1)
+    cp "$annotation_file" "miiify/${project_name}-annotations.json"
+    
+    # Wait for miiify service to be ready
+    log_info "Waiting for miiify service to be ready..."
+    local retries=30
+    while [ $retries -gt 0 ]; do
+        if curl -s -f --noproxy '*' --max-time 5 "http://localhost:10000/" > /dev/null 2>&1; then
+            log_info "Miiify service is ready"
+            break
+        fi
+        sleep 2
+        retries=$((retries - 1))
+    done
+    
+    if [ $retries -eq 0 ]; then
+        log_error "Miiify service did not become ready within timeout"
+        return 1
+    fi
+    
+    # Create a simple load script
+    cd miiify
+    
+    # Run the annotation loading - this will generate manifests in web/iiif/
+    log_info "Loading annotations using ts-node..."
+    if npx ts-node load.ts "$project_name"; then
+        log_success "Annotations loaded successfully into miiify"
+        log_info "Generated manifest with annotation references in web/iiif/"
+        cd - > /dev/null
+        return 0
+    else
+        log_error "Failed to load annotations with ts-node"
+        cd - > /dev/null
+        return 1
+    fi
+}
+
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
@@ -606,14 +669,24 @@ main() {
             ;;
         "build")
             # Simple data-driven build process:
-            # 1. Process ANNOTATIONS → generate manifests
-            # 2. Build web service with IMAGES + generated manifests + static content
-            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
-                # Step 1: Set up annotation processing infrastructure and generate manifests
+            # Users place content in web/ directory, we build from there
+            log_info "🏗️  Building IIIF service from web/ directory content..."
+            log_info "📋 Expected content:"
+            log_info "   - web/images/ (your images)"
+            log_info "   - web/annotations/ (your annotations, optional)"
+            
+            # Check if we have content to work with
+            if [ ! -d "web/images" ] || [ -z "$(ls -A web/images 2>/dev/null)" ]; then
+                log_warning "No images found in web/images/ - using demo content"
+                PROJECT_NAME="demo"
+            fi
+            
+            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ] && [ -d "web/annotations" ] && [ -n "$(ls -A web/annotations 2>/dev/null)" ]; then
+                # Step 1: Process annotations to generate manifests
                 build_core_services
                 
-                log_info "📝 Processing project annotations to generate IIIF manifests..."
-                if ! load_annotations_to_miiify "$PROJECT_NAME"; then
+                log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
+                if ! load_annotations_from_web "$PROJECT_NAME"; then
                     log_warning "Failed to process annotations, but continuing..."
                 fi
                 
@@ -621,8 +694,8 @@ main() {
                 log_info "🏗️  Building complete IIIF service with all processed content..."
                 build_web_service
             else
-                # Demo project: simple single build (no annotation processing needed)
-                log_info "🎯 Building demo project..."
+                # No annotations to process, simple single build
+                log_info "🎯 Building IIIF service with images only (no annotation processing)..."
                 build_and_start
             fi
             ;;

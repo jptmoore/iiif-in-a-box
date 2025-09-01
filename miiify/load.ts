@@ -278,53 +278,22 @@ async function uploadAllAnnotations() {
         }
     }
 
-    // Write manifest back to the project's manifests directory
+    // Write manifest to web/iiif directory (simplified approach)
     const manifestFile = `${projectName}.json`;
     const manifest = generateManifest(grouped, `http://localhost:8080/iiif/${manifestFile}`, projectName);
     
-    // Try to write to the project directory first, fall back to current directory
-    let manifestPath = manifestFile;
-    
-    // Look for project directory in multiple locations
-    const possibleProjectPaths = [
-        `../${projectName}/manifests`,  // relative to miiify (for projects in iiif-in-a-box parent)
-        `../../${projectName}/manifests`,  // relative to miiify (for projects at git level)
-        `${projectName}/manifests`,  // relative to miiify (for projects in miiify)
-    ];
-    
-    let projectManifestDir = '';
-    for (const path of possibleProjectPaths) {
-        if (fs.existsSync(path)) {
-            projectManifestDir = path;
-            break;
-        }
-        // Check if project directory exists without manifests subdir
-        const projectDir = path.replace('/manifests', '');
-        if (fs.existsSync(projectDir)) {
-            fs.mkdirSync(path, { recursive: true });
-            projectManifestDir = path;
-            console.log(`📁 Created manifests directory: ${path}`);
-            break;
-        }
-    }
-    
-    if (projectManifestDir) {
-        manifestPath = `${projectManifestDir}/${manifestFile}`;
-        console.log(`📝 Writing manifest to project directory: ${manifestPath}`);
-    } else {
-        console.log(`📝 Project directory not found (searched: ${possibleProjectPaths.join(', ')})`);
-        console.log(`📝 Writing to current directory: ${manifestPath}`);
-    }
-    
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
-    console.log(`\n✅ Wrote manifest to ${manifestPath}`);
-    
-    // Also write a copy to web/iiif for the server
+    // Always write to web/iiif directory - no complex path resolution needed
     const webManifestPath = `../web/iiif/${manifestFile}`;
-    if (fs.existsSync('../web/iiif')) {
-        fs.writeFileSync(webManifestPath, JSON.stringify(manifest, null, 2));
-        console.log(`✅ Also wrote copy to web directory: ${webManifestPath}`);
+    
+    // Ensure the web/iiif directory exists
+    const webIiifDir = '../web/iiif';
+    if (!fs.existsSync(webIiifDir)) {
+        fs.mkdirSync(webIiifDir, { recursive: true });
     }
+    
+    fs.writeFileSync(webManifestPath, JSON.stringify(manifest, null, 2));
+    console.log(`\n✅ Wrote manifest to ${webManifestPath}`);
+    console.log(`📋 Manifest includes ${Object.keys(grouped).length} canvases with annotations`);
 }
 
 uploadAllAnnotations().catch(err => {

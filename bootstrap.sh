@@ -67,8 +67,10 @@ IIIF-In-A-Box Bootstrap Script
 Usage: $0 [OPTIONS] [COMMAND]
 
 Options:
-  --project, -p PROJECT_NAME        Set the project name (default: demo)
-  --collection, -c COLLECTION_DIR   Directory containing IIIF resources (required)
+  --project, -p PROJECT_NAME        Name of the project (required)
+  --collection, -c COLLECTION_DIR   Directory containing IIIF resources 
+                                    (optional - defaults to project name)
+                                    Searches: ./{project}, ../{project}, ../../{project}
   --help, -h                        Show this help message
 
 Commands:
@@ -137,20 +139,52 @@ setup_project_from_directory() {
     
     log_info "Setting up project from directory: $collection_dir"
     
-    # Validate that collection directory is provided
+    # Collection directory defaults to project name if not provided
     if [ -z "$collection_dir" ]; then
-        log_error "Collection directory is required. Use --collection to specify a directory containing IIIF resources."
-        return 1
+        collection_dir="$project_name"
+        log_info "Using project name as collection directory: $collection_dir"
     fi
     
-    # Resolve relative path to absolute path
+    # If it's not an absolute path, try to find the project directory in common locations
     if [[ "$collection_dir" != /* ]]; then
-        collection_dir="$(pwd)/$collection_dir"
+        # List of possible locations to search for the project directory
+        possible_paths=(
+            "$(pwd)/$collection_dir"           # Current directory (iiif-in-a-box)
+            "$(pwd)/../$collection_dir"        # Parent directory (git level)
+            "$(pwd)/../../$collection_dir"     # Grandparent directory
+            "$collection_dir"                  # Relative to current location
+        )
+        
+        found_path=""
+        for path in "${possible_paths[@]}"; do
+            if [ -d "$path" ]; then
+                found_path="$path"
+                log_info "Found collection directory at: $found_path"
+                break
+            fi
+        done
+        
+        if [ -n "$found_path" ]; then
+            collection_dir="$found_path"
+        else
+            # If not found, resolve to absolute path anyway for better error message
+            collection_dir="$(pwd)/$collection_dir"
+        fi
     fi
     
     # Check if directory exists
     if [ ! -d "$collection_dir" ]; then
         log_error "Collection directory does not exist: $collection_dir"
+        log_error "Searched in the following locations:"
+        if [[ "$collection_dir" != /* ]]; then
+            # This shouldn't happen now, but just in case
+            log_error "  - $(pwd)/$collection_dir"
+            log_error "  - $(pwd)/../$collection_dir"
+        else
+            log_error "  - $collection_dir"
+            log_error "  - $(dirname "$collection_dir")/../$(basename "$collection_dir")"
+        fi
+        log_error "Please ensure the project directory exists or use --collection to specify the correct path."
         return 1
     fi
     
@@ -205,6 +239,72 @@ setup_project_from_directory() {
     log_success "Project setup from directory completed"
 }
 
+# Function to load annotations into miiify annotation server
+load_annotations_to_miiify() {
+    local project_name="$1"
+    
+    log_info "Checking for annotations to load into miiify..."
+    
+    # Check if there are annotation files
+    if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
+        log_info "No annotations found to load"
+        return 0
+    fi
+    
+    # Look for annotation files (JSON format)
+    local annotation_files=$(find web/annotations -name "*.json" | head -1)
+    
+    if [ -z "$annotation_files" ]; then
+        log_info "No JSON annotation files found in web/annotations"
+        return 0
+    fi
+    
+    log_info "Found annotation files. Loading into miiify annotation server..."
+    
+    # Ensure miiify database directory exists
+    mkdir -p "miiify/db"
+    
+    # Copy the annotation file to miiify directory for processing
+    local annotation_file=$(echo "$annotation_files" | head -1)
+    cp "$annotation_file" "miiify/${project_name}-annotations.json"
+    
+    # Wait for miiify service to be ready
+    log_info "Waiting for miiify service to be ready..."
+    local retries=30
+    while [ $retries -gt 0 ]; do
+        if curl -s -f --noproxy '*' --max-time 5 "http://localhost:10000/" > /dev/null 2>&1; then
+            log_info "Miiify service is ready"
+            break
+        fi
+        sleep 2
+        retries=$((retries - 1))
+    done
+    
+    if [ $retries -eq 0 ]; then
+        log_error "Miiify service did not become ready within timeout"
+        return 1
+    fi
+    
+    # Create a project-specific load script
+    cd miiify
+    
+    # Run the annotation loading with project name as argument
+    log_info "Loading annotations using ts-node..."
+    if npx ts-node load.ts "$project_name"; then
+        log_success "Annotations loaded successfully into miiify"
+        log_info "Updated manifest with annotation references in both project and web directories"
+    else
+        log_error "Failed to load annotations into miiify"
+        cd - > /dev/null
+        return 1
+    fi
+    
+    # Clean up temporary files (no longer needed since load.ts writes directly to correct locations)
+    rm -f "${project_name}-annotations.json"
+    cd - > /dev/null
+    log_success "Annotation loading completed"
+}
+
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
@@ -246,6 +346,12 @@ setup_project_files() {
     # Validate project name
     if ! validate_project_name "$project_name"; then
         return 1
+    fi
+    
+    # If no collection directory specified, use project name as directory name
+    if [ -z "$collection_dir" ]; then
+        collection_dir="$project_name"
+        log_info "No collection directory specified, using project name: $collection_dir"
     fi
     
     # Setup from filesystem directory (required)
@@ -435,9 +541,16 @@ main() {
         "build")
             # First build all services
             build_and_start
-            # Then rebuild web service to ensure project files are included
+            
+            # Load annotations into miiify after services are ready, but before web rebuild
             if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
-                log_info "Project files were created/updated, rebuilding web service..."
+                log_info "Loading annotations into miiify annotation server..."
+                if ! load_annotations_to_miiify "$PROJECT_NAME"; then
+                    log_warning "Failed to load annotations, but continuing..."
+                fi
+                
+                # Then rebuild web service to ensure project files and generated manifests are included
+                log_info "Project files and manifests were created/updated, rebuilding web service..."
                 rebuild_web_service
             fi
             ;;

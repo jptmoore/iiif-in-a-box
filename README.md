@@ -6,7 +6,7 @@ A complete IIIF (International Image Interoperability Framework) service stack t
 
 IIIF-In-A-Box is **data-driven** - you provide two key inputs:
 1. **📷 Images** (TIFF, JPEG, etc.) 
-2. **📝 Annotations** (JSON files, optional)
+2. **📝 Annotations** (JSON files, required for manifest generation)
 
 The system processes these to create:
 - **🖼️ IIIF Image API** (via Cantaloupe image server)
@@ -21,7 +21,7 @@ The system processes these to create:
 # Place your images
 cp your-images/* web/images/
 
-# Place your annotations (optional)
+# Place your annotations (required for manifests)
 cp your-annotations.json web/annotations/
 ```
 
@@ -47,7 +47,7 @@ cp your-annotations.json web/annotations/
 iiif-in-a-box/
 ├── web/
 │   ├── images/           ← Put your images here
-│   ├── annotations/      ← Put your annotation files here  
+│   ├── annotations/      ← Put your annotation files here (required)
 │   ├── iiif/            ← Generated manifests (auto-created)
 │   └── pages/           ← Generated HTML pages (auto-created)
 ├── bootstrap.sh         ← Main build script

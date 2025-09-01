@@ -671,31 +671,40 @@ main() {
             # Simple data-driven build process:
             # Users place content in web/ directory, we build from there
             log_info "🏗️  Building IIIF service from web/ directory content..."
-            log_info "📋 Expected content:"
+            log_info "📋 Required content:"
             log_info "   - web/images/ (your images)"
-            log_info "   - web/annotations/ (your annotations, optional)"
+            log_info "   - web/annotations/ (your annotations - required for manifest generation)"
             
-            # Check if we have content to work with
+            # Check if we have images
             if [ ! -d "web/images" ] || [ -z "$(ls -A web/images 2>/dev/null)" ]; then
                 log_warning "No images found in web/images/ - using demo content"
                 PROJECT_NAME="demo"
             fi
             
-            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ] && [ -d "web/annotations" ] && [ -n "$(ls -A web/annotations 2>/dev/null)" ]; then
+            # Check if we have annotations (required for manifest generation)
+            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
+                if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
+                    log_error "No annotations found in web/annotations/ directory"
+                    log_error "Annotations are required to generate IIIF manifests"
+                    log_error "Please add your annotation JSON files to web/annotations/"
+                    exit 1
+                fi
+                
                 # Step 1: Process annotations to generate manifests
                 build_core_services
                 
                 log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
                 if ! load_annotations_from_web "$PROJECT_NAME"; then
-                    log_warning "Failed to process annotations, but continuing..."
+                    log_error "Failed to process annotations - cannot continue without manifests"
+                    exit 1
                 fi
                 
                 # Step 2: Build complete IIIF service with all content
                 log_info "🏗️  Building complete IIIF service with all processed content..."
                 build_web_service
             else
-                # No annotations to process, simple single build
-                log_info "🎯 Building IIIF service with images only (no annotation processing)..."
+                # Demo project: simple single build with pre-existing manifests
+                log_info "🎯 Building demo project with pre-existing manifests..."
                 build_and_start
             fi
             ;;

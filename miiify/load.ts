@@ -218,36 +218,28 @@ async function uploadAllAnnotations() {
     
     console.log(`🎯 Loading annotations for project: ${projectName}`);
     
-    // Try to find annotation files in multiple locations
+    // Find annotation files in web/annotations directory (simplified approach)
     let annotationData: any = null;
     let annotationFile = '';
     
-    // Check for project-specific annotation file in current directory
-    const projectAnnotationFile = `${projectName}-annotations.json`;
-    if (fs.existsSync(projectAnnotationFile)) {
-        annotationFile = projectAnnotationFile;
-        console.log(`📁 Found project annotation file: ${annotationFile}`);
-    }
-    // Check for default lincoln file (backward compatibility)
-    else if (fs.existsSync('lincoln-annotations.json')) {
-        annotationFile = 'lincoln-annotations.json';
-        console.log(`📁 Found default annotation file: ${annotationFile}`);
-    }
-    // Check in parent web/annotations directory
-    else if (fs.existsSync('../web/annotations')) {
-        const annotationDir = '../web/annotations';
-        const files = fs.readdirSync(annotationDir).filter(f => f.endsWith('.json'));
+    // Check in web/annotations directory (primary location)
+    const webAnnotationsDir = '../web/annotations';
+    if (fs.existsSync(webAnnotationsDir)) {
+        const files = fs.readdirSync(webAnnotationsDir).filter(f => f.endsWith('.json'));
         if (files.length > 0) {
-            annotationFile = `${annotationDir}/${files[0]}`;
-            console.log(`📁 Found annotation file in web directory: ${annotationFile}`);
+            annotationFile = `${webAnnotationsDir}/${files[0]}`;
+            console.log(`📁 Found annotation file: ${annotationFile}`);
+            if (files.length > 1) {
+                console.log(`📋 Note: Multiple annotation files found, using: ${files[0]}`);
+                console.log(`� Other files: ${files.slice(1).join(', ')}`);
+            }
         }
     }
     
     if (!annotationFile) {
-        console.error('❌ No annotation files found. Checked:');
-        console.error(`   - ${projectAnnotationFile}`);
-        console.error(`   - lincoln-annotations.json`);
-        console.error(`   - ../web/annotations/*.json`);
+        console.error('❌ No annotation files found in web/annotations/');
+        console.error('📝 Please place your .json annotation files in web/annotations/');
+        console.error('📝 Example: web/annotations/my-annotations.json');
         return;
     }
     

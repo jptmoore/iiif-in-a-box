@@ -341,13 +341,10 @@ load_annotations_from_web() {
     fi
     
     log_info "Found annotation files: $(echo "$annotation_files" | wc -l) files"
+    log_info "Load script will read directly from web/annotations/ directory"
     
     # Ensure miiify database directory exists
     mkdir -p "miiify/db"
-    
-    # Copy annotation files to miiify directory for processing
-    local annotation_file=$(echo "$annotation_files" | head -1)
-    cp "$annotation_file" "miiify/${project_name}-annotations.json"
     
     # Wait for miiify service to be ready
     log_info "Waiting for miiify service to be ready..."
@@ -366,10 +363,9 @@ load_annotations_from_web() {
         return 1
     fi
     
-    # Create a simple load script
+    # Run annotation loading - load.ts will read directly from web/annotations/
     cd miiify
     
-    # Run the annotation loading - this will generate manifests in web/iiif/
     log_info "Loading annotations using ts-node..."
     if npx ts-node load.ts "$project_name"; then
         log_success "Annotations loaded successfully into miiify"

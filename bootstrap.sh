@@ -379,6 +379,29 @@ load_annotations_from_web() {
     fi
 }
 
+# Function to index annotations with annosearch
+index_annotations_with_annosearch() {
+    local project_name="$1"
+    
+    log_info "Indexing annotations for search functionality..."
+    
+    # Check if annosearch load script exists
+    if [ ! -f "annosearch/load.sh" ]; then
+        log_warning "AnnoSearch load script not found - skipping search indexing"
+        return 0
+    fi
+    
+    # Run the annosearch indexing script
+    if ./annosearch/load.sh "$project_name"; then
+        log_success "Annotations indexed successfully for search"
+        log_info "Search API available at: http://localhost:8080/annosearch/${project_name}/search"
+        return 0
+    else
+        log_warning "Failed to index annotations for search, but continuing..."
+        return 0  # Don't fail the build if search indexing fails
+    fi
+}
+
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
@@ -581,7 +604,7 @@ build_and_start() {
 build_core_services() {
     local compose_file="docker-compose.yml"
     
-    log_info "Building core services (annotation processing infrastructure)..."
+    log_info "Building core services (annotation processing and search infrastructure)..."
     
     cd proxy
     
@@ -591,18 +614,20 @@ build_core_services() {
         docker-compose -f "$compose_file" down
     fi
     
-    # Build and start only the services needed for annotation processing
-    log_info "Building annotation processing services..."
+    # Build and start services needed for annotation processing and search
+    log_info "Building annotation and search services..."
+    build_service_if_needed "$compose_file" "quickwit" "$FORCE_REBUILD"
+    build_service_if_needed "$compose_file" "annosearch" "$FORCE_REBUILD"
     build_service_if_needed "$compose_file" "miiify" "$FORCE_REBUILD"
     
-    log_info "Starting annotation processing services..."
-    docker-compose -f "$compose_file" up -d miiify
+    log_info "Starting annotation and search services..."
+    docker-compose -f "$compose_file" up -d quickwit annosearch miiify
     
-    # Wait for miiify to be ready
-    log_info "Waiting for annotation service to be ready..."
-    sleep 5
+    # Wait for services to be ready
+    log_info "Waiting for annotation and search services to be ready..."
+    sleep 10
     
-    log_success "Annotation processing infrastructure ready!"
+    log_success "Annotation processing and search infrastructure ready!"
     
     cd - > /dev/null
 }
@@ -775,6 +800,10 @@ main() {
                 # Step 2: Build complete IIIF service with all content
                 log_info "🏗️  Building complete IIIF service with all processed content..."
                 build_web_service
+                
+                # Step 3: Index annotations for search functionality (after full stack is up)
+                log_info "🔍 Indexing annotations for search functionality..."
+                index_annotations_with_annosearch "$PROJECT_NAME"
             else
                 # Demo project: simple single build with pre-existing manifests
                 log_info "🎯 Building demo project with pre-existing manifests..."

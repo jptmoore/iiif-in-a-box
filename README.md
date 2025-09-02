@@ -12,7 +12,7 @@ The system processes these to create:
 - **🖼️ IIIF Image API** (via Cantaloupe image server)
 - **📋 IIIF Manifests** (generated from your annotations)
 - **👁️ Web Viewer** (Tamerlane IIIF viewer)
-- **🔍 Search** (full-text search across annotations)
+- **🔍 Full-text Search** (via AnnoSearch with IIIF Content Search API)
 
 ## Quick Start
 
@@ -40,7 +40,7 @@ cp your-annotations.json web/annotations/
 ### 3. Access Your IIIF Service
 - **📚 Main site**: http://localhost:8080
 - **👁️ Viewer**: http://localhost:8080/viewer/
-- **🔍 Search**: http://localhost:8080/annosearch/
+- **🔍 Search**: http://localhost:8080/annosearch/my-project/search?q=search-term
 - **📝 Annotations**: http://localhost:8080/miiify/
 - **🖼️ Images**: http://localhost:8080/cantaloupe/
 
@@ -62,8 +62,9 @@ iiif-in-a-box/
 The system uses a **two-phase build** optimized for your content:
 
 ### Phase 1: Process Annotations
-- Starts annotation processing infrastructure (miiify)
+- Starts annotation processing infrastructure (miiify, annosearch, quickwit)
 - Loads your annotations into the annotation server
+- Indexes annotations for full-text search
 - Generates IIIF manifests that reference both images and annotations
 
 ### Phase 2: Build Complete Service  
@@ -71,14 +72,14 @@ The system uses a **two-phase build** optimized for your content:
   - **Images** → served via Cantaloupe image server
   - **Generated manifests** → served as static files
   - **Tamerlane viewer** → React-based IIIF viewer
-  - **Search index** → full-text search across annotations
+  - **Search index** → IIIF Content Search API for annotations
 
 ### Result
 A complete IIIF service where:
 - Images are served via IIIF Image API
 - Manifests link images to annotations  
 - Viewer displays images with overlay annotations
-- Search finds content across all annotations
+- Search finds content across all annotations via IIIF Content Search API
 ## Commands
 
 ```bash
@@ -130,7 +131,7 @@ cp transcriptions.json web/annotations/
 ./bootstrap.sh build documents
 
 # 3. View images with overlay annotations
-# 4. Search transcriptions at http://localhost:8080/annosearch/
+# 4. Search transcriptions at http://localhost:8080/annosearch/documents/search?q=your-search-term
 ```
 
 ## Architecture

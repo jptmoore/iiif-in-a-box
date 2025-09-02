@@ -24,61 +24,6 @@ log_warning() { echo -e "${YELLOW}[ANNOSEARCH]${NC} $1"; }
 log_error() { echo -e "${RED}[ANNOSEARCH]${NC} $1"; }
 log_section() { echo -e "\n${BLUE}[ANNOSEARCH]${NC} === $1 ==="; }
 
-# Function to check if annosearch service is ready
-wait_for_annosearch() {
-    log_info "Waiting for annosearch service to be ready..."
-    log_info "Checking annosearch at: ${ANNOSEARCH_BASE_URL}/version"
-    local retries=30
-    while [ $retries -gt 0 ]; do
-        # Try to get version info from annosearch
-        local response
-        response=$(curl -s --max-time 5 "${ANNOSEARCH_BASE_URL}/version" 2>/dev/null)
-        if [ $? -eq 0 ] && [ -n "$response" ]; then
-            log_success "AnnoSearch service is ready"
-            log_info "AnnoSearch version info: $response"
-            return 0
-        fi
-        sleep 2
-        retries=$((retries - 1))
-        log_info "Waiting for annosearch... ($retries retries left)"
-    done
-    
-    log_error "AnnoSearch service did not become ready within timeout"
-    log_error "Last attempt failed - check if annosearch is running on ${ANNOSEARCH_BASE_URL}"
-    return 1
-}
-
-# Function to check if web service is ready
-wait_for_web_service() {
-    log_info "Waiting for web service to be ready..."
-    log_info "Checking web service at: ${WEB_BASE_URL}/"
-    local retries=30
-    while [ $retries -gt 0 ]; do
-        # Try to get response from web service
-        local response_code
-        response_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "${WEB_BASE_URL}/" 2>/dev/null)
-        if [ $? -eq 0 ] && [ "$response_code" -ge 200 ] && [ "$response_code" -lt 400 ]; then
-            log_success "Web service is ready (HTTP $response_code)"
-            return 0
-        fi
-        sleep 2
-        retries=$((retries - 1))
-        log_info "Waiting for web service... ($retries retries left, last response: ${response_code:-connection failed})"
-    done
-    
-    log_error "Web service did not become ready within timeout"
-    log_error "Last attempt failed - check if web service is running on ${WEB_BASE_URL}"
-    log_error ""
-    log_error "Make sure the full IIIF stack is running before running this script."
-    log_error "You may need to run the bootstrap script first:"
-    log_error "  ./bootstrap.sh"
-    log_error ""
-    log_error "Or check if nginx container is running:"
-    log_error "  docker ps --filter name=nginx"
-    return 1
-    return 1
-}
-
 # Function to create/recreate index
 create_index() {
     local project_name="$1"
@@ -87,13 +32,9 @@ create_index() {
     
     cd "$ANNOSEARCH_DIR"
     
-    # Try to delete existing index (check exit code to see if it existed)
-    log_info "Checking for existing index: $project_name"
-    if npx annosearch delete --index "$project_name" 2>/dev/null; then
-        log_success "Existing index '$project_name' deleted successfully"
-    else
-        log_info "No existing index found for '$project_name' (or already deleted)"
-    fi
+    # Try to delete existing index (silently ignore errors - 404 is expected if index doesn't exist)
+    log_info "Cleaning up any existing index: $project_name"
+    npx annosearch delete --index "$project_name" >/dev/null 2>&1
     
     # Create new index
     log_info "Creating new search index: $project_name"
@@ -151,9 +92,6 @@ load_annotations() {
 # Main function
 main() {
     log_section "Starting annotation indexing for project: $PROJECT_NAME"
-    log_info "This script requires the full IIIF stack to be running."
-    log_info "Make sure you have run ./bootstrap.sh first."
-    log_info ""
     
     # Check if annosearch directory exists
     if [ ! -d "$ANNOSEARCH_DIR" ]; then
@@ -161,25 +99,12 @@ main() {
         log_error "Please ensure annosearch repository is cloned"
         exit 1
     fi
-    
-    # Wait for services to be ready
-    if ! wait_for_annosearch; then
-        log_error "AnnoSearch service is not available"
-        exit 1
-    fi
-    
-    if ! wait_for_web_service; then
-        log_error "Web service is not available"
-        exit 1
-    fi
-    
+
     # Create/recreate search index
     if ! create_index "$PROJECT_NAME"; then
         log_error "Failed to set up search index"
         exit 1
-    fi
-    
-    # Load annotations into search index
+    fi    # Load annotations into search index
     if ! load_annotations "$PROJECT_NAME"; then
         log_error "Failed to load annotations into search index"
         exit 1
@@ -208,14 +133,16 @@ Examples:
   $0 domesday
 
 Requirements:
-  - annosearch service running on localhost:3000
-  - web service running on localhost:8080 with generated IIIF manifests
+  - Full IIIF stack running (use ./bootstrap.sh to start)
   - jq command-line JSON processor
 
 The script will:
-1. Create a search index for the project
+1. Create/recreate a search index for the project
 2. Load annotations from IIIF manifest served by web server
 3. Make them searchable via IIIF Content Search API
+
+Note: This script is typically called automatically by bootstrap.sh
+but can be run manually after the full stack is running.
 
 EOF
     exit 0

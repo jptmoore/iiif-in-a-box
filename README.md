@@ -27,8 +27,11 @@ cp your-annotations.json web/annotations/
 
 ### 2. Build and Run
 ```bash
-# Build complete IIIF service
+# Build complete IIIF service (fast - reuses existing Docker images)
 ./bootstrap.sh build my-project
+
+# Force complete rebuild (slow - rebuilds everything including Cantaloupe)
+./bootstrap.sh build my-project --force
 
 # Or for demo with sample content
 ./bootstrap.sh build
@@ -79,8 +82,11 @@ A complete IIIF service where:
 ## Commands
 
 ```bash
-# Build with your content
+# Build with your content (fast build using cached images)
 ./bootstrap.sh build my-project
+
+# Force complete rebuild (slow - rebuilds everything)
+./bootstrap.sh build my-project --force
 
 # Build demo with sample content  
 ./bootstrap.sh build
@@ -244,7 +250,14 @@ cd .. && ./bootstrap.sh build my-project
 
 ## Performance Tips
 
+- **Fast builds**: Default build reuses existing Docker images (especially Cantaloupe which is slow to build)
+- **Force rebuild**: Use `--force` flag only when you need to rebuild everything from scratch
 - **TIFF images**: Use tiled TIFFs for better performance
 - **Large collections**: Consider image pyramids for zoom performance  
 - **Annotations**: Group related annotations in single JSON files
 - **Search**: Larger annotation collections will have better search results
+
+### Build Performance
+- **First build**: ~5-10 minutes (downloads Cantaloupe JAR, builds all images)
+- **Subsequent builds**: ~1-2 minutes (reuses cached Docker layers and images)
+- **Force rebuild**: ~5-10 minutes (rebuilds everything from scratch)

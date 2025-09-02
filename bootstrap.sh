@@ -30,6 +30,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 parse_arguments() {
     PROJECT_NAME="$DEFAULT_PROJECT_NAME"
     COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
+    FORCE_REBUILD="false"
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -41,6 +42,10 @@ parse_arguments() {
                 COLLECTION_DIR="$2"
                 shift 2
                 ;;
+            --force|-f)
+                FORCE_REBUILD="true"
+                shift
+                ;;
             --help|-h)
                 show_help
                 exit 0
@@ -49,6 +54,11 @@ parse_arguments() {
                 # Store command for later use
                 BOOTSTRAP_COMMAND="$1"
                 shift
+                # Check if this is a project name for build command
+                if [ "$BOOTSTRAP_COMMAND" = "build" ] && [ -n "$1" ]; then
+                    PROJECT_NAME="$1"
+                    shift
+                fi
                 ;;
         esac
     done
@@ -64,28 +74,33 @@ show_help() {
     cat << EOF
 IIIF-In-A-Box Bootstrap Script
 
-Usage: $0 [OPTIONS] [COMMAND]
+Usage: $0 [OPTIONS] [COMMAND] [PROJECT_NAME]
 
 Options:
-  --project, -p PROJECT_NAME        Name of the project (required)
+  --project, -p PROJECT_NAME        Name of the project (required for build)
   --collection, -c COLLECTION_DIR   Directory containing IIIF resources 
                                     (optional - defaults to project name)
                                     Searches: ./{project}, ../{project}, ../../{project}
+  --force, -f                       Force rebuild all Docker images (including slow Cantaloupe)
   --help, -h                        Show this help message
 
 Commands:
-  build            - Update projects and build/start services (default)
-  update-only      - Only update git repositories
-  status           - Show service status
-  stop             - Stop all services
-  restart          - Restart all services
-  logs             - Show service logs
+  build [PROJECT_NAME]     - Build IIIF service from web/ directory content
+  update-only              - Only update git repositories
+  status                   - Show service status
+  stop                     - Stop all services
+  restart                  - Restart all services
+  logs                     - Show service logs
 
 Examples:
-  # Setup a medieval manuscripts collection
-  $0 --project medieval --collection ../medieval-manuscripts build
+  # Build with your content (fast - reuses existing images)
+  $0 build my-project
   
-  # Setup with short flags
+  # Force complete rebuild (slow - rebuilds everything including Cantaloupe)
+  $0 build my-project --force
+  
+  # Build demo project
+  $0 build
   $0 -p newspapers -c ../newspaper-collection build
 
 Collection Directory Structure:
@@ -582,7 +597,7 @@ build_core_services() {
     
     # Build and start only the services needed for annotation processing
     log_info "Building annotation processing services..."
-    docker-compose -f "$compose_file" build --no-cache miiify
+    build_service_if_needed "$compose_file" "miiify" "$FORCE_REBUILD"
     
     log_info "Starting annotation processing services..."
     docker-compose -f "$compose_file" up -d miiify
@@ -604,9 +619,12 @@ build_web_service() {
     
     cd proxy
     
-    # Build all remaining services with the processed content
-    log_info "Building all services..."
-    docker-compose -f "$compose_file" build --no-cache
+    # Build all services, checking for existing images to speed up builds
+    log_info "Building all services (using cached images where possible)..."
+    if [ "$FORCE_REBUILD" = "true" ]; then
+        log_info "🔄 Force rebuild requested - rebuilding all images from scratch"
+    fi
+    build_services_optimized "$compose_file" "$FORCE_REBUILD"
     
     # Start the complete service stack
     log_info "Starting complete IIIF service stack..."
@@ -631,6 +649,60 @@ build_web_service() {
     log_info "📝 Annotations served via Miiify annotation server"
     
     cd - > /dev/null
+}
+
+# Helper function to check if a Docker image exists locally
+image_exists() {
+    local image_name="$1"
+    docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q "^${image_name}$"
+}
+
+# Helper function to build a service only if needed
+build_service_if_needed() {
+    local compose_file="$1"
+    local service="$2"
+    local force_rebuild="${3:-false}"
+    
+    # Get the image name for this service
+    local image_name=$(docker-compose -f "$compose_file" config | grep -A 5 "^  ${service}:" | grep "image:" | awk '{print $2}' | head -1)
+    
+    # If no explicit image name, it will be built with a default name
+    if [ -z "$image_name" ]; then
+        image_name="${PWD##*/}-${service}"
+    fi
+    
+    if [ "$force_rebuild" = "true" ] || ! image_exists "$image_name"; then
+        log_info "Building $service (image: $image_name)..."
+        docker-compose -f "$compose_file" build --no-cache "$service"
+    else
+        log_info "Using existing $service image (image: $image_name) ✓"
+        # Still run build without --no-cache to update if Dockerfile changed
+        docker-compose -f "$compose_file" build "$service"
+    fi
+}
+
+# Helper function to build services with optimization
+build_services_optimized() {
+    local compose_file="$1"
+    local force_rebuild="${2:-false}"
+    
+    # List of services that should be built
+    local services=("quickwit" "annosearch" "cantaloupe" "miiify" "web" "nginx")
+    
+    for service in "${services[@]}"; do
+        # Special handling for cantaloupe (the slow one)
+        if [ "$service" = "cantaloupe" ]; then
+            local cantaloupe_image="cantaloupe:5.0.7"
+            if [ "$force_rebuild" != "true" ] && image_exists "$cantaloupe_image"; then
+                log_info "Using existing Cantaloupe image (cantaloupe:5.0.7) ✓ - skipping slow rebuild"
+            else
+                log_info "Building Cantaloupe (this may take a while due to JAR download)..."
+                docker-compose -f "$compose_file" build --no-cache cantaloupe
+            fi
+        else
+            build_service_if_needed "$compose_file" "$service" "$force_rebuild"
+        fi
+    done
 }
 
 # Function to show service status
@@ -671,6 +743,11 @@ main() {
             # Simple data-driven build process:
             # Users place content in web/ directory, we build from there
             log_info "🏗️  Building IIIF service from web/ directory content..."
+            if [ "$FORCE_REBUILD" = "true" ]; then
+                log_info "🔄 Force rebuild mode enabled - will rebuild all images including Cantaloupe"
+            else
+                log_info "⚡ Fast build mode - will reuse existing Docker images where possible"
+            fi
             log_info "📋 Required content:"
             log_info "   - web/images/ (your images)"
             log_info "   - web/annotations/ (your annotations - required for manifest generation)"

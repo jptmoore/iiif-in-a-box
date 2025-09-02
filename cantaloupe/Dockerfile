@@ -4,14 +4,22 @@ FROM eclipse-temurin:17-jdk
 # Set working directory
 WORKDIR /cantaloupe
 
-# Download and extract the JAR from the ZIP
+# Install download tools in a separate layer (cached)
 RUN apt-get update && apt-get install -y wget unzip && \
-    wget --no-check-certificate -O cantaloupe.zip https://github.com/cantaloupe-project/cantaloupe/releases/download/v5.0.7/cantaloupe-5.0.7.zip && \
-    unzip cantaloupe.zip && \
-    cp cantaloupe-5.0.7/cantaloupe-5.0.7.jar ./ && \
-    rm -rf cantaloupe.zip cantaloupe-5.0.7 && \
-    apt-get purge -y wget unzip && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*
 
+# Download Cantaloupe in a separate layer (cached unless version changes)
+RUN wget --no-check-certificate -O cantaloupe.zip https://github.com/cantaloupe-project/cantaloupe/releases/download/v5.0.7/cantaloupe-5.0.7.zip
+
+# Extract and setup in a separate layer (cached)
+RUN unzip cantaloupe.zip && \
+    cp cantaloupe-5.0.7/cantaloupe-5.0.7.jar ./ && \
+    rm -rf cantaloupe.zip cantaloupe-5.0.7
+
+# Clean up tools (cached)
+RUN apt-get purge -y wget unzip && apt-get autoremove -y
+
+# Copy config file (only rebuilds this layer if config changes)
 COPY cantaloupe.properties .
 
 # Expose the default Cantaloupe port (8182)

@@ -65,6 +65,18 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
         id: manifestId,
         type: 'Manifest',
         label: { en: [`${projectName} Annotations`] },
+        service: [
+            {
+                id: `http://localhost:8080/annosearch/${projectName}/search`,
+                type: 'SearchService2',
+                service: [
+                    {
+                        id: `http://localhost:8080/annosearch/${projectName}/autocomplete`,
+                        type: 'AutoCompleteService2'
+                    }
+                ]
+            }
+        ],
         items: canvases
     };
 }

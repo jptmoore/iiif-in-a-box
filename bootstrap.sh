@@ -50,6 +50,11 @@ parse_arguments() {
                 show_help
                 exit 0
                 ;;
+            stop|status|restart|logs)
+                # Commands that don't require project setup
+                BOOTSTRAP_COMMAND="$1"
+                shift
+                ;;
             *)
                 # Store command for later use
                 BOOTSTRAP_COMMAND="$1"
@@ -745,8 +750,15 @@ main() {
     # Check dependencies
     check_dependencies
     
-    # Setup project files
-    setup_project_files
+    # Setup project files (skip for service management commands)
+    case "$BOOTSTRAP_COMMAND" in
+        "stop"|"status"|"restart"|"logs")
+            log_info "Service management command detected - skipping project setup"
+            ;;
+        *)
+            setup_project_files
+            ;;
+    esac
     
     # Update/clone projects
     log_info "Updating project dependencies..."

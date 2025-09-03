@@ -53,7 +53,7 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
             ],
             annotations: [
                 {
-                    id: `${serverBase}/${containerId}/?page=0`,
+                    id: `http://localhost:8080/miiify/annotations/${containerId}/?page=0`,
                     type: 'AnnotationPage'
                 }
             ]
@@ -237,13 +237,22 @@ async function uploadAllAnnotations() {
     // Check in web/annotations directory (primary location)
     const webAnnotationsDir = '../web/annotations';
     if (fs.existsSync(webAnnotationsDir)) {
-        const files = fs.readdirSync(webAnnotationsDir).filter(f => f.endsWith('.json'));
-        if (files.length > 0) {
-            annotationFile = `${webAnnotationsDir}/${files[0]}`;
-            console.log(`📁 Found annotation file: ${annotationFile}`);
-            if (files.length > 1) {
-                console.log(`📋 Note: Multiple annotation files found, using: ${files[0]}`);
-                console.log(`� Other files: ${files.slice(1).join(', ')}`);
+        // First try to find annotation file matching the project name
+        const projectAnnotationFile = `${webAnnotationsDir}/${projectName}.json`;
+        if (fs.existsSync(projectAnnotationFile)) {
+            annotationFile = projectAnnotationFile;
+            console.log(`📁 Found project annotation file: ${annotationFile}`);
+        } else {
+            // Fall back to first .json file found (with warning)
+            const files = fs.readdirSync(webAnnotationsDir).filter(f => f.endsWith('.json'));
+            if (files.length > 0) {
+                annotationFile = `${webAnnotationsDir}/${files[0]}`;
+                console.log(`⚠️  No annotation file found for project '${projectName}'`);
+                console.log(`📁 Using first available file: ${annotationFile}`);
+                console.log(`💡 Consider renaming to: ${webAnnotationsDir}/${projectName}.json`);
+                if (files.length > 1) {
+                    console.log(`📋 Other files available: ${files.slice(1).join(', ')}`);
+                }
             }
         }
     }

@@ -34,11 +34,11 @@ create_index() {
     
     # Try to delete existing index (silently ignore errors - 404 is expected if index doesn't exist)
     log_info "Cleaning up any existing index: $project_name"
-    npx annosearch delete --index "$project_name" >/dev/null 2>&1
+    npm start -- delete --index "$project_name" >/dev/null 2>&1
     
     # Create new index
     log_info "Creating new search index: $project_name"
-    if npx annosearch init --index "$project_name"; then
+    if npm start -- init --index "$project_name"; then
         log_success "Search index '$project_name' created successfully"
         return 0
     else
@@ -69,7 +69,7 @@ load_annotations() {
     
     # Load the manifest into annosearch
     log_info "Loading IIIF Manifest into search index..."
-    if npx annosearch load --index "$project_name" --type Manifest --uri "$manifest_url"; then
+    if npm start -- load --index "$project_name" --type Manifest --uri "$manifest_url"; then
         log_success "IIIF Manifest loaded successfully into search index"
         
         # Get some stats about what was loaded

@@ -559,18 +559,18 @@ rebuild_web_service() {
     cd proxy
     
     # Stop web service if running
-    if docker-compose -f "$compose_file" ps web 2>/dev/null | grep -q "Up"; then
+    if docker-compose -p "$PROJECT_NAME" -f "$compose_file" ps web 2>/dev/null | grep -q "Up"; then
         log_info "Stopping web service..."
-        docker-compose -f "$compose_file" stop web
+        docker-compose -p "$PROJECT_NAME" -f "$compose_file" stop web
     fi
     
     # Rebuild only the web service
     log_info "Building web service..."
-    docker-compose -f "$compose_file" build --no-cache web
+    docker-compose -p "$PROJECT_NAME" -f "$compose_file" build --no-cache web
     
     # Start web service
     log_info "Starting web service..."
-    docker-compose -f "$compose_file" up -d web
+    docker-compose -p "$PROJECT_NAME" -f "$compose_file" up -d web
     
     cd - > /dev/null
     
@@ -586,27 +586,27 @@ build_and_start() {
     cd proxy
     
     # Stop any running services
-    if docker-compose -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
+    if docker-compose -p "$PROJECT_NAME" -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
         log_info "Stopping existing services..."
-        docker-compose -f "$compose_file" down
+        docker-compose -p "$PROJECT_NAME" -f "$compose_file" down
     fi
     
     # Build services
     log_info "Building Docker services..."
-    docker-compose -f "$compose_file" build --no-cache
+    docker-compose -p "$PROJECT_NAME" -f "$compose_file" build --no-cache
     
     # Start services
     log_info "Starting services..."
-    docker-compose -f "$compose_file" up -d
+    docker-compose -p "$PROJECT_NAME" -f "$compose_file" up -d
     
     # Wait for services to be ready
     log_info "Waiting for services to be ready..."
     sleep 10
     
     # Check service status
-    if docker-compose ps | grep -q "Exit"; then
+    if docker-compose -p "$PROJECT_NAME" ps | grep -q "Exit"; then
         log_error "Some services failed to start!"
-        docker-compose logs
+        docker-compose -p "$PROJECT_NAME" logs
         cd - > /dev/null
         return 1
     fi
@@ -626,9 +626,9 @@ build_core_services() {
     cd proxy
     
     # Stop any running services
-    if docker-compose -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
+    if docker-compose -p "$PROJECT_NAME" -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
         log_info "Stopping existing services..."
-        docker-compose -f "$compose_file" down
+        docker-compose -p "$PROJECT_NAME" -f "$compose_file" down
     fi
     
     # Build and start services needed for annotation processing and search
@@ -638,7 +638,7 @@ build_core_services() {
     build_service_if_needed "$compose_file" "miiify" "$FORCE_REBUILD"
     
     log_info "Starting annotation and search services..."
-    docker-compose -f "$compose_file" up -d quickwit annosearch miiify
+    docker-compose -p "$PROJECT_NAME" -f "$compose_file" up -d quickwit annosearch miiify
     
     # Wait for services to be ready
     log_info "Waiting for annotation and search services to be ready..."
@@ -666,16 +666,16 @@ build_web_service() {
     
     # Start the complete service stack
     log_info "Starting complete IIIF service stack..."
-    docker-compose -f "$compose_file" up -d
+    docker-compose -p "$PROJECT_NAME" -f "$compose_file" up -d
     
     # Wait for all services to be ready
     log_info "Waiting for all services to be ready..."
     sleep 10
     
     # Check service status
-    if docker-compose ps | grep -q "Exit"; then
+    if docker-compose -p "$PROJECT_NAME" ps | grep -q "Exit"; then
         log_error "Some services failed to start!"
-        docker-compose logs
+        docker-compose -p "$PROJECT_NAME" logs
         cd - > /dev/null
         return 1
     fi
@@ -702,20 +702,20 @@ build_service_if_needed() {
     local force_rebuild="${3:-false}"
     
     # Get the image name for this service
-    local image_name=$(docker-compose -f "$compose_file" config | grep -A 5 "^  ${service}:" | grep "image:" | awk '{print $2}' | head -1)
+    local image_name=$(docker-compose -p "$PROJECT_NAME" -f "$compose_file" config | grep -A 5 "^  ${service}:" | grep "image:" | awk '{print $2}' | head -1)
     
     # If no explicit image name, it will be built with a default name
     if [ -z "$image_name" ]; then
-        image_name="${PWD##*/}-${service}"
+        image_name="${PROJECT_NAME}-${service}"
     fi
     
     if [ "$force_rebuild" = "true" ] || ! image_exists "$image_name"; then
         log_info "Building $service (image: $image_name)..."
-        docker-compose -f "$compose_file" build --no-cache "$service"
+        docker-compose -p "$PROJECT_NAME" -f "$compose_file" build --no-cache "$service"
     else
         log_info "Using existing $service image (image: $image_name) ✓"
         # Still run build without --no-cache to update if Dockerfile changed
-        docker-compose -f "$compose_file" build "$service"
+        docker-compose -p "$PROJECT_NAME" -f "$compose_file" build "$service"
     fi
 }
 
@@ -735,7 +735,7 @@ build_services_optimized() {
                 log_info "Using existing Cantaloupe image (cantaloupe:5.0.7) ✓ - skipping slow rebuild"
             else
                 log_info "Building Cantaloupe (this may take a while due to JAR download)..."
-                docker-compose -f "$compose_file" build --no-cache cantaloupe
+                docker-compose -p "$PROJECT_NAME" -f "$compose_file" build --no-cache cantaloupe
             fi
         else
             build_service_if_needed "$compose_file" "$service" "$force_rebuild"
@@ -743,11 +743,38 @@ build_services_optimized() {
     done
 }
 
+# Function to get current or default project name for service operations
+get_service_project_name() {
+    # If PROJECT_NAME is already set, use it
+    if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "$DEFAULT_PROJECT_NAME" ]; then
+        echo "$PROJECT_NAME"
+        return 0
+    fi
+    
+    # Try to find most recent project by checking running containers
+    local running_project=$(docker ps --format "table {{.Names}}" | grep -E "^[a-zA-Z0-9_-]+-web$" | head -1 | sed 's/-web$//')
+    if [ -n "$running_project" ]; then
+        echo "$running_project"
+        return 0
+    fi
+    
+    # Try to find most recent project by checking existing images
+    local recent_project=$(docker images --format "table {{.Repository}}" | grep -E "^[a-zA-Z0-9_-]+-web$" | head -1 | sed 's/-web$//')
+    if [ -n "$recent_project" ]; then
+        echo "$recent_project"
+        return 0
+    fi
+    
+    # Fall back to default
+    echo "$DEFAULT_PROJECT_NAME"
+}
+
 # Function to show service status
 show_status() {
-    log_info "Service Status:"
+    local service_project_name=$(get_service_project_name)
+    log_info "Service Status for project: $service_project_name"
     cd proxy
-    docker-compose ps
+    docker-compose -p "$service_project_name" ps
     cd - > /dev/null
 }
 
@@ -838,22 +865,26 @@ main() {
             show_status
             ;;
         "stop")
-            log_info "Stopping services..."
+            local service_project_name=$(get_service_project_name)
+            log_info "Stopping services for project: $service_project_name"
             cd proxy
-            docker-compose down
+            docker-compose -p "$service_project_name" down
             cd - > /dev/null
             log_success "Services stopped"
             ;;
         "restart")
-            log_info "Restarting services..."
+            local service_project_name=$(get_service_project_name)
+            log_info "Restarting services for project: $service_project_name"
             cd proxy
-            docker-compose restart
+            docker-compose -p "$service_project_name" restart
             cd - > /dev/null
             log_success "Services restarted"
             ;;
         "logs")
+            local service_project_name=$(get_service_project_name)
+            log_info "Showing logs for project: $service_project_name"
             cd proxy
-            docker-compose logs -f
+            docker-compose -p "$service_project_name" logs -f
             cd - > /dev/null
             ;;
         *)

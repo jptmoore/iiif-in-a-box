@@ -68,9 +68,9 @@ load_annotations() {
     fi
     
     # Load the manifest into annosearch
-    log_info "Loading IIIF Manifest into search index..."
-    if npm start -- load --index "$project_name" --type Manifest --uri "$manifest_url"; then
-        log_success "IIIF Manifest loaded successfully into search index"
+    log_info "Loading IIIF Collection into search index..."
+    if npm start -- load --index "$project_name" --type Collection --uri "$manifest_url"; then
+        log_success "IIIF Collection loaded successfully into search index"
         
         # Get some stats about what was loaded
         log_info "Manifest loaded from: $manifest_url"

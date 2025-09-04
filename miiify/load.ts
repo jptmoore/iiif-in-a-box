@@ -61,7 +61,7 @@ function getDefaultConfig(projectName: string): any {
     };
 }
 
-function generateManifest(grouped: Record<string, Annotation[]>, manifestId: string, projectName: string = 'Project') {
+function generateManifest(grouped: Record<string, Annotation[]>, manifestId: string, manifestName: string, projectName: string = 'Project') {
     // Load project configuration
     const config = loadProjectConfig(projectName);
     
@@ -113,6 +113,40 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
         '@context': 'http://iiif.io/api/presentation/3/context.json',
         id: manifestId,
         type: 'Manifest',
+        label: { en: [manifestName] },
+        items: canvases
+    };
+
+    // Add metadata if configured (only for the main project manifest, not individual manifests)
+    if (manifestName === config.title && config.metadata && config.metadata.length > 0) {
+        manifest.metadata = config.metadata;
+    }
+
+    // Add provider if configured
+    if (config.provider) {
+        manifest.provider = [config.provider];
+    }
+
+    return manifest;
+}
+
+function generateCollection(manifestFiles: string[], projectName: string): any {
+    const config = loadProjectConfig(projectName);
+    const baseUrl = 'http://localhost:8080/iiif';
+    
+    const items = manifestFiles.map(manifestFile => {
+        const manifestName = manifestFile.replace('.json', '');
+        return {
+            id: `${baseUrl}/${manifestFile}`,
+            type: 'Manifest',
+            label: { en: [manifestName] }
+        };
+    });
+
+    const collection: any = {
+        '@context': 'http://iiif.io/api/presentation/3/context.json',
+        id: `${baseUrl}/${projectName}.json`,
+        type: 'Collection',
         label: { en: [config.title] },
         summary: { en: [config.description] },
         service: [
@@ -127,20 +161,20 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
                 ]
             }
         ],
-        items: canvases
+        items: items
     };
 
-    // Add metadata if configured
+    // Add metadata to collection
     if (config.metadata && config.metadata.length > 0) {
-        manifest.metadata = config.metadata;
+        collection.metadata = config.metadata;
     }
 
-    // Add provider if configured
+    // Add provider to collection
     if (config.provider) {
-        manifest.provider = [config.provider];
+        collection.provider = [config.provider];
     }
 
-    return manifest;
+    return collection;
 }
 
 function sanitizeSlug(raw: string): string {
@@ -292,83 +326,92 @@ async function uploadAllAnnotations() {
     
     console.log(`🎯 Loading annotations for project: ${projectName}`);
     
-    // Find annotation files in web/annotations directory (simplified approach)
-    let annotationData: any = null;
-    let annotationFile = '';
-    
-    // Check in web/annotations directory (primary location)
+    // Find all annotation files in web/annotations directory
     const webAnnotationsDir = '../web/annotations';
-    if (fs.existsSync(webAnnotationsDir)) {
-        // First try to find annotation file matching the project name
-        const projectAnnotationFile = `${webAnnotationsDir}/${projectName}.json`;
-        if (fs.existsSync(projectAnnotationFile)) {
-            annotationFile = projectAnnotationFile;
-            console.log(`📁 Found project annotation file: ${annotationFile}`);
-        } else {
-            // Fall back to first .json file found (with warning)
-            const files = fs.readdirSync(webAnnotationsDir).filter(f => f.endsWith('.json'));
-            if (files.length > 0) {
-                annotationFile = `${webAnnotationsDir}/${files[0]}`;
-                console.log(`⚠️  No annotation file found for project '${projectName}'`);
-                console.log(`📁 Using first available file: ${annotationFile}`);
-                console.log(`💡 Consider renaming to: ${webAnnotationsDir}/${projectName}.json`);
-                if (files.length > 1) {
-                    console.log(`📋 Other files available: ${files.slice(1).join(', ')}`);
-                }
-            }
-        }
-    }
-    
-    if (!annotationFile) {
+    if (!fs.existsSync(webAnnotationsDir)) {
         console.error('❌ No annotation files found in web/annotations/');
         console.error('📝 Please place your .json annotation files in web/annotations/');
-        console.error('📝 Example: web/annotations/my-annotations.json');
         return;
     }
     
-    const raw = fs.readFileSync(annotationFile, 'utf-8');
-    const annotationPage = JSON.parse(raw);
+    const annotationFiles = fs.readdirSync(webAnnotationsDir)
+        .filter(f => f.endsWith('.json') && f !== '.gitkeep');
     
-    // Extract annotations from the AnnotationPage items array
-    const annotations: Annotation[] = annotationPage.items || annotationPage;
-    console.log(`📄 Loaded ${annotations.length} annotations from ${annotationFile}`);
+    if (annotationFiles.length === 0) {
+        console.error('❌ No annotation files found in web/annotations/');
+        console.error('� Please place your .json annotation files in web/annotations/');
+        return;
+    }
+    
+    console.log(`� Found ${annotationFiles.length} annotation file(s): ${annotationFiles.join(', ')}`);
+    
+    const manifestFiles: string[] = [];
+    
+    // Process each annotation file to create individual manifests
+    for (const annotationFile of annotationFiles) {
+        const manifestName = annotationFile.replace('.json', '');
+        console.log(`\n� Processing manifest: ${manifestName}`);
+        
+        const annotationFilePath = `${webAnnotationsDir}/${annotationFile}`;
+        const raw = fs.readFileSync(annotationFilePath, 'utf-8');
+        const annotationPage = JSON.parse(raw);
+        
+        // Extract annotations from the AnnotationPage items array
+        const annotations: Annotation[] = annotationPage.items || annotationPage;
+        console.log(`� Loaded ${annotations.length} annotations from ${annotationFile}`);
 
-    const grouped: Record<string, Annotation[]> = {};
+        const grouped: Record<string, Annotation[]> = {};
 
-    for (const anno of annotations) {
-        const targets = Array.isArray(anno.target) ? anno.target : [anno.target];
-        for (const t of targets) {
-            const canvas = extractCanvasIdFromTarget(t);
-            if (!grouped[canvas]) grouped[canvas] = [];
-            grouped[canvas].push(anno);
+        for (const anno of annotations) {
+            const targets = Array.isArray(anno.target) ? anno.target : [anno.target];
+            for (const t of targets) {
+                const canvas = extractCanvasIdFromTarget(t);
+                if (!grouped[canvas]) grouped[canvas] = [];
+                grouped[canvas].push(anno);
+            }
         }
-    }
 
-    for (const [canvas, annos] of Object.entries(grouped)) {
-        const containerId = extractContainerId(canvas);
-        console.log(`\n📦 Processing container: ${containerId} (${annos.length} annotations)`);
-        await ensureContainer(containerId);
-        for (const anno of annos) {
-            await ensureAnnotation(containerId, anno);
+        // Upload annotations to miiify
+        for (const [canvas, annos] of Object.entries(grouped)) {
+            const containerId = extractContainerId(canvas);
+            console.log(`📦 Processing container: ${containerId} (${annos.length} annotations)`);
+            await ensureContainer(containerId);
+            for (const anno of annos) {
+                await ensureAnnotation(containerId, anno);
+            }
         }
-    }
 
-    // Write manifest to web/iiif directory (simplified approach)
-    const manifestFile = `${projectName}.json`;
-    const manifest = generateManifest(grouped, `http://localhost:8080/iiif/${manifestFile}`, projectName);
-    
-    // Always write to web/iiif directory - no complex path resolution needed
-    const webManifestPath = `../web/iiif/${manifestFile}`;
-    
-    // Ensure the web/iiif directory exists
-    const webIiifDir = '../web/iiif';
-    if (!fs.existsSync(webIiifDir)) {
-        fs.mkdirSync(webIiifDir, { recursive: true });
+        // Generate individual manifest
+        const manifestFile = `${manifestName}.json`;
+        const manifestId = `http://localhost:8080/iiif/${manifestFile}`;
+        const manifest = generateManifest(grouped, manifestId, manifestName, projectName);
+        
+        // Write individual manifest
+        const webManifestPath = `../web/iiif/${manifestFile}`;
+        
+        // Ensure the web/iiif directory exists
+        const webIiifDir = '../web/iiif';
+        if (!fs.existsSync(webIiifDir)) {
+            fs.mkdirSync(webIiifDir, { recursive: true });
+        }
+        
+        fs.writeFileSync(webManifestPath, JSON.stringify(manifest, null, 2));
+        console.log(`✅ Wrote manifest to ${webManifestPath}`);
+        console.log(`📋 Manifest includes ${Object.keys(grouped).length} canvases with annotations`);
+        
+        manifestFiles.push(manifestFile);
     }
     
-    fs.writeFileSync(webManifestPath, JSON.stringify(manifest, null, 2));
-    console.log(`\n✅ Wrote manifest to ${webManifestPath}`);
-    console.log(`📋 Manifest includes ${Object.keys(grouped).length} canvases with annotations`);
+    // Generate collection file
+    console.log(`\n📚 Generating collection for project: ${projectName}`);
+    const collection = generateCollection(manifestFiles, projectName);
+    const collectionFile = `${projectName}.json`;
+    const collectionPath = `../web/iiif/${collectionFile}`;
+    
+    fs.writeFileSync(collectionPath, JSON.stringify(collection, null, 2));
+    console.log(`✅ Wrote collection to ${collectionPath}`);
+    console.log(`📋 Collection includes ${manifestFiles.length} manifest(s): ${manifestFiles.join(', ')}`);
+    console.log(`🔍 Search service available at: http://localhost:8080/annosearch/${projectName}/search`);
 }
 
 uploadAllAnnotations().catch(err => {

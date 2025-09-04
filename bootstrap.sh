@@ -424,18 +424,30 @@ create_html_page() {
         return 1
     fi
     
-    # Copy template and replace project-specific content
-    # Capitalize first letter for display
-    local project_display_name="${project_name^}"
+    # Generate project title and description from project name
+    local project_title="${project_name^} Collection"
+    local project_description="Explore the ${project_name} collection using our interactive IIIF viewer"
     
+    log_info "Using generated project data for: $project_name"
+    
+    # Copy template and replace project-specific content
     cp "$template_file" "$page_file"
     
     # Replace project-specific content in the copied file
     sed -i "s/demo\.json/${project_name}.json/g" "$page_file"
-    sed -i "s/Demo/${project_display_name}/g" "$page_file"
+    sed -i "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
+    sed -i "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
+    sed -i "s/Demo collection/${project_title}/g" "$page_file"
+    sed -i "s/Demo/${project_title}/g" "$page_file"
     sed -i "s/demo/${project_name}/g" "$page_file"
     
     log_success "HTML page created: $page_file"
+    if [ -n "$project_title" ]; then
+        log_info "Title: $project_title"
+    fi
+    if [ -n "$project_description" ]; then
+        log_info "Description: $project_description"
+    fi
 }
 
 # Function to setup project files

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import fetch from 'node-fetch';
+import YAML from 'yaml';
 
 interface Annotation {
     id: string;
@@ -15,7 +16,55 @@ function extractCanvasIdFromTarget(target: string): string {
     return hashIndex >= 0 ? target.substring(0, hashIndex) : target;
 }
 
+// Load project configuration from YAML
+function loadProjectConfig(projectName: string): any {
+    try {
+        const configPath = '../config/projects.yml';
+        
+        if (!fs.existsSync(configPath)) {
+            console.warn(`⚠️ Configuration file not found: ${configPath}`);
+            return getDefaultConfig(projectName);
+        }
+        
+        const configFile = fs.readFileSync(configPath, 'utf8');
+        const config = YAML.parse(configFile);
+        
+        // Get project-specific configuration
+        const projectConfig = config.projects?.[projectName];
+        if (!projectConfig) {
+            console.warn(`⚠️ Project '${projectName}' not found in configuration, using defaults`);
+            return getDefaultConfig(projectName);
+        }
+        
+        // Merge with defaults
+        const defaults = config.defaults || {};
+        
+        return {
+            title: projectConfig.title || `${projectName} Collection`,
+            description: projectConfig.description || `Explore the ${projectName} collection`,
+            metadata: projectConfig.metadata || [],
+            provider: projectConfig.provider || defaults.provider || null
+        };
+    } catch (error) {
+        console.warn(`⚠️ Error loading configuration for ${projectName}:`, error instanceof Error ? error.message : String(error));
+        return getDefaultConfig(projectName);
+    }
+}
+
+// Default configuration fallback
+function getDefaultConfig(projectName: string): any {
+    return {
+        title: `${projectName} Collection`,
+        description: `Explore the ${projectName} collection`,
+        metadata: [],
+        provider: null
+    };
+}
+
 function generateManifest(grouped: Record<string, Annotation[]>, manifestId: string, projectName: string = 'Project') {
+    // Load project configuration
+    const config = loadProjectConfig(projectName);
+    
     const canvases = Object.entries(grouped).map(([canvasUrl, annotations]) => {
         const containerId = extractContainerId(canvasUrl);
         const imageId = canvasUrl.split('/').pop()?.replace('.json', '') ?? containerId;
@@ -60,11 +109,12 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
         };
     });
 
-    return {
+    const manifest: any = {
         '@context': 'http://iiif.io/api/presentation/3/context.json',
         id: manifestId,
         type: 'Manifest',
-        label: { en: [`${projectName} Annotations`] },
+        label: { en: [config.title] },
+        summary: { en: [config.description] },
         service: [
             {
                 id: `http://localhost:8080/annosearch/${projectName}/search`,
@@ -79,6 +129,18 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
         ],
         items: canvases
     };
+
+    // Add metadata if configured
+    if (config.metadata && config.metadata.length > 0) {
+        manifest.metadata = config.metadata;
+    }
+
+    // Add provider if configured
+    if (config.provider) {
+        manifest.provider = [config.provider];
+    }
+
+    return manifest;
 }
 
 function sanitizeSlug(raw: string): string {

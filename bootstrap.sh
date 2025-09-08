@@ -10,7 +10,6 @@ PROJECTS=(
 )
 
 # Default configuration
-DEFAULT_PROJECT_NAME="demo"
 DEFAULT_COLLECTION_DIR=""
 
 # Colors for output
@@ -28,16 +27,11 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 # Function to parse command line arguments
 parse_arguments() {
-    PROJECT_NAME="$DEFAULT_PROJECT_NAME"
     COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
     FORCE_REBUILD="false"
     
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --project|-p)
-                PROJECT_NAME="$2"
-                shift 2
-                ;;
             --collection|-c)
                 COLLECTION_DIR="$2"
                 shift 2
@@ -50,20 +44,10 @@ parse_arguments() {
                 show_help
                 exit 0
                 ;;
-            stop|status|restart|logs)
-                # Commands that don't require project setup
-                BOOTSTRAP_COMMAND="$1"
-                shift
-                ;;
             *)
                 # Store command for later use
                 BOOTSTRAP_COMMAND="$1"
                 shift
-                # Check if this is a project name for build command
-                if [ "$BOOTSTRAP_COMMAND" = "build" ] && [ -n "$1" ]; then
-                    PROJECT_NAME="$1"
-                    shift
-                fi
                 ;;
         esac
     done
@@ -72,6 +56,14 @@ parse_arguments() {
     if [ -z "$BOOTSTRAP_COMMAND" ]; then
         BOOTSTRAP_COMMAND="build"
     fi
+    
+    # Get project name from YAML for build commands
+    if [ "$BOOTSTRAP_COMMAND" = "build" ]; then
+        PROJECT_NAME=$(get_single_project)
+        if [ $? -ne 0 ]; then
+            exit 1
+        fi
+    fi
 }
 
 # Function to show help
@@ -79,34 +71,31 @@ show_help() {
     cat << EOF
 IIIF-In-A-Box Bootstrap Script
 
-Usage: $0 [OPTIONS] [COMMAND] [PROJECT_NAME]
+Usage: $0 [OPTIONS] [COMMAND]
 
 Options:
-  --project, -p PROJECT_NAME        Name of the project (required for build)
   --collection, -c COLLECTION_DIR   Directory containing IIIF resources 
-                                    (optional - defaults to project name)
-                                    Searches: ./{project}, ../{project}, ../../{project}
+                                    (optional - defaults to project name from YAML)
   --force, -f                       Force rebuild all Docker images (including slow Cantaloupe)
   --help, -h                        Show this help message
 
 Commands:
-  build [PROJECT_NAME]     - Build IIIF service from web/ directory content
-  update-only              - Only update git repositories
-  status                   - Show service status
-  stop                     - Stop all services
-  restart                  - Restart all services
-  logs                     - Show service logs
+  build                        - Build IIIF service (uses project from config/projects.yml)
+  update-only                  - Only update git repositories
+  status                       - Show service status
+  stop                         - Stop all services
+  restart                      - Restart all services
+  logs                         - Show service logs
 
 Examples:
-  # Build with your content (fast - reuses existing images)
-  $0 build my-project
+  # Build IIIF service (uses the project defined in config/projects.yml)
+  $0 build
   
   # Force complete rebuild (slow - rebuilds everything including Cantaloupe)
-  $0 build my-project --force
+  $0 build --force
   
-  # Build demo project
-  $0 build
-  $0 -p newspapers -c ../newspaper-collection build
+  # Build with explicit project flag
+  $0 -p domesday build
 
 Collection Directory Structure:
   The collection directory should contain:
@@ -132,6 +121,31 @@ Collection Directory Structure:
     - Create a viewer at http://localhost:8080/pages/{project-name}.html
 
 EOF
+}
+
+# Function to get the single project from YAML
+get_single_project() {
+    if [ ! -f "config/projects.yml" ]; then
+        log_error "config/projects.yml not found"
+        return 1
+    fi
+    
+    # Simple approach: find "domesday:" line (or similar project) in the YAML
+    # This assumes proper YAML structure with projects under "projects:"
+    local available_projects=($(grep -A 100 "^projects:" config/projects.yml | grep "^  [a-zA-Z0-9_-]*:" | sed 's/^  //' | sed 's/:.*$//' | grep -v "defaults" | grep -v "_template"))
+    
+    if [ ${#available_projects[@]} -eq 0 ]; then
+        log_error "No projects found in config/projects.yml (excluding defaults and _template)"
+        return 1
+    elif [ ${#available_projects[@]} -gt 1 ]; then
+        log_error "Multiple projects found in config/projects.yml. Only one project is allowed:"
+        printf '  - %s\n' "${available_projects[@]}"
+        log_error "Please keep only one project in the YAML file"
+        return 1
+    fi
+    
+    echo "${available_projects[0]}"
+    return 0
 }
 
 # Function to validate project name
@@ -413,7 +427,7 @@ get_project_title_from_yaml() {
     local config_file="config/projects.yml"
     
     if [ ! -f "$config_file" ]; then
-        echo "${project_name^} Collection"
+        echo "$project_name"
         return 0
     fi
     
@@ -440,7 +454,7 @@ get_project_title_from_yaml() {
     if [ -n "$project_title" ]; then
         echo "$project_title"
     else
-        echo "${project_name^} Collection"
+        echo "$project_name"
     fi
 }
 
@@ -849,54 +863,57 @@ main() {
             log_success "Projects updated. Run './bootstrap.sh build' to build and start services."
             ;;
         "build")
-            # Simple data-driven build process:
-            # Users place content in web/ directory, we build from there
-            log_info "🏗️  Building IIIF service from web/ directory content..."
+            log_info "Using project: $PROJECT_NAME"
+            
+            log_info "🏗️  Building IIIF service for project: $PROJECT_NAME"
             if [ "$FORCE_REBUILD" = "true" ]; then
                 log_info "🔄 Force rebuild mode enabled - will rebuild all images including Cantaloupe"
             else
                 log_info "⚡ Fast build mode - will reuse existing Docker images where possible"
             fi
             log_info "📋 Required content:"
+            log_info "   - config/projects.yml (project configuration)"
             log_info "   - web/images/ (your images)"
             log_info "   - web/annotations/ (your annotations - required for manifest generation)"
             
-            # Check if we have images
-            if [ ! -d "web/images" ] || [ -z "$(ls -A web/images 2>/dev/null)" ]; then
-                log_warning "No images found in web/images/ - using demo content"
-                PROJECT_NAME="demo"
+            # Check if project exists in YAML config
+            if [ -f "config/projects.yml" ]; then
+                if ! grep -q "^[[:space:]]*${PROJECT_NAME}:" config/projects.yml; then
+                    log_error "Project '$PROJECT_NAME' not found in config/projects.yml"
+                    log_error "Available projects:"
+                    grep "^[[:space:]]*[a-zA-Z0-9_-]*:" config/projects.yml | grep -v "defaults:" | sed 's/://g' | sed 's/^[[:space:]]*/  - /'
+                    exit 1
+                fi
+            else
+                log_error "Configuration file config/projects.yml not found"
+                log_error "Please create a projects.yml file with your project definitions"
+                exit 1
             fi
             
             # Check if we have annotations (required for manifest generation)
-            if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "demo" ]; then
-                if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
-                    log_error "No annotations found in web/annotations/ directory"
-                    log_error "Annotations are required to generate IIIF manifests"
-                    log_error "Please add your annotation JSON files to web/annotations/"
-                    exit 1
-                fi
-                
-                # Step 1: Process annotations to generate manifests
-                build_core_services
-                
-                log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
-                if ! load_annotations_from_web "$PROJECT_NAME"; then
-                    log_error "Failed to process annotations - cannot continue without manifests"
-                    exit 1
-                fi
-                
-                # Step 2: Build complete IIIF service with all content
-                log_info "🏗️  Building complete IIIF service with all processed content..."
-                build_web_service
-                
-                # Step 3: Index annotations for search functionality (after full stack is up)
-                log_info "🔍 Indexing annotations for search functionality..."
-                index_annotations_with_annosearch "$PROJECT_NAME"
-            else
-                # Demo project: simple single build with pre-existing manifests
-                log_info "🎯 Building demo project with pre-existing manifests..."
-                build_and_start
+            if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
+                log_error "No annotations found in web/annotations/ directory"
+                log_error "Annotations are required to generate IIIF manifests"
+                log_error "Please add your annotation JSON files to web/annotations/"
+                exit 1
             fi
+            
+            # Step 1: Process annotations to generate manifests
+            build_core_services
+            
+            log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
+            if ! load_annotations_from_web "$PROJECT_NAME"; then
+                log_error "Failed to process annotations - cannot continue without manifests"
+                exit 1
+            fi
+            
+            # Step 2: Build complete IIIF service with all content
+            log_info "🏗️  Building complete IIIF service with all processed content..."
+            build_web_service
+            
+            # Step 3: Index annotations for search functionality (after full stack is up)
+            log_info "🔍 Indexing annotations for search functionality..."
+            index_annotations_with_annosearch "$PROJECT_NAME"
             ;;
         "status")
             show_status

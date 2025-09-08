@@ -1,5 +1,11 @@
 # IIIF-in-a-Box Project Configuration
 # This file defines project-specific settings, metadata, and IIIF manifest properties
+# 
+# IMPORTANT: This file must contain exactly ONE project (plus defaults and _template)
+# 
+# USAGE: ./bootstrap.sh build
+# 
+# The system will automatically use the single project defined below
 
 # Default settings that apply to all projects unless overridden
 defaults:
@@ -33,7 +39,10 @@ defaults:
         format: "text/html"
 
 # Project-specific configurations
+# Must contain exactly ONE project
 projects:
+  
+  # Your project configuration
   domesday:
     title: "Domesday"
     description: "Explore Domesday using our interactive IIIF viewer"
@@ -66,63 +75,4 @@ projects:
             - "The National Archives"
             - "<span>You have permission to make copies of this work under a <a target=\"_top\" href=\"http://creativecommons.org/licenses/by-nc/4.0/\">Creative Commons, Attribution, Non-commercial license</a>.<br/><br/>Non-commercial use includes private study, academic research, teaching, and other activities that are not primarily intended for, or directed towards, commercial advantage or private monetary compensation. See the <a target=\"_top\" href=\"http://creativecommons.org/licenses/by-nc/4.0/legalcode\">Legal Code</a> for further information.<br/><br/>Image source should be attributed as specified in the full catalogue record. If no source is given the image should be attributed to The National Archives.</span>"
 
-    # Override default provider if needed (optional)
-    # provider:
-    #   id: "https://example.org"
-    #   type: "Agent"
-    #   label:
-    #     en: ["Custom Provider"]
 
-  # Example of another project
-  lincoln:
-    title: "Lincolnshire Records"
-    description: "Historical records from Lincolnshire"
-    
-    metadata:
-      - label:
-          en: ["Publication/creation"]
-        value:
-          none: ["Medieval 974-1485"]
-      - label:
-          en: ["Contributors"]
-        value:
-          none: ["Local History Archive"]
-      - label:
-          en: ["Copyright note"]
-        value:
-          en: ["Crown Copyright."]
-      - label:
-          en: ["Type/technique"]
-        value:
-          en: ["Historical documents"]
-      - label:
-          en: ["Subjects"]
-        value:
-          en: ["Lincolnshire", "Local History"]
-
-  # Template for new projects
-  _template:
-    title: "Project Title"
-    description: "Project description for the viewer"
-    
-    metadata:
-      - label:
-          en: ["Publication/creation"]
-        value:
-          none: ["Date or period"]
-      - label:
-          en: ["Contributors"]
-        value:
-          none: ["Contributors list"]
-      - label:
-          en: ["Copyright note"]
-        value:
-          en: ["Copyright information"]
-      - label:
-          en: ["Type/technique"]
-        value:
-          en: ["Material type"]
-      - label:
-          en: ["Subjects"]
-        value:
-          en: ["Subject tags"]

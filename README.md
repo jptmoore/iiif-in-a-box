@@ -105,14 +105,27 @@ defaults:
 
 projects:
   my-project:
-    title: "Project Title"
+    title: "My IIIF Collection"             # Used exactly as collection title (no "Collection" suffix added)
     description: "Description for the viewer"
-    metadata:
+    metadata:                                 # Applied to both collection AND individual manifests
       - label:
           en: ["Creator"]
         value:
           none: ["Creator Name"]
+      - label:
+          en: ["Date"]
+        value:
+          none: ["2024"]
+      - label:
+          en: ["Subjects"]                   # Will be automatically populated with manifest names
+        value:
+          en: ["Topic 1", "Topic 2"]         # Your subjects + manifest names will be combined
 ```
+
+**Note**: 
+- Individual manifests inherit the metadata from the collection but keep their titles based on the annotation filename
+- The "Subjects" field in collection metadata is automatically populated with all manifest/annotation names
+- If you have existing subjects, the manifest names will be added to them
 
 ## Generated Output
 

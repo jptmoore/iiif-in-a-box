@@ -407,6 +407,43 @@ index_annotations_with_annosearch() {
     fi
 }
 
+# Function to read project title from YAML config
+get_project_title_from_yaml() {
+    local project_name="$1"
+    local config_file="config/projects.yml"
+    
+    if [ ! -f "$config_file" ]; then
+        echo "${project_name^} Collection"
+        return 0
+    fi
+    
+    # Use a simpler approach with awk to extract the title
+    local project_title=$(awk -v project="$project_name" '
+        BEGIN { in_section = 0; title = "" }
+        /^[[:space:]]*[a-zA-Z0-9_-]+:[[:space:]]*$/ {
+            if ($0 ~ "^[[:space:]]*" project ":[[:space:]]*$") {
+                in_section = 1
+            } else {
+                in_section = 0
+            }
+        }
+        in_section && /^[[:space:]]*title:[[:space:]]*/ {
+            gsub(/^[[:space:]]*title:[[:space:]]*["\x27]?/, "")
+            gsub(/["\x27]?[[:space:]]*$/, "")
+            title = $0
+            exit
+        }
+        END { print title }
+    ' "$config_file")
+    
+    # Return the found title or fallback
+    if [ -n "$project_title" ]; then
+        echo "$project_title"
+    else
+        echo "${project_name^} Collection"
+    fi
+}
+
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
@@ -424,11 +461,11 @@ create_html_page() {
         return 1
     fi
     
-    # Generate project title and description from project name
-    local project_title="${project_name^} Collection"
-    local project_description="Explore the ${project_name} collection using our interactive IIIF viewer"
+    # Get project title from YAML configuration
+    local project_title=$(get_project_title_from_yaml "$project_name")
+    local project_description="Explore the ${project_title} using our interactive IIIF viewer"
     
-    log_info "Using generated project data for: $project_name"
+    log_info "Using YAML configuration for: $project_name"
     
     # Copy template and replace project-specific content
     cp "$template_file" "$page_file"

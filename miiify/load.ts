@@ -40,7 +40,7 @@ function loadProjectConfig(projectName: string): any {
         const defaults = config.defaults || {};
         
         return {
-            title: projectConfig.title || `${projectName} Collection`,
+            title: projectConfig.title || projectName,
             description: projectConfig.description || `Explore the ${projectName} collection`,
             metadata: projectConfig.metadata || [],
             provider: projectConfig.provider || defaults.provider || null
@@ -54,7 +54,7 @@ function loadProjectConfig(projectName: string): any {
 // Default configuration fallback
 function getDefaultConfig(projectName: string): any {
     return {
-        title: `${projectName} Collection`,
+        title: projectName,
         description: `Explore the ${projectName} collection`,
         metadata: [],
         provider: null
@@ -113,12 +113,12 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
         '@context': 'http://iiif.io/api/presentation/3/context.json',
         id: manifestId,
         type: 'Manifest',
-        label: { en: [manifestName] },
+        label: { en: [manifestName] }, // Keep title as filename
         items: canvases
     };
 
-    // Add metadata if configured (only for the main project manifest, not individual manifests)
-    if (manifestName === config.title && config.metadata && config.metadata.length > 0) {
+    // Add metadata from collection configuration to individual manifests
+    if (config.metadata && config.metadata.length > 0) {
         manifest.metadata = config.metadata;
     }
 
@@ -133,6 +133,9 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
 function generateCollection(manifestFiles: string[], projectName: string): any {
     const config = loadProjectConfig(projectName);
     const baseUrl = 'http://localhost:8080/iiif';
+    
+    // Extract manifest names (without .json extension) for subjects
+    const manifestNames = manifestFiles.map(file => file.replace('.json', ''));
     
     const items = manifestFiles.map(manifestFile => {
         const manifestName = manifestFile.replace('.json', '');
@@ -166,7 +169,43 @@ function generateCollection(manifestFiles: string[], projectName: string): any {
 
     // Add metadata to collection
     if (config.metadata && config.metadata.length > 0) {
-        collection.metadata = config.metadata;
+        // Create a copy of the metadata array
+        collection.metadata = [...config.metadata];
+        
+        // Find existing subjects field or add new one
+        let subjectsField = collection.metadata.find((meta: any) => 
+            meta.label && meta.label.en && meta.label.en.includes('Subjects')
+        );
+        
+        if (subjectsField) {
+            // Add manifest names to existing subjects
+            const existingSubjects = subjectsField.value.en || subjectsField.value.none || [];
+            subjectsField.value = {
+                en: [...existingSubjects, ...manifestNames]
+            };
+        } else {
+            // Create new subjects field with manifest names
+            collection.metadata.push({
+                label: {
+                    en: ["Subjects"]
+                },
+                value: {
+                    en: manifestNames
+                }
+            });
+        }
+    } else {
+        // If no metadata exists, create metadata with just subjects
+        collection.metadata = [
+            {
+                label: {
+                    en: ["Subjects"]
+                },
+                value: {
+                    en: manifestNames
+                }
+            }
+        ];
     }
 
     // Add provider to collection

@@ -35,8 +35,8 @@ defaults:
 # Project-specific configurations
 projects:
   domesday:
-    title: "Domesday Book"
-    description: "Explore the Domesday Book collection using our interactive IIIF viewer"
+    title: "Domesday"
+    description: "Explore Domesday using our interactive IIIF viewer"
     
     metadata:
       - label:

@@ -256,12 +256,16 @@ setup_project_from_directory() {
         log_warning "No images directory found in collection directory"
     fi
     
-    # Copy annotations if they exist
+    # Copy annotations only if web/annotations is empty
     if [ -d "$collection_dir/annotations" ]; then
-        log_info "Copying annotations..."
-        cp -r "$collection_dir/annotations"/* "web/annotations/" 2>/dev/null || log_warning "No annotations found or failed to copy annotations"
+        if [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
+            log_info "Copying annotations from collection directory..."
+            cp -r "$collection_dir/annotations"/* "web/annotations/" 2>/dev/null || log_warning "No annotations found or failed to copy annotations"
+        else
+            log_info "Annotation files already exist in web/annotations/, skipping copy from collection directory"
+        fi
     else
-        log_warning "No annotations directory found in collection directory"
+        log_info "No annotations directory found in collection directory (user should place annotation files directly in web/annotations/)"
     fi
     
     # Ensure we have a main manifest
@@ -346,7 +350,9 @@ load_annotations_from_web() {
     
     # Check if annotations directory exists and has files
     if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
-        log_warning "No annotations found in web/annotations/ directory"
+        log_error "No annotations found in web/annotations/ directory"
+        log_error "Annotations are required to generate IIIF manifests"
+        log_error "Please add your annotation JSON files to web/annotations/"
         return 1
     fi
     
@@ -355,7 +361,8 @@ load_annotations_from_web() {
     annotation_files=$(find "web/annotations" -name "*.json" -type f)
     
     if [ -z "$annotation_files" ]; then
-        log_warning "No JSON annotation files found in web/annotations/"
+        log_error "No JSON annotation files found in web/annotations/"
+        log_error "Please ensure your annotation files have .json extension"
         return 1
     fi
     

@@ -26,7 +26,6 @@ node_modules/
 web/iiif/*.json
 web/pages/*.html
 web/images/*
-web/annotations/*
 
 # Keep the demo template file
 !web/pages/demo.html

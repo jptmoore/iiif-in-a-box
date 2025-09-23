@@ -343,8 +343,60 @@ load_annotations_to_miiify() {
     log_success "Annotation loading completed"
 }
 
+# Function to ensure Node.js dependencies are installed for load.ts
+ensure_nodejs_dependencies() {
+    log_info "Checking Node.js dependencies for load.ts..."
+    
+    # Check if Node.js is installed
+    if ! command -v node &> /dev/null; then
+        log_error "Node.js is not installed. Please install Node.js to run the annotation processing."
+        log_error "Install with: sudo apt update && sudo apt install nodejs npm"
+        return 1
+    fi
+    
+    # Check if npm is installed
+    if ! command -v npm &> /dev/null; then
+        log_error "npm is not installed. Please install npm to manage dependencies."
+        log_error "Install with: sudo apt update && sudo apt install npm"
+        return 1
+    fi
+    
+    # Install dependencies in the miiify directory
+    if [ -f "miiify/package.json" ]; then
+        log_info "Installing Node.js dependencies for annotation processing..."
+        cd miiify
+        
+        # Check if node_modules exists and has the required packages
+        if [ ! -d "node_modules" ] || [ ! -f "node_modules/node-fetch/package.json" ] || [ ! -f "node_modules/yaml/package.json" ]; then
+            log_info "Installing missing dependencies with npm..."
+            if npm install; then
+                log_success "Node.js dependencies installed successfully"
+            else
+                log_error "Failed to install Node.js dependencies"
+                cd - > /dev/null
+                return 1
+            fi
+        else
+            log_info "Node.js dependencies already installed ✓"
+        fi
+        
+        cd - > /dev/null
+    else
+        log_error "package.json not found in miiify directory"
+        return 1
+    fi
+    
+    return 0
+}
+
 load_annotations_from_web() {
     local project_name="$1"
+    
+    # Ensure Node.js dependencies are installed
+    if ! ensure_nodejs_dependencies; then
+        log_error "Failed to ensure Node.js dependencies - cannot run load.ts"
+        return 1
+    fi
     
     log_info "Loading annotations from web/annotations/ directory..."
     

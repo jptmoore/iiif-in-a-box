@@ -8,7 +8,7 @@ Transforms images and annotations into IIIF Collections with viewer, search, and
 ## Quick Start
 
 ```bash
-# 1. Configure your project in config/projects.yml (exactly ONE project)
+# 1. Configure your project in config/projects.yml
 # 2. Add images to web/images/
 # 3. Add annotation files to web/annotations/
 # 4. Build
@@ -17,7 +17,6 @@ Transforms images and annotations into IIIF Collections with viewer, search, and
 
 ## Architecture
 
-- **📁 Single Project System** - Only one project allowed in `config/projects.yml`
 - **📄 Annotation Preservation** - Files in `web/annotations/` are used exactly as provided
 - **📋 Manifest Generation** - Annotations processed into IIIF manifests in `web/iiif/`
 - **🔍 Integrated Search** - Full-text search across all annotations
@@ -34,7 +33,6 @@ web/iiif/              ← Generated IIIF collections + manifests (auto-created)
 **Important**: 
 - Place annotation files directly in `web/annotations/` - they will NOT be modified
 - The system generates IIIF manifests in `web/iiif/` from your source annotations
-- Only one project is allowed in the YAML configuration
 
 ## Commands
 
@@ -47,11 +45,11 @@ web/iiif/              ← Generated IIIF collections + manifests (auto-created)
 ./bootstrap.sh logs                            # View logs
 ```
 
-**Note**: The system automatically detects and uses the single project defined in `config/projects.yml`. Multiple projects are not supported.
+**Note**: The system automatically detects and uses the single project defined in `config/projects.yml`. 
 
 ## Configuration
 
-YAML configuration in `config/projects.yml` (**must contain exactly one project**):
+YAML configuration in `config/projects.yml`:
 
 ```yaml
 defaults:

@@ -326,10 +326,10 @@ load_annotations_to_miiify() {
     # Create a project-specific load script
     cd miiify
     
-    # Run the annotation loading with project name as argument
-    log_info "Loading annotations using ts-node..."
-    if npx ts-node load.ts "$project_name"; then
-        log_success "Annotations loaded successfully into miiify"
+    # Run the annotation processing with project name as argument
+    log_info "Processing annotations using ts-node..."
+    if npx ts-node process-annotations.ts "$project_name"; then
+        log_success "Annotations processed successfully into miiify"
         log_info "Updated manifest with annotation references in both project and web directories"
     else
         log_error "Failed to load annotations into miiify"
@@ -345,7 +345,7 @@ load_annotations_to_miiify() {
 
 # Function to ensure Node.js dependencies are installed for load.ts
 ensure_nodejs_dependencies() {
-    log_info "Checking Node.js dependencies for load.ts..."
+    log_info "Checking Node.js dependencies for process-annotations.ts..."
     
     # Check if Node.js is installed
     if ! command -v node &> /dev/null; then
@@ -394,7 +394,7 @@ load_annotations_from_web() {
     
     # Ensure Node.js dependencies are installed
     if ! ensure_nodejs_dependencies; then
-        log_error "Failed to ensure Node.js dependencies - cannot run load.ts"
+        log_error "Failed to ensure Node.js dependencies - cannot run process-annotations.ts"
         return 1
     fi
     
@@ -441,17 +441,17 @@ load_annotations_from_web() {
         return 1
     fi
     
-    # Run annotation loading - load.ts will read directly from web/annotations/
+    # Run annotation processing - process-annotations.ts will read directly from web/annotations/
     cd miiify
     
-    log_info "Loading annotations using ts-node..."
-    if npx ts-node load.ts "$project_name"; then
-        log_success "Annotations loaded successfully into miiify"
+    log_info "Processing annotations using ts-node..."
+    if npx ts-node process-annotations.ts "$project_name"; then
+        log_success "Annotations processed successfully into miiify"
         log_info "Generated manifest with annotation references in web/iiif/"
         cd - > /dev/null
         return 0
     else
-        log_error "Failed to load annotations with ts-node"
+        log_error "Failed to process annotations with ts-node"
         cd - > /dev/null
         return 1
     fi

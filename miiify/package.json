@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "load": "ts-node load.ts"
+    "process": "ts-node process-annotations.ts"
   },
   "keywords": [],
   "author": "",

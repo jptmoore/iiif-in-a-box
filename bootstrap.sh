@@ -888,6 +888,33 @@ show_status() {
     cd - > /dev/null
 }
 
+# Function to setup miiify config from cloned repository
+setup_miiify_config() {
+    log_info "Setting up miiify configuration..."
+    
+    local miiify_source="../miiify/miiify/config.json"
+    local miiify_target="miiify/config.json"
+    
+    if [ -f "$miiify_source" ]; then
+        log_info "Copying miiify config from cloned repository..."
+        cp "$miiify_source" "$miiify_target"
+        
+        # Modify id_proto to use http instead of https
+        if command -v jq &> /dev/null; then
+            jq '.id_proto = "http"' "$miiify_target" > "${miiify_target}.tmp" && mv "${miiify_target}.tmp" "$miiify_target"
+            log_info "Updated id_proto to http in miiify config"
+        else
+            # Fallback using sed if jq is not available
+            sed -i 's/"id_proto": "https"/"id_proto": "http"/' "$miiify_target"
+            log_info "Updated id_proto to http in miiify config (using sed)"
+        fi
+        
+        log_success "Miiify configuration ready"
+    else
+        log_warning "Miiify config not found at $miiify_source - using existing config"
+    fi
+}
+
 # Main execution
 main() {
     log_info "IIIF-In-A-Box Bootstrap Script"
@@ -915,6 +942,9 @@ main() {
         IFS=':' read -r project_path repo_url <<< "$project_info"
         update_project "$project_path" "$repo_url"
     done
+    
+    # Setup miiify config from cloned repository
+    setup_miiify_config
     
     # Execute the requested command
     case "$BOOTSTRAP_COMMAND" in

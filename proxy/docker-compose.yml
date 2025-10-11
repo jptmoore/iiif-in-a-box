@@ -64,7 +64,7 @@ services:
     ports:
       - "127.0.0.1:10000:10000"
     volumes:
-      - ../miiify/db:/home/miiify/db
+      - miiify_db:/home/miiify/db
     networks:
       - appnet
     healthcheck:
@@ -77,4 +77,8 @@ services:
 networks:
   appnet:
     driver: bridge
+
+volumes:
+  miiify_db:
+  quickwit_data:
 

@@ -29,11 +29,16 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 parse_arguments() {
     COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
     FORCE_REBUILD="false"
+    PROJECT_NAME=""
     
     while [[ $# -gt 0 ]]; do
         case $1 in
             --collection|-c)
                 COLLECTION_DIR="$2"
+                shift 2
+                ;;
+            --project|-p)
+                PROJECT_NAME="$2"
                 shift 2
                 ;;
             --force|-f)
@@ -44,10 +49,21 @@ parse_arguments() {
                 show_help
                 exit 0
                 ;;
-            *)
-                # Store command for later use
+            build|dev|clean|status|stop|restart|logs)
+                # Store command
                 BOOTSTRAP_COMMAND="$1"
                 shift
+                # Check if next argument is a project name (not a flag)
+                if [[ $# -gt 0 && ! "$1" =~ ^-- ]]; then
+                    PROJECT_NAME="$1"
+                    shift
+                fi
+                ;;
+            *)
+                # Unknown argument
+                log_error "Unknown option: $1"
+                show_help
+                exit 1
                 ;;
         esac
     done
@@ -57,8 +73,8 @@ parse_arguments() {
         BOOTSTRAP_COMMAND="build"
     fi
     
-    # Get project name from YAML for build commands
-    if [ "$BOOTSTRAP_COMMAND" = "build" ]; then
+    # Get project name from YAML if not provided via command line
+    if [ "$BOOTSTRAP_COMMAND" = "build" ] && [ -z "$PROJECT_NAME" ]; then
         PROJECT_NAME=$(get_single_project)
         if [ $? -ne 0 ]; then
             exit 1
@@ -91,11 +107,14 @@ Examples:
   # Build IIIF service (uses the project defined in config/projects.yml)
   $0 build
   
-  # Force complete rebuild (slow - rebuilds everything including Cantaloupe)
-  $0 build --force
+  # Build specific project
+  $0 build domesday
   
   # Build with explicit project flag
-  $0 -p domesday build
+  $0 build --project domesday
+  
+  # Force complete rebuild (slow - rebuilds everything including Cantaloupe)
+  $0 build --force
 
 Collection Directory Structure:
   The collection directory should contain:
@@ -170,6 +189,16 @@ validate_project_name() {
 setup_project_from_directory() {
     local project_name="$1"
     local collection_dir="$2"
+    
+    # Check if files already exist in web/ directory (standard project structure)
+    if [ -f "web/iiif/${project_name}.json" ] && [ -d "web/images" ] && [ -d "web/annotations" ]; then
+        log_info "Project files already exist in web/ directory structure"
+        log_info "Using existing manifest: web/iiif/${project_name}.json"
+        if [ -f "web/pages/${project_name}.html" ]; then
+            log_info "Using existing HTML page: web/pages/${project_name}.html"
+        fi
+        return 0
+    fi
     
     log_info "Setting up project from directory: $collection_dir"
     
@@ -517,6 +546,7 @@ get_project_title_from_yaml() {
     fi
 }
 
+
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
@@ -536,20 +566,30 @@ create_html_page() {
     
     # Get project title from YAML configuration
     local project_title=$(get_project_title_from_yaml "$project_name")
-    local project_description="Explore the ${project_title} using our interactive IIIF viewer"
+    if [ -z "$project_title" ]; then
+        # Fallback: capitalize first letter of project name
+        project_title="$(echo ${project_name:0:1} | tr '[:lower:]' '[:upper:]')${project_name:1}"
+    fi
+    local project_description="Explore the ${project_title} collection using our interactive IIIF viewer"
     
-    log_info "Using YAML configuration for: $project_name"
+    log_info "Using project name: $project_name"
+    log_info "Using project title: $project_title"
     
     # Copy template and replace project-specific content
     cp "$template_file" "$page_file"
     
-    # Replace project-specific content in the copied file
-    sed -i "s/demo\.json/${project_name}.json/g" "$page_file"
-    sed -i "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
-    sed -i "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
-    sed -i "s/Demo collection/${project_title}/g" "$page_file"
-    sed -i "s/Demo/${project_title}/g" "$page_file"
-    sed -i "s/demo/${project_name}/g" "$page_file"
+    # Replace project-specific content in the copied file (order matters!)
+    sed -i.bak "s/demo\.json/${project_name}.json/g" "$page_file"
+    sed -i.bak "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
+    sed -i.bak "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
+    sed -i.bak "s/IIIF Viewer showing the Demo collection/IIIF Viewer showing the ${project_title} collection/g" "$page_file"
+    sed -i.bak "s/<span class=\"tna-breadcrumbs__current\">Demo<\/span>/<span class=\"tna-breadcrumbs__current\">${project_title}<\/span>/g" "$page_file"
+    sed -i.bak "s/<h1 class=\"tna-heading-xl\">Demo<\/h1>/<h1 class=\"tna-heading-xl\">${project_title}<\/h1>/g" "$page_file"
+    sed -i.bak "s/Demo collection/${project_title} collection/g" "$page_file"
+    sed -i.bak "s/Demo/${project_title}/g" "$page_file"
+    
+    # Remove backup files
+    rm -f "${page_file}.bak"
     
     log_success "HTML page created: $page_file"
     if [ -n "$project_title" ]; then
@@ -584,10 +624,15 @@ setup_project_files() {
         return 1
     fi
     
-    # Create HTML page from template
-    if ! create_html_page "$project_name"; then
-        log_error "Failed to create HTML page"
-        return 1
+    # Create HTML page only if it doesn't exist or still has demo references
+    local page_file="web/pages/${project_name}.html"
+    if [ ! -f "$page_file" ] || grep -q "demo\.json\|Demo" "$page_file"; then
+        if ! create_html_page "$project_name"; then
+            log_error "Failed to create HTML page"
+            return 1
+        fi
+    else
+        log_info "HTML page already exists and is correctly configured: $page_file"
     fi
     
     log_success "Project files created successfully for: $project_name"

@@ -23,10 +23,9 @@ node_modules/
 .env
 
 # Ignore dynamically generated project files
-web/iiif/*.json
-web/pages/*.html
-web/images/*
+#web/iiif/*.json
+#web/pages/*.html
+#web/images/*
 
-# Keep the demo template file
-!web/pages/demo.html
+
 

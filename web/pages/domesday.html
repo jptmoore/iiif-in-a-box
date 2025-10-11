@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" class="tna-template">
+<head>
+  <meta charset="UTF-8">
+  <title>Domesday - IIIF-in-a-Box</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Explore the Domesday collection using our interactive IIIF viewer">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400..700&family=Roboto+Mono:wght@400..500&display=swap">
+  <style>
+    /* TNA-inspired styling */
+    .tna-template {
+      font-family: "Open Sans", Arial, sans-serif;
+      color: #26262a;
+      background-color: #ffffff;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .tna-template * {
+      box-sizing: border-box;
+    }
+
+    /* Header styling inspired by TNA */
+    .tna-header {
+      background-color: #010101;
+      color: #ffffff;
+      padding: 1rem 0;
+      border-bottom: 4px solid #fe1d57;
+    }
+
+    .tna-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .tna-header__content {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    .tna-header__logo {
+      height: 40px;
+      width: auto;
+    }
+
+    /* Navigation breadcrumbs */
+    .tna-breadcrumbs {
+      background-color: #f4f4f4;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #d9d9d6;
+    }
+
+    .tna-breadcrumbs__list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .tna-breadcrumbs__item {
+      display: flex;
+      align-items: center;
+    }
+
+    .tna-breadcrumbs__item:not(:last-child)::after {
+      content: "›";
+      margin: 0 0.5rem;
+      color: #8c9694;
+    }
+
+    .tna-breadcrumbs__link {
+      color: #0062a8;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 2px;
+      font-size: 0.875rem;
+    }
+
+    .tna-breadcrumbs__link:hover {
+      color: #004c7e;
+      text-decoration-thickness: 3px;
+    }
+
+    .tna-breadcrumbs__current {
+      color: #26262a;
+      font-size: 0.875rem;
+    }
+
+    /* Main content */
+    .tna-section {
+      flex: 1;
+      padding: 2rem 0;
+    }
+
+    .tna-heading-xl {
+      font-family: "Open Sans", Arial, sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin: 0 0 1.5rem 0;
+      color: #26262a;
+    }
+
+    .tna-chip {
+      display: inline-block;
+      background-color: #fe1d57;
+      color: #ffffff;
+      padding: 0.25rem 0.75rem;
+      border-radius: 0.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      margin-bottom: 0.75rem;
+    }
+
+    .tna-large-paragraph {
+      font-size: 1.25rem;
+      line-height: 1.4;
+      color: #26262a;
+      margin-bottom: 2rem;
+      max-width: 40rem;
+    }
+
+    /* Viewer container */
+    .tna-viewer-container {
+      border: 1px solid #d9d9d6;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      background-color: #ffffff;
+      box-shadow: 0 2px 8px rgba(38, 38, 42, 0.1);
+    }
+
+    .tna-viewer-container iframe {
+      width: 100%;
+      height: 70vh;
+      min-height: 500px;
+      border: none;
+      display: block;
+    }
+
+    /* Grid system */
+    .tna-column {
+      width: 100%;
+    }
+
+    .tna-column--width-2-3 {
+      width: 66.6667%;
+    }
+
+    .tna-column--width-5-6-medium {
+      width: 83.3333%;
+    }
+
+    @media (max-width: 768px) {
+      .tna-header__content {
+        justify-content: flex-start;
+      }
+
+      .tna-heading-xl {
+        font-size: 2rem;
+      }
+      
+      .tna-large-paragraph {
+        font-size: 1.125rem;
+      }
+
+      .tna-viewer-container iframe {
+        height: 60vh;
+        min-height: 400px;
+      }
+    }
+
+    /* Footer */
+    .tna-footer {
+      background-color: #26262a;
+      color: #ffffff;
+      padding: 1rem 0;
+      margin-top: auto;
+    }
+
+    .tna-footer__content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .tna-footer__text {
+      font-size: 0.875rem;
+      color: #d9d9d6;
+    }
+
+    .tna-footer__links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .tna-footer__link {
+      color: #ffffff;
+      text-decoration: underline;
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      font-size: 0.875rem;
+    }
+
+    .tna-footer__link:hover {
+      text-decoration-thickness: 2px;
+    }
+
+    @media (max-width: 768px) {
+      .tna-footer__content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .tna-footer__links {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body class="tna-template__body">
+  <header class="tna-header">
+    <div class="tna-container">
+      <div class="tna-header__content">
+        <img src="/assets/tna-square-logo.svg" 
+             alt="IIIF-in-a-Box" 
+             class="tna-header__logo">
+      </div>
+    </div>
+  </header>
+
+  <nav class="tna-breadcrumbs">
+    <div class="tna-container">
+      <ol class="tna-breadcrumbs__list">
+        <li class="tna-breadcrumbs__item">
+          <a href="/" class="tna-breadcrumbs__link">Home</a>
+        </li>
+        <li class="tna-breadcrumbs__item">
+          <a href="/pages/" class="tna-breadcrumbs__link">Collections</a>
+        </li>
+        <li class="tna-breadcrumbs__item">
+          <span class="tna-breadcrumbs__current">Domesday</span>
+        </li>
+      </ol>
+    </div>
+  </nav>
+
+  <main id="main-content" class="tna-section">
+    <div class="tna-container">
+      <div class="tna-column">
+        <div class="tna-chip">IIIF Collection</div>
+        <h1 class="tna-heading-xl">Domesday</h1>
+        <p class="tna-large-paragraph">
+          Explore the Domesday collection using our interactive IIIF viewer. 
+          Navigate through the digital materials and examine them in detail.
+        </p>
+        
+        <div class="tna-viewer-container">
+          <iframe
+            src="/viewer/?iiif-content=http://localhost:8080/iiif/domesday.json"
+            allowfullscreen
+            allow="clipboard-write; clipboard-read"
+            title="IIIF Viewer showing the Domesday collection"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="tna-footer">
+    <div class="tna-container">
+      <div class="tna-footer__content">
+        <div class="tna-footer__text">
+          Powered by IIIF-in-a-Box
+        </div>
+        <ul class="tna-footer__links">
+          <li><a href="/accessibility/" class="tna-footer__link">Accessibility</a></li>
+          <li><a href="/cookies/" class="tna-footer__link">Cookies</a></li>
+          <li><a href="/" class="tna-footer__link">Home</a></li>
+        </ul>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

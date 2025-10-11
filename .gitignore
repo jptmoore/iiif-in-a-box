@@ -27,5 +27,6 @@ node_modules/
 #web/pages/*.html
 #web/images/*
 
-
+# miiify db
+miiify/db/
 

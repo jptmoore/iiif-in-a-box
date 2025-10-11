@@ -60,11 +60,11 @@ services:
       - appnet
 
   miiify:
-    build: ../../iiif-in-a-box/miiify
+    build: ../miiify
     ports:
       - "127.0.0.1:10000:10000"
     volumes:
-      - ../../miiify/miiify/db:/home/miiify/db
+      - ../miiify/db:/home/miiify/db
     networks:
       - appnet
 

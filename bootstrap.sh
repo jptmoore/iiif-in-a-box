@@ -907,14 +907,14 @@ get_service_project_name() {
     fi
     
     # Try to find most recent project by checking running containers
-    local running_project=$(docker ps --format "table {{.Names}}" | grep -E "^[a-zA-Z0-9_-]+-web$" | head -1 | sed 's/-web$//')
+    local running_project=$(docker ps --format "table {{.Names}}" | grep -E "^[a-zA-Z0-9_-]+[_-]web[_0-9]*$" | head -1 | sed 's/[_-]web.*$//')
     if [ -n "$running_project" ]; then
         echo "$running_project"
         return 0
     fi
     
     # Try to find most recent project by checking existing images
-    local recent_project=$(docker images --format "table {{.Repository}}" | grep -E "^[a-zA-Z0-9_-]+-web$" | head -1 | sed 's/-web$//')
+    local recent_project=$(docker images --format "table {{.Repository}}" | grep -E "^[a-zA-Z0-9_-]+[_-]web$" | head -1 | sed 's/[_-]web$//')
     if [ -n "$recent_project" ]; then
         echo "$recent_project"
         return 0

@@ -11,6 +11,7 @@ PROJECTS=(
 
 # Default configuration
 DEFAULT_COLLECTION_DIR=""
+DEFAULT_HOSTNAME="http://localhost:8080"
 
 # Colors for output
 RED='\033[0;31m'
@@ -30,6 +31,7 @@ parse_arguments() {
     COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
     FORCE_REBUILD="false"
     PROJECT_NAME=""
+    HOSTNAME="$DEFAULT_HOSTNAME"
     
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -39,6 +41,10 @@ parse_arguments() {
                 ;;
             --project|-p)
                 PROJECT_NAME="$2"
+                shift 2
+                ;;
+            --hostname|--host)
+                HOSTNAME="$2"
                 shift 2
                 ;;
             --force|-f)
@@ -92,6 +98,8 @@ Usage: $0 [OPTIONS] [COMMAND]
 Options:
   --collection, -c COLLECTION_DIR   Directory containing IIIF resources 
                                     (optional - defaults to project name from YAML)
+  --hostname, --host HOSTNAME       Base URL for the IIIF service 
+                                    (default: http://localhost:8080)
   --force, -f                       Force rebuild all Docker images (including slow Cantaloupe)
   --help, -h                        Show this help message
 
@@ -113,8 +121,14 @@ Examples:
   # Build with explicit project flag
   $0 build --project domesday
   
+  # Build for deployment on a VM with external hostname
+  $0 build domesday --hostname http://my-vm-ip:8080
+  
+  # Build with hostname using flags
+  $0 build --project domesday --hostname http://192.168.1.100:8080
+  
   # Force complete rebuild (slow - rebuilds everything including Cantaloupe)
-  $0 build --force
+  $0 build domesday --force
 
 Collection Directory Structure:
   The collection directory should contain:
@@ -357,7 +371,7 @@ load_annotations_to_miiify() {
     
     # Run the annotation processing with project name as argument
     log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name"; then
+    if npx ts-node process-annotations.ts "$project_name" "$hostname"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Updated manifest with annotation references in both project and web directories"
     else
@@ -420,6 +434,7 @@ ensure_nodejs_dependencies() {
 
 load_annotations_from_web() {
     local project_name="$1"
+    local hostname="$2"
     
     # Ensure Node.js dependencies are installed
     if ! ensure_nodejs_dependencies; then
@@ -474,7 +489,7 @@ load_annotations_from_web() {
     cd miiify
     
     log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name"; then
+    if npx ts-node process-annotations.ts "$project_name" "$hostname"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Generated manifest with annotation references in web/iiif/"
         cd - > /dev/null
@@ -501,7 +516,7 @@ index_annotations_with_annosearch() {
     # Run the annosearch indexing script
     if ./annosearch/load.sh "$project_name"; then
         log_success "Annotations indexed successfully for search"
-        log_info "Search API available at: http://localhost:8080/annosearch/${project_name}/search"
+        log_info "Search API available at: ${HOSTNAME}/annosearch/${project_name}/search"
         return 0
     else
         log_warning "Failed to index annotations for search, but continuing..."
@@ -639,9 +654,9 @@ setup_project_files() {
     log_info "Collection Directory: $collection_dir"
     log_info "IIIF Manifest: web/iiif/${project_name}.json"
     log_info "HTML Page: web/pages/${project_name}.html"
-    log_info "Viewer URL: http://localhost:8080/pages/${project_name}.html"
-    log_info "Images served via: http://localhost:8080/cantaloupe/"
-    log_info "Annotations available at: http://localhost:8080/annotations/"
+    log_info "Viewer URL: ${HOSTNAME}/pages/${project_name}.html"
+    log_info "Images served via: ${HOSTNAME}/cantaloupe/"
+    log_info "Annotations available at: ${HOSTNAME}/annotations/"
 }
 
 # Function to clone or update a project
@@ -774,8 +789,8 @@ build_and_start() {
     fi
     
     log_success "All services are running!"
-    log_info "IIIF-In-A-Box is available at: http://localhost:8080"
-    log_info "Tamerlane viewer at: http://localhost:8080/viewer/"
+    log_info "IIIF-In-A-Box is available at: ${HOSTNAME}"
+    log_info "Tamerlane viewer at: ${HOSTNAME}/viewer/"
     
     cd - > /dev/null
 }
@@ -843,8 +858,8 @@ build_web_service() {
     fi
     
     log_success "🎉 Complete IIIF service is running!"
-    log_info "📚 IIIF-In-A-Box is available at: http://localhost:8080"
-    log_info "👁️  Tamerlane viewer at: http://localhost:8080/viewer/"
+    log_info "📚 IIIF-In-A-Box is available at: ${HOSTNAME}"
+    log_info "👁️  Tamerlane viewer at: ${HOSTNAME}/viewer/"
     log_info "🖼️  Images served via Cantaloupe image server"
     log_info "📝 Annotations served via Miiify annotation server"
     
@@ -940,6 +955,48 @@ show_status() {
     cd - > /dev/null
 }
 
+# Function to update URLs in IIIF manifests and annotations
+update_hostname_in_files() {
+    local project_name="$1"
+    local hostname="$2"
+    
+    log_info "Updating URLs to use hostname: $hostname"
+    
+    # Update URLs in IIIF manifest files - target specific IIIF service endpoints
+    if [ -d "web/iiif" ]; then
+        log_info "Updating IIIF manifest URLs..."
+        find web/iiif -name "*.json" -type f -exec sed -i -E \
+            -e "s|https?://[^/]+(:[0-9]+)?/iiif/|${hostname}/iiif/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/cantaloupe/|${hostname}/cantaloupe/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/miiify/|${hostname}/miiify/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/annosearch/|${hostname}/annosearch/|g" {} \;
+    fi
+    
+    # Update URLs in annotation files before processing
+    if [ -d "web/annotations" ]; then
+        log_info "Updating annotation URLs..."
+        find web/annotations -name "*.json" -type f -exec sed -i -E \
+            -e "s|https?://[^/]+(:[0-9]+)?/iiif/|${hostname}/iiif/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/cantaloupe/|${hostname}/cantaloupe/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/miiify/|${hostname}/miiify/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/annosearch/|${hostname}/annosearch/|g" {} \;
+    fi
+    
+    # Update URLs in HTML pages
+    if [ -d "web/pages" ]; then
+        log_info "Updating HTML page URLs..."
+        find web/pages -name "*.html" -type f -exec sed -i -E \
+            -e "s|https?://[^/]+(:[0-9]+)?/iiif/|${hostname}/iiif/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/cantaloupe/|${hostname}/cantaloupe/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/miiify/|${hostname}/miiify/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/annosearch/|${hostname}/annosearch/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/pages/|${hostname}/pages/|g" \
+            -e "s|https?://[^/]+(:[0-9]+)?/viewer/|${hostname}/viewer/|g" {} \;
+    fi
+    
+    log_success "URL updates completed for hostname: $hostname"
+}
+
 # Function to setup miiify config from cloned repository
 setup_miiify_config() {
     log_info "Setting up miiify configuration..."
@@ -985,6 +1042,8 @@ main() {
             ;;
         *)
             setup_project_files
+            # Always update hostname in project files to ensure consistency
+            update_hostname_in_files "$PROJECT_NAME" "$HOSTNAME"
             ;;
     esac
     
@@ -1043,7 +1102,7 @@ main() {
             build_core_services
             
             log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
-            if ! load_annotations_from_web "$PROJECT_NAME"; then
+            if ! load_annotations_from_web "$PROJECT_NAME" "$HOSTNAME"; then
                 log_error "Failed to process annotations - cannot continue without manifests"
                 exit 1
             fi

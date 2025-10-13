@@ -61,7 +61,7 @@ function getDefaultConfig(projectName: string): any {
     };
 }
 
-function generateManifest(grouped: Record<string, Annotation[]>, manifestId: string, manifestName: string, projectName: string = 'Project') {
+function generateManifest(grouped: Record<string, Annotation[]>, manifestId: string, manifestName: string, projectName: string = 'Project', hostname: string = 'http://localhost:8080') {
     // Load project configuration
     const config = loadProjectConfig(projectName);
     
@@ -80,17 +80,17 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
                     type: 'AnnotationPage',
                     items: [
                         {
-                            id: `http://localhost:8080/cantaloupe/iiif/manifest/${imageId}/annotation`,
+                            id: `${hostname}/cantaloupe/iiif/manifest/${imageId}/annotation`,
                             type: 'Annotation',
                             motivation: 'painting',
                             target: canvasUrl,
                             body: {
-                                id: `http://localhost:8080/cantaloupe/iiif/3/${imageId}.tif/full/max/0/default.jpg`,
+                                id: `${hostname}/cantaloupe/iiif/3/${imageId}.tif/full/max/0/default.jpg`,
                                 type: 'Image',
                                 format: 'image/jpeg',
                                 service: [
                                     {
-                                        id: `http://localhost:8080/cantaloupe/iiif/3/${imageId}.tif/info.json`,
+                                        id: `${hostname}/cantaloupe/iiif/3/${imageId}.tif/info.json`,
                                         type: 'ImageService3',
                                         profile: 'level2'
                                     }
@@ -102,7 +102,7 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
             ],
             annotations: [
                 {
-                    id: `http://localhost:8080/miiify/annotations/${containerId}/?page=0`,
+                    id: `${hostname}/miiify/annotations/${containerId}/?page=0`,
                     type: 'AnnotationPage'
                 }
             ]
@@ -130,9 +130,9 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
     return manifest;
 }
 
-function generateCollection(manifestFiles: string[], projectName: string): any {
+function generateCollection(manifestFiles: string[], projectName: string, hostname: string = 'http://localhost:8080'): any {
     const config = loadProjectConfig(projectName);
-    const baseUrl = 'http://localhost:8080/iiif';
+    const baseUrl = `${hostname}/iiif`;
     
     // Extract manifest names (without .json extension) for subjects
     const manifestNames = manifestFiles.map(file => file.replace('.json', ''));
@@ -154,11 +154,11 @@ function generateCollection(manifestFiles: string[], projectName: string): any {
         summary: { en: [config.description] },
         service: [
             {
-                id: `http://localhost:8080/annosearch/${projectName}/search`,
+                id: `${hostname}/annosearch/${projectName}/search`,
                 type: 'SearchService2',
                 service: [
                     {
-                        id: `http://localhost:8080/annosearch/${projectName}/autocomplete`,
+                        id: `${hostname}/annosearch/${projectName}/autocomplete`,
                         type: 'AutoCompleteService2'
                     }
                 ]
@@ -359,9 +359,10 @@ async function ensureAnnotation(containerId: string, annotation: Annotation): Pr
 }
 
 async function uploadAllAnnotations() {
-    // Get command line arguments for project name, or use default
+    // Get command line arguments for project name and hostname, or use defaults
     const args = process.argv.slice(2);
     const projectName = args[0] || 'lincolnshire';
+    const hostname = args[1] || 'http://localhost:8080';
     
     console.log(`🎯 Loading annotations for project: ${projectName}`);
     
@@ -422,8 +423,8 @@ async function uploadAllAnnotations() {
 
         // Generate individual manifest
         const manifestFile = `${manifestName}.json`;
-        const manifestId = `http://localhost:8080/iiif/${manifestFile}`;
-        const manifest = generateManifest(grouped, manifestId, manifestName, projectName);
+        const manifestId = `${hostname}/iiif/${manifestFile}`;
+        const manifest = generateManifest(grouped, manifestId, manifestName, projectName, hostname);
         
         // Write individual manifest
         const webManifestPath = `../web/iiif/${manifestFile}`;
@@ -443,14 +444,14 @@ async function uploadAllAnnotations() {
     
     // Generate collection file
     console.log(`\n📚 Generating collection for project: ${projectName}`);
-    const collection = generateCollection(manifestFiles, projectName);
+    const collection = generateCollection(manifestFiles, projectName, hostname);
     const collectionFile = `${projectName}.json`;
     const collectionPath = `../web/iiif/${collectionFile}`;
     
     fs.writeFileSync(collectionPath, JSON.stringify(collection, null, 2));
     console.log(`✅ Wrote collection to ${collectionPath}`);
     console.log(`📋 Collection includes ${manifestFiles.length} manifest(s): ${manifestFiles.join(', ')}`);
-    console.log(`🔍 Search service available at: http://localhost:8080/annosearch/${projectName}/search`);
+    console.log(`🔍 Search service available at: ${hostname}/annosearch/${projectName}/search`);
 }
 
 uploadAllAnnotations().catch(err => {

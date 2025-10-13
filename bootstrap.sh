@@ -267,8 +267,16 @@ load_annotations_to_miiify() {
     # Create a project-specific load script
     cd miiify
     
-    # Skip annotation processing to avoid modifying web/iiif/ files
-    log_info "Skipping annotation processing - web/iiif/ files preserved"
+    # Run the annotation processing with project name as argument
+    log_info "Processing annotations using ts-node..."
+    if npx ts-node process-annotations.ts "$project_name"; then
+        log_success "Annotations processed successfully into miiify"
+        log_info "Updated manifest with annotation references in both project and web directories"
+    else
+        log_error "Failed to load annotations into miiify"
+        cd - > /dev/null
+        return 1
+    fi
     
     # Clean up temporary files (no longer needed since load.ts writes directly to correct locations)
     rm -f "${project_name}-annotations.json"
@@ -375,9 +383,20 @@ load_annotations_from_web() {
         return 1
     fi
     
-    # Skip annotation processing to avoid modifying web/iiif/ files
-    log_info "Skipping annotation processing - web/iiif/ files preserved"
-    return 0
+    # Run annotation processing - process-annotations.ts will read directly from web/annotations/
+    cd miiify
+    
+    log_info "Processing annotations using ts-node..."
+    if npx ts-node process-annotations.ts "$project_name"; then
+        log_success "Annotations processed successfully into miiify"
+        log_info "Generated manifest with annotation references in web/iiif/"
+        cd - > /dev/null
+        return 0
+    else
+        log_error "Failed to process annotations with ts-node"
+        cd - > /dev/null
+        return 1
+    fi
 }
 
 # Function to index annotations with annosearch
@@ -841,16 +860,10 @@ update_hostname_in_files() {
     
     log_info "Updating hostname references to: $hostname"
     
-    # Update HTML pages - change localhost to hostname
+    # Update HTML pages only - change localhost to hostname
     if [ -d "web/pages" ]; then
         log_info "Updating HTML pages..."
         find web/pages -name "*.html" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
-    fi
-    
-    # Update all JSON files in annotations directory
-    if [ -d "web/annotations" ]; then
-        log_info "Updating annotation files..."
-        find web/annotations -name "*.json" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
     fi
     
     log_info "IIIF manifests remain localhost for portability"

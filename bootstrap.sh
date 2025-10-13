@@ -632,7 +632,7 @@ update_cantaloupe_config() {
         
         log_success "Cantaloupe configuration updated"
     else
-        log_warn "Cantaloupe config not found at $cantaloupe_config"
+        log_warning "Cantaloupe config not found at $cantaloupe_config"
     fi
 }
 
@@ -792,17 +792,6 @@ build_web_service() {
     log_info "📋 Content includes: manifests (from annotations) + images + static files + viewer"
     
     cd proxy
-    
-    # Update cantaloupe configuration right before building
-    log_info "Updating cantaloupe base_uri to: ${HOSTNAME}/cantaloupe"
-    if [ -f "cantaloupe/cantaloupe.properties" ]; then
-        sed -i.bak "s|base_uri = .*|base_uri = ${HOSTNAME}/cantaloupe|g" cantaloupe/cantaloupe.properties
-        log_success "Updated cantaloupe base_uri"
-    else
-        log_warning "Cantaloupe config not found at cantaloupe/cantaloupe.properties"
-        log_info "Current directory: $(pwd)"
-        log_info "Available files: $(ls -la cantaloupe/ 2>/dev/null || echo 'cantaloupe directory not found')"
-    fi
     
     # Build all services, checking for existing images to speed up builds
     log_info "Building all services (using cached images where possible)..."

@@ -26,6 +26,27 @@ function extractCanvasIdFromTarget(target: string): string {
     return hashIndex >= 0 ? target.substring(0, hashIndex) : target;
 }
 
+// Update annotation URLs to use the provided hostname
+function updateAnnotationUrls(annotation: Annotation, hostname: string): Annotation {
+    const updatedAnnotation = { ...annotation };
+    
+    // Update target URLs
+    if (typeof updatedAnnotation.target === 'string') {
+        updatedAnnotation.target = updatedAnnotation.target.replace(/^https?:\/\/[^\/]+/, hostname);
+    } else if (Array.isArray(updatedAnnotation.target)) {
+        updatedAnnotation.target = updatedAnnotation.target.map(target => 
+            typeof target === 'string' ? target.replace(/^https?:\/\/[^\/]+/, hostname) : target
+        );
+    }
+    
+    // Update id if it exists and contains a URL
+    if (updatedAnnotation.id && typeof updatedAnnotation.id === 'string' && updatedAnnotation.id.startsWith('http')) {
+        updatedAnnotation.id = updatedAnnotation.id.replace(/^https?:\/\/[^\/]+/, hostname);
+    }
+    
+    return updatedAnnotation;
+}
+
 // Load project configuration from YAML
 function loadProjectConfig(projectName: string): any {
     try {
@@ -78,22 +99,25 @@ function generateManifest(grouped: Record<string, Annotation[]>, manifestId: str
     const canvases = Object.entries(grouped).map(([canvasUrl, annotations]) => {
         const containerId = extractContainerId(canvasUrl);
         const imageId = canvasUrl.split('/').pop()?.replace('.json', '') ?? containerId;
+        
+        // Update canvas URL to use the provided hostname instead of localhost
+        const updatedCanvasUrl = canvasUrl.replace(/^https?:\/\/[^\/]+/, hostname);
 
         return {
-            id: canvasUrl,
+            id: updatedCanvasUrl,
             type: 'Canvas',
             width: 3191,
             height: 4573,
             items: [
                 {
-                    id: `${canvasUrl}/painting`,
+                    id: `${updatedCanvasUrl}/painting`,
                     type: 'AnnotationPage',
                     items: [
                         {
                             id: `${hostname}/cantaloupe/iiif/manifest/${imageId}/annotation`,
                             type: 'Annotation',
                             motivation: 'painting',
-                            target: canvasUrl,
+                            target: updatedCanvasUrl,
                             body: {
                                 id: `${hostname}/cantaloupe/iiif/3/${imageId}.tif/full/max/0/default.jpg`,
                                 type: 'Image',
@@ -407,8 +431,12 @@ async function uploadAllAnnotations() {
         const annotationPage = JSON.parse(raw);
         
         // Extract annotations from the AnnotationPage items array
-        const annotations: Annotation[] = annotationPage.items || annotationPage;
-        console.log(`� Loaded ${annotations.length} annotations from ${annotationFile}`);
+        const rawAnnotations: Annotation[] = annotationPage.items || annotationPage;
+        console.log(`� Loaded ${rawAnnotations.length} annotations from ${annotationFile}`);
+
+        // Update annotation URLs to use the provided hostname
+        const annotations: Annotation[] = rawAnnotations.map(anno => updateAnnotationUrls(anno, hostname));
+        console.log(`� Updated annotation URLs to use hostname: ${hostname}`);
 
         const grouped: Record<string, Annotation[]> = {};
 

@@ -960,22 +960,25 @@ update_hostname_in_files() {
     local project_name="$1"
     local hostname="$2"
     
-    log_info "Updating entry point URLs to use hostname: $hostname"
+    log_info "Updating hostname references to: $hostname"
     
-    # Update URLs in HTML pages (entry points) to use external hostname
+    # Update HTML pages (entry points) - change localhost to hostname
     if [ -d "web/pages" ]; then
-        log_info "Updating HTML page entry point URLs..."
+        log_info "Updating HTML page entry points..."
         find web/pages -name "*.html" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
     fi
     
-    # Update URLs in annotation files for external access (but not manifests)
-    if [ -d "web/annotations" ]; then
-        log_info "Updating annotation URLs for external access..."
-        find web/annotations -name "*.json" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
+    # Update only the specific project's annotation file for external access
+    local annotation_file="web/annotations/${project_name}.json"
+    if [ -f "$annotation_file" ]; then
+        log_info "Updating annotation URLs for external access: $annotation_file"
+        sed -i "s|http://localhost:8080|${hostname}|g" "$annotation_file"
+    else
+        log_warning "Project annotation file not found: $annotation_file"
     fi
     
-    log_info "IIIF manifests will keep localhost URLs for portability (resolved relative to VM)"
-    log_success "Selective URL updates completed for hostname: $hostname"
+    log_info "IIIF manifests remain localhost for portability"
+    log_success "Updated HTML pages and ${project_name}.json annotation file to use: $hostname"
 }
 
 # Function to setup miiify config from cloned repository

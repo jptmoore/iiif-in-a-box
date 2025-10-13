@@ -26,6 +26,15 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
+# Function to get service URL - bootstrap script runs on host, so use localhost
+get_service_url() {
+    local service_name="$1"
+    local port="$2"
+    
+    # Bootstrap script always runs on host, so use localhost
+    echo "http://localhost:${port}"
+}
+
 # Function to parse command line arguments
 parse_arguments() {
     COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
@@ -124,6 +133,9 @@ Examples:
   # Build for deployment on a VM with external hostname
   $0 build domesday --hostname http://my-vm-ip:8080
   
+  # Build for AWS Lightsail with static IP
+  $0 build domesday --hostname http://3.15.123.45:8080
+  
   # Build with hostname using flags
   $0 build --project domesday --hostname http://192.168.1.100:8080
   
@@ -212,8 +224,12 @@ setup_project_from_directory() {
         return 1
     fi
     
-    # Update hostname in existing files
-    update_hostname_in_files "$project_name" "$HOSTNAME"
+    # Update hostname in existing files (optional - only if hostname specified)
+    if [ "$HOSTNAME" != "$DEFAULT_HOSTNAME" ]; then
+        update_hostname_in_files "$project_name" "$HOSTNAME"
+    else
+        log_info "Using default localhost URLs in HTML pages"
+    fi
     
     log_success "Project setup completed"
 }
@@ -249,9 +265,11 @@ load_annotations_to_miiify() {
     
     # Wait for miiify service to be ready
     log_info "Waiting for miiify service to be ready..."
+    local miiify_url=$(get_service_url "miiify" "10000")
+    log_info "Checking miiify at: $miiify_url"
     local retries=30
     while [ $retries -gt 0 ]; do
-        if curl -s -f --noproxy '*' --max-time 5 "http://localhost:10000/" > /dev/null 2>&1; then
+        if curl -s -f --noproxy '*' --max-time 5 "${miiify_url}/" > /dev/null 2>&1; then
             log_info "Miiify service is ready"
             break
         fi
@@ -368,9 +386,11 @@ load_annotations_from_web() {
     
     # Wait for miiify service to be ready
     log_info "Waiting for miiify service to be ready..."
+    local miiify_url=$(get_service_url "miiify" "10000")
+    log_info "Checking miiify at: $miiify_url"
     local retries=30
     while [ $retries -gt 0 ]; do
-        if curl -s -f --noproxy '*' --max-time 5 "http://localhost:10000/" > /dev/null 2>&1; then
+        if curl -s -f --noproxy '*' --max-time 5 "${miiify_url}/" > /dev/null 2>&1; then
             log_info "Miiify service is ready"
             break
         fi
@@ -387,6 +407,10 @@ load_annotations_from_web() {
     cd miiify
     
     log_info "Processing annotations using ts-node..."
+    # Set environment variable to indicate Docker environment
+    if [ -f /.dockerenv ] || docker network ls 2>/dev/null | grep -q "appnet"; then
+        export DOCKER_ENV=true
+    fi
     if npx ts-node process-annotations.ts "$project_name"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Generated manifest with annotation references in web/iiif/"
@@ -820,28 +844,9 @@ build_services_optimized() {
 
 # Function to get current or default project name for service operations
 get_service_project_name() {
-    # If PROJECT_NAME is already set, use it
-    if [ -n "$PROJECT_NAME" ] && [ "$PROJECT_NAME" != "$DEFAULT_PROJECT_NAME" ]; then
-        echo "$PROJECT_NAME"
-        return 0
-    fi
-    
-    # Try to find most recent project by checking running containers
-    local running_project=$(docker ps --format "table {{.Names}}" | grep -E "^[a-zA-Z0-9_-]+[_-]web[_0-9]*$" | head -1 | sed 's/[_-]web.*$//')
-    if [ -n "$running_project" ]; then
-        echo "$running_project"
-        return 0
-    fi
-    
-    # Try to find most recent project by checking existing images
-    local recent_project=$(docker images --format "table {{.Repository}}" | grep -E "^[a-zA-Z0-9_-]+[_-]web$" | head -1 | sed 's/[_-]web$//')
-    if [ -n "$recent_project" ]; then
-        echo "$recent_project"
-        return 0
-    fi
-    
-    # Fall back to default
-    echo "$DEFAULT_PROJECT_NAME"
+    # With consistent container names, we can use a fixed project name
+    # This ensures compatibility across Mac and VM
+    echo "iiif"
 }
 
 # Function to show service status

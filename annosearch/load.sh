@@ -7,8 +7,17 @@ set -e
 # Configuration
 PROJECT_NAME="${1:-demo}"
 ANNOSEARCH_DIR="../annosearch"
-WEB_BASE_URL="http://localhost:8080"
-ANNOSEARCH_BASE_URL="http://localhost:3000"
+
+# Smart URL detection - use container names if in Docker environment
+if [ -f /.dockerenv ] || docker network ls 2>/dev/null | grep -q "appnet"; then
+    # Running in Docker environment
+    WEB_BASE_URL="http://iiif-nginx"
+    ANNOSEARCH_BASE_URL="http://iiif-annosearch:3000"
+else
+    # Running on host
+    WEB_BASE_URL="http://localhost:8080"
+    ANNOSEARCH_BASE_URL="http://localhost:3000"
+fi
 
 # Colors for output  
 RED='\033[0;31m'

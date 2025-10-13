@@ -1,5 +1,6 @@
 services:
   web:
+    container_name: iiif-web
     build: 
       context: ../../
       dockerfile: iiif-in-a-box/web/Dockerfile
@@ -7,6 +8,7 @@ services:
       - appnet
 
   quickwit:
+    container_name: iiif-quickwit
     image: quickwit/quickwit
     command: run
     ports:
@@ -17,6 +19,7 @@ services:
       - appnet
 
   annosearch:
+    container_name: iiif-annosearch
     build: ../../annosearch
     entrypoint: ["node", "./dist/index.js"]
     command: ["serve"]
@@ -31,6 +34,7 @@ services:
       - appnet
 
   cantaloupe:
+    container_name: iiif-cantaloupe
     build: ../../iiif-in-a-box/cantaloupe
     image: cantaloupe:5.0.7
     volumes:
@@ -44,6 +48,7 @@ services:
       -jar cantaloupe-5.0.7.jar
 
   nginx:
+    container_name: iiif-nginx
     image: nginx:alpine
     ports:
       - "8080:80"
@@ -60,6 +65,7 @@ services:
       - appnet
 
   miiify:
+    container_name: iiif-miiify
     build: ../miiify
     ports:
       - "127.0.0.1:10000:10000"

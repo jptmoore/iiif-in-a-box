@@ -8,7 +8,17 @@ interface Annotation {
     [key: string]: any;
 }
 
-const serverBase = 'http://localhost:10000/annotations';
+// Smart URL detection for annotation server
+const getServerBase = (): string => {
+    // The process-annotations.ts script runs on the host, so always use localhost
+    // Only use container name if explicitly set via environment variable
+    if (process.env.MIIIFY_URL) {
+        return process.env.MIIIFY_URL;
+    }
+    return 'http://localhost:10000/annotations';
+};
+
+const serverBase = getServerBase();
 
 // Extract base canvas ID from a `target` string like "...canvas/123#xywh=..."
 function extractCanvasIdFromTarget(target: string): string {

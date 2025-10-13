@@ -359,10 +359,10 @@ async function ensureAnnotation(containerId: string, annotation: Annotation): Pr
 }
 
 async function uploadAllAnnotations() {
-    // Get command line arguments for project name and hostname, or use defaults
+    // Get command line arguments for project name, always use localhost for manifests
     const args = process.argv.slice(2);
     const projectName = args[0] || 'lincolnshire';
-    const hostname = args[1] || 'http://localhost:8080';
+    const hostname = 'http://localhost:8080';  // Always use localhost for manifests
     
     console.log(`🎯 Loading annotations for project: ${projectName}`);
     
@@ -421,10 +421,11 @@ async function uploadAllAnnotations() {
             }
         }
 
-        // Generate individual manifest
+        // Generate individual manifest using localhost only
         const manifestFile = `${manifestName}.json`;
-        const manifestId = `${hostname}/iiif/${manifestFile}`;
-        const manifest = generateManifest(grouped, manifestId, manifestName, projectName, hostname);
+        const localhostUrl = 'http://localhost:8080';
+        const manifestId = `${localhostUrl}/iiif/${manifestFile}`;
+        const manifest = generateManifest(grouped, manifestId, manifestName, projectName, localhostUrl);
         
         // Write individual manifest
         const webManifestPath = `../web/iiif/${manifestFile}`;
@@ -436,22 +437,23 @@ async function uploadAllAnnotations() {
         }
         
         fs.writeFileSync(webManifestPath, JSON.stringify(manifest, null, 2));
-        console.log(`✅ Wrote manifest to ${webManifestPath}`);
+        console.log(`✅ Wrote manifest to ${webManifestPath} (using localhost)`);
         console.log(`📋 Manifest includes ${Object.keys(grouped).length} canvases with annotations`);
         
         manifestFiles.push(manifestFile);
     }
     
-    // Generate collection file
+    // Generate collection file using localhost only
     console.log(`\n📚 Generating collection for project: ${projectName}`);
-    const collection = generateCollection(manifestFiles, projectName, hostname);
+    const localhostUrl = 'http://localhost:8080';
+    const collection = generateCollection(manifestFiles, projectName, localhostUrl);
     const collectionFile = `${projectName}.json`;
     const collectionPath = `../web/iiif/${collectionFile}`;
     
     fs.writeFileSync(collectionPath, JSON.stringify(collection, null, 2));
-    console.log(`✅ Wrote collection to ${collectionPath}`);
+    console.log(`✅ Wrote collection to ${collectionPath} (using localhost)`);
     console.log(`📋 Collection includes ${manifestFiles.length} manifest(s): ${manifestFiles.join(', ')}`);
-    console.log(`🔍 Search service available at: ${hostname}/annosearch/${projectName}/search`);
+    console.log(`🔍 Search service available at: ${localhostUrl}/annosearch/${projectName}/search`);
 }
 
 uploadAllAnnotations().catch(err => {

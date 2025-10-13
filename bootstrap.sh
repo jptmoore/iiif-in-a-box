@@ -267,16 +267,8 @@ load_annotations_to_miiify() {
     # Create a project-specific load script
     cd miiify
     
-    # Run the annotation processing with project name as argument
-    log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name"; then
-        log_success "Annotations processed successfully into miiify"
-        log_info "Updated manifest with annotation references in both project and web directories"
-    else
-        log_error "Failed to load annotations into miiify"
-        cd - > /dev/null
-        return 1
-    fi
+    # Skip annotation processing to avoid modifying web/iiif/ files
+    log_info "Skipping annotation processing - web/iiif/ files preserved"
     
     # Clean up temporary files (no longer needed since load.ts writes directly to correct locations)
     rm -f "${project_name}-annotations.json"
@@ -383,20 +375,9 @@ load_annotations_from_web() {
         return 1
     fi
     
-    # Run annotation processing - process-annotations.ts will read directly from web/annotations/
-    cd miiify
-    
-    log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name"; then
-        log_success "Annotations processed successfully into miiify"
-        log_info "Generated manifest with annotation references in web/iiif/"
-        cd - > /dev/null
-        return 0
-    else
-        log_error "Failed to process annotations with ts-node"
-        cd - > /dev/null
-        return 1
-    fi
+    # Skip annotation processing to avoid modifying web/iiif/ files
+    log_info "Skipping annotation processing - web/iiif/ files preserved"
+    return 0
 }
 
 # Function to index annotations with annosearch

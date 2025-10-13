@@ -620,6 +620,43 @@ update_project() {
     fi
 }
 
+# Function to update cantaloupe configuration with correct base_uri
+update_cantaloupe_config() {
+    local cantaloupe_config="cantaloupe/cantaloupe.properties"
+    
+    if [ -f "$cantaloupe_config" ]; then
+        log_info "Updating cantaloupe base_uri to: ${HOSTNAME}/cantaloupe"
+        
+        # Update base_uri with the provided hostname
+        sed -i.bak "s|base_uri = .*|base_uri = ${HOSTNAME}/cantaloupe|g" "$cantaloupe_config"
+        
+        log_success "Cantaloupe configuration updated"
+    else
+        log_warn "Cantaloupe config not found at $cantaloupe_config"
+    fi
+}
+
+# Function to override Tamerlane's CSP for public HTTP deployment
+override_tamerlane_csp() {
+    local tamerlane_index="../tamerlane/public/index.html"
+    
+    if [ -f "$tamerlane_index" ]; then
+        log_info "Overriding Tamerlane CSP for public HTTP deployment..."
+        
+        # Remove existing CSP meta tag and add permissive one
+        sed -i.bak 's/<meta http-equiv="Content-Security-Policy"[^>]*>//g' "$tamerlane_index"
+        
+        # Add new permissive CSP meta tag in the head section
+        sed -i.bak '/<head>/a \
+    <meta http-equiv="Content-Security-Policy" content="default-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' data: blob: http: https:; img-src '\''self'\'' data: blob: http: https:; script-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' http: https:; style-src '\''self'\'' '\''unsafe-inline'\'' http: https:; font-src '\''self'\'' data: http: https:; connect-src '\''self'\'' http: https:;">
+' "$tamerlane_index"
+        
+        log_success "Tamerlane CSP updated for public HTTP deployment"
+    else
+        log_warn "Tamerlane index.html not found at $tamerlane_index"
+    fi
+}
+
 # Function to check if docker and $DOCKER_COMPOSE_CMD are available
 check_dependencies() {
     log_info "Checking dependencies..."
@@ -755,6 +792,17 @@ build_web_service() {
     log_info "📋 Content includes: manifests (from annotations) + images + static files + viewer"
     
     cd proxy
+    
+    # Update cantaloupe configuration right before building
+    log_info "Updating cantaloupe base_uri to: ${HOSTNAME}/cantaloupe"
+    if [ -f "cantaloupe/cantaloupe.properties" ]; then
+        sed -i.bak "s|base_uri = .*|base_uri = ${HOSTNAME}/cantaloupe|g" cantaloupe/cantaloupe.properties
+        log_success "Updated cantaloupe base_uri"
+    else
+        log_warning "Cantaloupe config not found at cantaloupe/cantaloupe.properties"
+        log_info "Current directory: $(pwd)"
+        log_info "Available files: $(ls -la cantaloupe/ 2>/dev/null || echo 'cantaloupe directory not found')"
+    fi
     
     # Build all services, checking for existing images to speed up builds
     log_info "Building all services (using cached images where possible)..."
@@ -929,6 +977,12 @@ main() {
         IFS=':' read -r project_path repo_url <<< "$project_info"
         update_project "$project_path" "$repo_url"
     done
+    
+    # Override Tamerlane CSP for public HTTP deployment
+    override_tamerlane_csp
+    
+    # Update cantaloupe base_uri if hostname is specified
+    update_cantaloupe_config
     
     # Setup miiify config from cloned repository
     setup_miiify_config

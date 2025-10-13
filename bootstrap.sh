@@ -960,41 +960,22 @@ update_hostname_in_files() {
     local project_name="$1"
     local hostname="$2"
     
-    log_info "Updating URLs to use hostname: $hostname"
+    log_info "Updating entry point URLs to use hostname: $hostname"
     
-    # Update URLs in IIIF manifest files - target specific IIIF service endpoints
-    if [ -d "web/iiif" ]; then
-        log_info "Updating IIIF manifest URLs..."
-        find web/iiif -name "*.json" -type f -exec sed -i -E \
-            -e "s|https?://[^/]+(:[0-9]+)?/iiif/|${hostname}/iiif/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/cantaloupe/|${hostname}/cantaloupe/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/miiify/|${hostname}/miiify/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/annosearch/|${hostname}/annosearch/|g" {} \;
-    fi
-    
-    # Update URLs in annotation files before processing
-    if [ -d "web/annotations" ]; then
-        log_info "Updating annotation URLs..."
-        find web/annotations -name "*.json" -type f -exec sed -i -E \
-            -e "s|https?://[^/]+(:[0-9]+)?/iiif/|${hostname}/iiif/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/cantaloupe/|${hostname}/cantaloupe/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/miiify/|${hostname}/miiify/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/annosearch/|${hostname}/annosearch/|g" {} \;
-    fi
-    
-    # Update URLs in HTML pages
+    # Update URLs in HTML pages (entry points) to use external hostname
     if [ -d "web/pages" ]; then
-        log_info "Updating HTML page URLs..."
-        find web/pages -name "*.html" -type f -exec sed -i -E \
-            -e "s|https?://[^/]+(:[0-9]+)?/iiif/|${hostname}/iiif/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/cantaloupe/|${hostname}/cantaloupe/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/miiify/|${hostname}/miiify/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/annosearch/|${hostname}/annosearch/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/pages/|${hostname}/pages/|g" \
-            -e "s|https?://[^/]+(:[0-9]+)?/viewer/|${hostname}/viewer/|g" {} \;
+        log_info "Updating HTML page entry point URLs..."
+        find web/pages -name "*.html" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
     fi
     
-    log_success "URL updates completed for hostname: $hostname"
+    # Update URLs in annotation files for external access (but not manifests)
+    if [ -d "web/annotations" ]; then
+        log_info "Updating annotation URLs for external access..."
+        find web/annotations -name "*.json" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
+    fi
+    
+    log_info "IIIF manifests will keep localhost URLs for portability (resolved relative to VM)"
+    log_success "Selective URL updates completed for hostname: $hostname"
 }
 
 # Function to setup miiify config from cloned repository
@@ -1042,8 +1023,10 @@ main() {
             ;;
         *)
             setup_project_files
-            # Always update hostname in project files to ensure consistency
-            update_hostname_in_files "$PROJECT_NAME" "$HOSTNAME"
+            # Update hostname in project files if different from default
+            if [ "$HOSTNAME" != "$DEFAULT_HOSTNAME" ]; then
+                update_hostname_in_files "$PROJECT_NAME" "$HOSTNAME"
+            fi
             ;;
     esac
     

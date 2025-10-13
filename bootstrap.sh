@@ -204,120 +204,18 @@ setup_project_from_directory() {
     local project_name="$1"
     local collection_dir="$2"
     
-    # Check if files already exist in web/ directory (standard project structure)
-    if [ -f "web/iiif/${project_name}.json" ] && [ -d "web/images" ] && [ -d "web/annotations" ]; then
-        log_info "Project files already exist in web/ directory structure"
-        log_info "Using existing manifest: web/iiif/${project_name}.json"
-        if [ -f "web/pages/${project_name}.html" ]; then
-            log_info "Using existing HTML page: web/pages/${project_name}.html"
-        fi
-        return 0
-    fi
-    
-    log_info "Setting up project from directory: $collection_dir"
-    
-    # Collection directory defaults to project name if not provided
-    if [ -z "$collection_dir" ]; then
-        collection_dir="$project_name"
-        log_info "Using project name as collection directory: $collection_dir"
-    fi
-    
-    # If it's not an absolute path, try to find the project directory in common locations
-    if [[ "$collection_dir" != /* ]]; then
-        # List of possible locations to search for the project directory
-        possible_paths=(
-            "$(pwd)/$collection_dir"           # Current directory (iiif-in-a-box)
-            "$(pwd)/../$collection_dir"        # Parent directory (git level)
-            "$(pwd)/../../$collection_dir"     # Grandparent directory
-            "$collection_dir"                  # Relative to current location
-        )
-        
-        found_path=""
-        for path in "${possible_paths[@]}"; do
-            if [ -d "$path" ]; then
-                found_path="$path"
-                log_info "Found collection directory at: $found_path"
-                break
-            fi
-        done
-        
-        if [ -n "$found_path" ]; then
-            collection_dir="$found_path"
-        else
-            # If not found, resolve to absolute path anyway for better error message
-            collection_dir="$(pwd)/$collection_dir"
-        fi
-    fi
-    
-    # Check if directory exists
-    if [ ! -d "$collection_dir" ]; then
-        log_error "Collection directory does not exist: $collection_dir"
-        log_error "Searched in the following locations:"
-        if [[ "$collection_dir" != /* ]]; then
-            # This shouldn't happen now, but just in case
-            log_error "  - $(pwd)/$collection_dir"
-            log_error "  - $(pwd)/../$collection_dir"
-        else
-            log_error "  - $collection_dir"
-            log_error "  - $(dirname "$collection_dir")/../$(basename "$collection_dir")"
-        fi
-        log_error "Please ensure the project directory exists or use --collection to specify the correct path."
-        return 1
-    fi
-    
-    # Create target directories
-    mkdir -p "web/iiif" "web/images" "web/annotations"
-    
-    # Copy manifests if they exist
-    if [ -d "$collection_dir/manifests" ]; then
-        log_info "Copying IIIF manifests..."
-        find "$collection_dir/manifests" -name "*.json" -exec cp {} "web/iiif/" \;
-        
-        # If there's a manifest with the project name, use it as the main manifest
-        if [ -f "$collection_dir/manifests/${project_name}.json" ]; then
-            log_info "Using ${project_name}.json as main manifest"
-        elif [ -f "web/iiif/${project_name}.json" ]; then
-            log_info "Found ${project_name}.json in manifests"
-        else
-            # Use the first manifest found and rename it
-            first_manifest=$(find "web/iiif" -name "*.json" | head -1)
-            if [ -n "$first_manifest" ]; then
-                cp "$first_manifest" "web/iiif/${project_name}.json"
-                log_info "Using $(basename "$first_manifest") as main manifest for ${project_name}"
-            fi
-        fi
-    else
-        log_error "No manifests directory found in collection directory. Directory must contain a 'manifests/' subdirectory."
-        return 1
-    fi
-    
-    # Copy images if they exist
-    if [ -d "$collection_dir/images" ]; then
-        log_info "Copying images..."
-        cp -r "$collection_dir/images"/* "web/images/" 2>/dev/null || log_warning "No images found or failed to copy images"
-    else
-        log_warning "No images directory found in collection directory"
-    fi
-    
-    # Copy annotations only if web/annotations is empty
-    if [ -d "$collection_dir/annotations" ]; then
-        if [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
-            log_info "Copying annotations from collection directory..."
-            cp -r "$collection_dir/annotations"/* "web/annotations/" 2>/dev/null || log_warning "No annotations found or failed to copy annotations"
-        else
-            log_info "Annotation files already exist in web/annotations/, skipping copy from collection directory"
-        fi
-    else
-        log_info "No annotations directory found in collection directory (user should place annotation files directly in web/annotations/)"
-    fi
+    log_info "Setting up project: $project_name"
     
     # Ensure we have a main manifest
     if [ ! -f "web/iiif/${project_name}.json" ]; then
-        log_error "No suitable manifest found for project ${project_name}. Expected manifests/${project_name}.json or any .json file in manifests/"
+        log_error "No manifest found for project ${project_name}. Expected web/iiif/${project_name}.json"
         return 1
     fi
     
-    log_success "Project setup from directory completed"
+    # Update hostname in existing files
+    update_hostname_in_files "$project_name" "$HOSTNAME"
+    
+    log_success "Project setup completed"
 }
 
 # Function to load annotations into miiify annotation server
@@ -371,7 +269,7 @@ load_annotations_to_miiify() {
     
     # Run the annotation processing with project name as argument
     log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name" "$hostname"; then
+    if npx ts-node process-annotations.ts "$project_name"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Updated manifest with annotation references in both project and web directories"
     else
@@ -489,7 +387,7 @@ load_annotations_from_web() {
     cd miiify
     
     log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name" "$hostname"; then
+    if npx ts-node process-annotations.ts "$project_name"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Generated manifest with annotation references in web/iiif/"
         cd - > /dev/null
@@ -962,19 +860,16 @@ update_hostname_in_files() {
     
     log_info "Updating hostname references to: $hostname"
     
-    # Update HTML pages (entry points) - change localhost to hostname
+    # Update HTML pages - change localhost to hostname
     if [ -d "web/pages" ]; then
-        log_info "Updating HTML page entry points..."
+        log_info "Updating HTML pages..."
         find web/pages -name "*.html" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
     fi
     
-    # Update only the specific project's annotation file for external access
-    local annotation_file="web/annotations/${project_name}.json"
-    if [ -f "$annotation_file" ]; then
-        log_info "Updating annotation URLs for external access: $annotation_file"
-        sed -i "s|http://localhost:8080|${hostname}|g" "$annotation_file"
-    else
-        log_warning "Project annotation file not found: $annotation_file"
+    # Update all JSON files in annotations directory
+    if [ -d "web/annotations" ]; then
+        log_info "Updating annotation files..."
+        find web/annotations -name "*.json" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
     fi
     
     log_info "IIIF manifests remain localhost for portability"
@@ -1026,10 +921,6 @@ main() {
             ;;
         *)
             setup_project_files
-            # Update hostname in project files if different from default
-            if [ "$HOSTNAME" != "$DEFAULT_HOSTNAME" ]; then
-                update_hostname_in_files "$PROJECT_NAME" "$HOSTNAME"
-            fi
             ;;
     esac
     
@@ -1088,7 +979,7 @@ main() {
             build_core_services
             
             log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
-            if ! load_annotations_from_web "$PROJECT_NAME" "$HOSTNAME"; then
+            if ! load_annotations_from_web "$PROJECT_NAME"; then
                 log_error "Failed to process annotations - cannot continue without manifests"
                 exit 1
             fi

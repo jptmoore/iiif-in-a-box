@@ -287,7 +287,7 @@ load_annotations_to_miiify() {
     
     # Run the annotation processing with project name as argument
     log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name"; then
+    if npx ts-node process-annotations.ts "$project_name" "$HOSTNAME"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Updated manifest with annotation references in both project and web directories"
     else
@@ -411,7 +411,7 @@ load_annotations_from_web() {
     if [ -f /.dockerenv ] || docker network ls 2>/dev/null | grep -q "appnet"; then
         export DOCKER_ENV=true
     fi
-    if npx ts-node process-annotations.ts "$project_name"; then
+    if npx ts-node process-annotations.ts "$project_name" "$HOSTNAME"; then
         log_success "Annotations processed successfully into miiify"
         log_info "Generated manifest with annotation references in web/iiif/"
         cd - > /dev/null
@@ -995,10 +995,44 @@ main() {
             show_status
             ;;
         "stop")
-            local service_project_name=$(get_service_project_name)
-            log_info "Stopping services for project: $service_project_name"
+            log_info "Stopping IIIF services..."
             cd proxy
-            $DOCKER_COMPOSE_CMD -p "$service_project_name" down
+            
+            # Try to detect the project name from running containers
+            local detected_project=""
+            for container_name in iiif-nginx iiif-web iiif-miiify iiif-cantaloupe iiif-annosearch iiif-quickwit; do
+                if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+                    # Extract project name from container labels or networks
+                    detected_project=$(docker inspect "$container_name" --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || echo "")
+                    if [ -n "$detected_project" ]; then
+                        break
+                    fi
+                fi
+            done
+            
+            # If we found a project name, use it; otherwise try common names
+            if [ -n "$detected_project" ]; then
+                log_info "Detected project name: $detected_project"
+                $DOCKER_COMPOSE_CMD -p "$detected_project" down
+            else
+                # Try stopping with different common project names
+                for project_name in domesday iiif lincolnshire; do
+                    if docker ps --format "{{.Names}}" | grep -q "${project_name}_\|${project_name}-"; then
+                        log_info "Stopping services for project: $project_name"
+                        $DOCKER_COMPOSE_CMD -p "$project_name" down
+                        break
+                    fi
+                done
+                
+                # Fallback: stop containers by name directly
+                log_info "Stopping containers by name..."
+                for container_name in iiif-nginx iiif-web iiif-miiify iiif-cantaloupe iiif-annosearch iiif-quickwit; do
+                    if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+                        docker stop "$container_name" 2>/dev/null && docker rm "$container_name" 2>/dev/null
+                    fi
+                done
+            fi
+            
             cd - > /dev/null
             log_success "Services stopped"
             ;;

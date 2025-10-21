@@ -628,7 +628,7 @@ update_cantaloupe_config() {
         log_info "Updating cantaloupe base_uri to: ${HOSTNAME}/cantaloupe"
         
         # Update base_uri with the provided hostname
-        sed -i.bak "s|base_uri = .*|base_uri = ${HOSTNAME}/cantaloupe|g" "$cantaloupe_config"
+        sed -i "s|base_uri = .*|base_uri = ${HOSTNAME}/cantaloupe|g" "$cantaloupe_config"
         
         log_success "Cantaloupe configuration updated"
     else

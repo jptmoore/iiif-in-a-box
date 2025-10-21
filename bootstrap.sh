@@ -487,7 +487,7 @@ get_project_title_from_yaml() {
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
-    local template_file="web/pages/demo.html"
+    local template_file="web/pages/_template.html"
     local page_file="web/pages/${project_name}.html"
     
     log_info "Creating HTML page: $page_file"

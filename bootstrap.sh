@@ -902,14 +902,20 @@ update_hostname_in_files() {
     
     log_info "Updating hostname references to: $hostname"
     
-    # Update HTML pages only - change localhost to hostname
+    # Update HTML pages - change localhost to hostname
     if [ -d "web/pages" ]; then
         log_info "Updating HTML pages..."
-        find web/pages -name "*.html" -type f -exec sed -i "s|http://localhost:8080|${hostname}|g" {} \;
+        find web/pages -name '*.html' -type f -exec sed -i "s#http://localhost:8080#${hostname}#g" {} \;
+    fi
+    
+    # Update annotation files - change localhost to hostname for annotation IDs and targets
+    if [ -d "web/annotations" ]; then
+        log_info "Updating annotation files..."
+        find web/annotations -name '*.json' -type f -exec sed -i "s#http://localhost:8080#${hostname}#g" {} \;
     fi
     
     log_info "IIIF manifests remain localhost for portability"
-    log_success "Updated HTML pages and ${project_name}.json annotation file to use: $hostname"
+    log_success "Updated HTML pages and annotation files to use: $hostname"
 }
 
 # Function to setup miiify config from cloned repository

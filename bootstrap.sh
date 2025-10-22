@@ -75,10 +75,16 @@ parse_arguments() {
                 fi
                 ;;
             *)
-                # Unknown argument
-                log_error "Unknown option: $1"
-                show_help
-                exit 1
+                # Check if it's a URL (hostname) - if so, set it as HOSTNAME
+                if [[ "$1" =~ ^https?:// ]]; then
+                    HOSTNAME="$1"
+                    shift
+                else
+                    # Unknown argument
+                    log_error "Unknown option: $1"
+                    show_help
+                    exit 1
+                fi
                 ;;
         esac
     done
@@ -1013,6 +1019,12 @@ main() {
     
     # Parse command line arguments
     parse_arguments "$@"
+    
+    # Create .env file for docker-compose (do this early and always)
+    if [ -d "proxy" ]; then
+        echo "ANNOSEARCH_PUBLIC_URL=${HOSTNAME}/annosearch" > proxy/.env
+        log_info "Created .env file with ANNOSEARCH_PUBLIC_URL=${HOSTNAME}/annosearch"
+    fi
     
     # Check dependencies
     check_dependencies

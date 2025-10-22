@@ -627,8 +627,15 @@ update_cantaloupe_config() {
     if [ -f "$cantaloupe_config" ]; then
         log_info "Updating cantaloupe base_uri to: ${HOSTNAME}/cantaloupe"
         
-        # Update base_uri with the provided hostname
-        sed -i "s|base_uri = .*|base_uri = ${HOSTNAME}/cantaloupe|g" "$cantaloupe_config"
+        # Update base_uri with the provided hostname (using # as delimiter to avoid URL conflicts)
+        # Handle macOS vs Linux sed differences
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS sed requires empty string for -i flag
+            sed -i "" "s#base_uri = .*#base_uri = ${HOSTNAME}/cantaloupe#g" "$cantaloupe_config"
+        else
+            # Linux sed doesn't need the empty string
+            sed -i "s#base_uri = .*#base_uri = ${HOSTNAME}/cantaloupe#g" "$cantaloupe_config"
+        fi
         
         log_success "Cantaloupe configuration updated"
     else

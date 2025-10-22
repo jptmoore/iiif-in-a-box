@@ -20,46 +20,32 @@ const getServerBase = (): string => {
 
 const serverBase = getServerBase();
 
+// Get hostname for Host header (remove protocol and path)
+function getHostHeader(hostname: string): string {
+    return hostname.replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+}
+
 // Extract base canvas ID from a `target` string like "...canvas/123#xywh=..."
 function extractCanvasIdFromTarget(target: string): string {
     const hashIndex = target.indexOf('#');
     return hashIndex >= 0 ? target.substring(0, hashIndex) : target;
 }
 
-// Update annotation URLs to use the provided hostname
+// Update annotation target URLs to use the provided hostname
 function updateAnnotationUrls(annotation: Annotation, hostname: string): Annotation {
     const updatedAnnotation = { ...annotation };
     
-    // Update target URLs
+    // Update target URLs (canvas references from source files)
     if (typeof updatedAnnotation.target === 'string') {
-        const oldTarget = updatedAnnotation.target;
         updatedAnnotation.target = updatedAnnotation.target.replace(/^https?:\/\/[^\/]+/, hostname);
-        if (oldTarget !== updatedAnnotation.target) {
-            console.log(`📌 Updated target: ${oldTarget} -> ${updatedAnnotation.target}`);
-        }
     } else if (Array.isArray(updatedAnnotation.target)) {
-        updatedAnnotation.target = updatedAnnotation.target.map(target => {
-            if (typeof target === 'string') {
-                const oldTarget = target;
-                const newTarget = target.replace(/^https?:\/\/[^\/]+/, hostname);
-                if (oldTarget !== newTarget) {
-                    console.log(`📌 Updated target: ${oldTarget} -> ${newTarget}`);
-                }
-                return newTarget;
-            }
-            return target;
-        });
+        updatedAnnotation.target = updatedAnnotation.target.map(target => 
+            typeof target === 'string' ? target.replace(/^https?:\/\/[^\/]+/, hostname) : target
+        );
     }
     
-    // Update id if it exists and contains a URL (handle both :8080 and :10000 ports)
-    if (updatedAnnotation.id && typeof updatedAnnotation.id === 'string' && updatedAnnotation.id.startsWith('http')) {
-        const oldId = updatedAnnotation.id;
-        // Replace localhost with any port number using regex
-        updatedAnnotation.id = updatedAnnotation.id.replace(/^https?:\/\/localhost:\d+/, hostname);
-        if (oldId !== updatedAnnotation.id) {
-            console.log(`🆔 Updated annotation ID: ${oldId} -> ${updatedAnnotation.id}`);
-        }
-    }
+    // Note: Annotation IDs are now generated correctly by miiify using the Host header
+    // so we don't need to rewrite them here
     
     return updatedAnnotation;
 }
@@ -304,14 +290,16 @@ async function deleteContainer(containerId: string): Promise<boolean> {
     }
 }
 
-async function createContainer(containerId: string): Promise<void> {
+async function createContainer(containerId: string, hostname: string): Promise<void> {
     const postUrl = `${serverBase}/`;
+    const hostHeader = getHostHeader(hostname);
     
     const res = await fetch(postUrl, {
         method: 'POST',
         headers: {
             'Slug': containerId,
             'Content-Type': 'application/ld+json',
+            'Host': hostHeader,
         },
         body: JSON.stringify({
             '@context': 'http://www.w3.org/ns/anno.jsonld',
@@ -345,7 +333,7 @@ async function createContainer(containerId: string): Promise<void> {
     throw new Error(`Failed to create container ${containerId}: ${res.status} ${res.statusText} - ${responseText}`);
 }
 
-async function ensureContainer(containerId: string): Promise<void> {
+async function ensureContainer(containerId: string, hostname: string): Promise<void> {
     // First try to delete any existing container
     await deleteContainer(containerId);
     
@@ -354,7 +342,7 @@ async function ensureContainer(containerId: string): Promise<void> {
     
     try {
         // Try to create the container
-        await createContainer(containerId);
+        await createContainer(containerId, hostname);
     } catch (error: any) {
         if (error.message.includes('container exists')) {
             console.log(`⚠️ Container ${containerId} still exists after delete. Checking if we can use it...`);
@@ -374,8 +362,9 @@ async function ensureContainer(containerId: string): Promise<void> {
     }
 }
 
-async function ensureAnnotation(containerId: string, annotation: Annotation): Promise<void> {
+async function ensureAnnotation(containerId: string, annotation: Annotation, hostname: string): Promise<void> {
     const slug = extractSlug(annotation.id);
+    const hostHeader = getHostHeader(hostname);
     
     // Create the annotation directly (since container was freshly created)
     const annotationCopy = JSON.parse(JSON.stringify(annotation));
@@ -388,6 +377,7 @@ async function ensureAnnotation(containerId: string, annotation: Annotation): Pr
         headers: {
             'Content-Type': 'application/ld+json',
             'Slug': slug,
+            'Host': hostHeader,
         },
         body: JSON.stringify(annotationCopy),
     });
@@ -470,9 +460,9 @@ async function uploadAllAnnotations() {
         for (const [canvas, annos] of Object.entries(grouped)) {
             const containerId = extractContainerId(canvas);
             console.log(`📦 Processing container: ${containerId} (${annos.length} annotations)`);
-            await ensureContainer(containerId);
+            await ensureContainer(containerId, hostname);
             for (const anno of annos) {
-                await ensureAnnotation(containerId, anno);
+                await ensureAnnotation(containerId, anno, hostname);
             }
         }
 

@@ -435,7 +435,8 @@ index_annotations_with_annosearch() {
         return 0
     fi
     
-    # Run the annosearch indexing script
+    # Run the annosearch indexing script with hostname
+    export IIIF_HOSTNAME="$HOSTNAME"
     if ./annosearch/load.sh "$project_name"; then
         log_success "Annotations indexed successfully for search"
         log_info "Search API available at: ${HOSTNAME}/annosearch/${project_name}/search"
@@ -984,10 +985,15 @@ setup_miiify_config() {
         log_info "Copying miiify config from cloned repository..."
         cp "$miiify_source" "$miiify_target"
         
-        # Modify id_proto to use http instead of https
+        # Set id_proto based on hostname protocol
         if command -v jq &> /dev/null; then
-            jq '.id_proto = "http"' "$miiify_target" > "${miiify_target}.tmp" && mv "${miiify_target}.tmp" "$miiify_target"
-            log_info "Updated id_proto to http in miiify config"
+            if [[ "$HOSTNAME" == https://* ]]; then
+                local protocol="https"
+            else
+                local protocol="http"
+            fi
+            jq ".id_proto = \"$protocol\"" "$miiify_target" > "${miiify_target}.tmp" && mv "${miiify_target}.tmp" "$miiify_target"
+            log_info "Updated id_proto to $protocol in miiify config"
         else
             # Fallback using sed if jq is not available
             sed -i 's/"id_proto": "https"/"id_proto": "http"/' "$miiify_target"

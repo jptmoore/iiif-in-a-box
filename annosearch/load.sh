@@ -64,8 +64,9 @@ load_annotations() {
     
     cd "$ANNOSEARCH_DIR"
     
-    # Construct manifest URL on the web service
-    local manifest_url="http://localhost:8080/iiif/${project_name}.json"
+    # Construct manifest URL - use hostname from environment or default to localhost
+    local base_url="${IIIF_HOSTNAME:-http://localhost:8080}"
+    local manifest_url="${base_url}/iiif/${project_name}.json"
     
     log_info "Loading from manifest URL: $manifest_url"
     

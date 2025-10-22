@@ -44,11 +44,8 @@ function updateAnnotationUrls(annotation: Annotation, hostname: string): Annotat
         );
     }
     
-    // Fix annotation IDs to include /miiify/ prefix for nginx routing
-    if (updatedAnnotation.id && typeof updatedAnnotation.id === 'string') {
-        // Replace /annotations/ with /miiify/annotations/ in the ID
-        updatedAnnotation.id = updatedAnnotation.id.replace('/annotations/', '/miiify/annotations/');
-    }
+    // Note: Annotation IDs are now generated correctly by miiify using the Host header
+    // so we don't need to rewrite them here
     
     return updatedAnnotation;
 }

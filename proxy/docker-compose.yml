@@ -28,7 +28,7 @@ services:
     depends_on:
       - quickwit
     environment:
-      ANNOSEARCH_PUBLIC_URL: http://localhost:8080/annosearch
+      ANNOSEARCH_PUBLIC_URL: ${ANNOSEARCH_PUBLIC_URL:-http://localhost:8080/annosearch}
       QUICKWIT_BASE_URL: http://quickwit:7280/api/v1/
     networks:
       - appnet

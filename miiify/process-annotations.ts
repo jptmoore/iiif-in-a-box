@@ -51,10 +51,11 @@ function updateAnnotationUrls(annotation: Annotation, hostname: string): Annotat
         });
     }
     
-    // Update id if it exists and contains a URL
+    // Update id if it exists and contains a URL (handle both :8080 and :10000 ports)
     if (updatedAnnotation.id && typeof updatedAnnotation.id === 'string' && updatedAnnotation.id.startsWith('http')) {
         const oldId = updatedAnnotation.id;
-        updatedAnnotation.id = updatedAnnotation.id.replace(/^https?:\/\/[^\/]+/, hostname);
+        // Replace localhost with any port number using regex
+        updatedAnnotation.id = updatedAnnotation.id.replace(/^https?:\/\/localhost:\d+/, hostname);
         if (oldId !== updatedAnnotation.id) {
             console.log(`🆔 Updated annotation ID: ${oldId} -> ${updatedAnnotation.id}`);
         }

@@ -32,16 +32,32 @@ function updateAnnotationUrls(annotation: Annotation, hostname: string): Annotat
     
     // Update target URLs
     if (typeof updatedAnnotation.target === 'string') {
+        const oldTarget = updatedAnnotation.target;
         updatedAnnotation.target = updatedAnnotation.target.replace(/^https?:\/\/[^\/]+/, hostname);
+        if (oldTarget !== updatedAnnotation.target) {
+            console.log(`📌 Updated target: ${oldTarget} -> ${updatedAnnotation.target}`);
+        }
     } else if (Array.isArray(updatedAnnotation.target)) {
-        updatedAnnotation.target = updatedAnnotation.target.map(target => 
-            typeof target === 'string' ? target.replace(/^https?:\/\/[^\/]+/, hostname) : target
-        );
+        updatedAnnotation.target = updatedAnnotation.target.map(target => {
+            if (typeof target === 'string') {
+                const oldTarget = target;
+                const newTarget = target.replace(/^https?:\/\/[^\/]+/, hostname);
+                if (oldTarget !== newTarget) {
+                    console.log(`📌 Updated target: ${oldTarget} -> ${newTarget}`);
+                }
+                return newTarget;
+            }
+            return target;
+        });
     }
     
     // Update id if it exists and contains a URL
     if (updatedAnnotation.id && typeof updatedAnnotation.id === 'string' && updatedAnnotation.id.startsWith('http')) {
+        const oldId = updatedAnnotation.id;
         updatedAnnotation.id = updatedAnnotation.id.replace(/^https?:\/\/[^\/]+/, hostname);
+        if (oldId !== updatedAnnotation.id) {
+            console.log(`🆔 Updated annotation ID: ${oldId} -> ${updatedAnnotation.id}`);
+        }
     }
     
     return updatedAnnotation;

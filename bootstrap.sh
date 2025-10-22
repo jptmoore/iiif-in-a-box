@@ -484,6 +484,28 @@ get_project_title_from_yaml() {
 }
 
 
+# Function to update template file with correct hostname
+update_template_hostname() {
+    local template_file="web/pages/_template.html"
+    
+    if [ -f "$template_file" ]; then
+        log_info "Updating template hostname to: $HOSTNAME"
+        
+        # Handle macOS vs Linux sed differences
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS sed with empty string (no backup files)
+            sed -i "" "s#http://localhost:8080#${HOSTNAME}#g" "$template_file"
+        else
+            # Linux sed doesn't need empty string parameter
+            sed -i "s#http://localhost:8080#${HOSTNAME}#g" "$template_file"
+        fi
+        
+        log_success "Template hostname updated"
+    else
+        log_warning "Template file not found at $template_file"
+    fi
+}
+
 # Function to create HTML page from template
 create_html_page() {
     local project_name="$1"
@@ -516,17 +538,32 @@ create_html_page() {
     cp "$template_file" "$page_file"
     
     # Replace project-specific content in the copied file (order matters!)
-    sed -i.bak "s/demo\.json/${project_name}.json/g" "$page_file"
-    sed -i.bak "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
-    sed -i.bak "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
-    sed -i.bak "s/IIIF Viewer showing the Demo collection/IIIF Viewer showing the ${project_title} collection/g" "$page_file"
-    sed -i.bak "s/<span class=\"tna-breadcrumbs__current\">Demo<\/span>/<span class=\"tna-breadcrumbs__current\">${project_title}<\/span>/g" "$page_file"
-    sed -i.bak "s/<h1 class=\"tna-heading-xl\">Demo<\/h1>/<h1 class=\"tna-heading-xl\">${project_title}<\/h1>/g" "$page_file"
-    sed -i.bak "s/Demo collection/${project_title} collection/g" "$page_file"
-    sed -i.bak "s/Demo/${project_title}/g" "$page_file"
-    
-    # Remove backup files
-    rm -f "${page_file}.bak"
+    # Handle macOS vs Linux sed differences for all replacements
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        # macOS sed with empty string (no backup files)
+        sed -i "" "s/demo\.json/${project_name}.json/g" "$page_file"
+        sed -i "" "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
+        sed -i "" "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
+        sed -i "" "s/IIIF Viewer showing the Demo collection/IIIF Viewer showing the ${project_title} collection/g" "$page_file"
+        sed -i "" "s/<span class=\"tna-breadcrumbs__current\">Demo<\/span>/<span class=\"tna-breadcrumbs__current\">${project_title}<\/span>/g" "$page_file"
+        sed -i "" "s/<h1 class=\"tna-heading-xl\">Demo<\/h1>/<h1 class=\"tna-heading-xl\">${project_title}<\/h1>/g" "$page_file"
+        sed -i "" "s/Demo collection/${project_title} collection/g" "$page_file"
+        sed -i "" "s/Demo/${project_title}/g" "$page_file"
+        # Update hostname in the iframe src
+        sed -i "" "s#http://localhost:8080#${HOSTNAME}#g" "$page_file"
+    else
+        # Linux sed doesn't need empty string parameter
+        sed -i "s/demo\.json/${project_name}.json/g" "$page_file"
+        sed -i "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
+        sed -i "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
+        sed -i "s/IIIF Viewer showing the Demo collection/IIIF Viewer showing the ${project_title} collection/g" "$page_file"
+        sed -i "s/<span class=\"tna-breadcrumbs__current\">Demo<\/span>/<span class=\"tna-breadcrumbs__current\">${project_title}<\/span>/g" "$page_file"
+        sed -i "s/<h1 class=\"tna-heading-xl\">Demo<\/h1>/<h1 class=\"tna-heading-xl\">${project_title}<\/h1>/g" "$page_file"
+        sed -i "s/Demo collection/${project_title} collection/g" "$page_file"
+        sed -i "s/Demo/${project_title}/g" "$page_file"
+        # Update hostname in the iframe src
+        sed -i "s#http://localhost:8080#${HOSTNAME}#g" "$page_file"
+    fi
     
     log_success "HTML page created: $page_file"
     if [ -n "$project_title" ]; then
@@ -561,15 +598,13 @@ setup_project_files() {
         return 1
     fi
     
-    # Create HTML page only if it doesn't exist or still has demo references
-    local page_file="web/pages/${project_name}.html"
-    if [ ! -f "$page_file" ] || grep -q "demo\.json\|Demo" "$page_file"; then
-        if ! create_html_page "$project_name"; then
-            log_error "Failed to create HTML page"
-            return 1
-        fi
-    else
-        log_info "HTML page already exists and is correctly configured: $page_file"
+    # Update template hostname before creating HTML pages
+    update_template_hostname
+    
+    # Always create HTML page from template to ensure it's up-to-date
+    if ! create_html_page "$project_name"; then
+        log_error "Failed to create HTML page"
+        return 1
     fi
     
     log_success "Project files created successfully for: $project_name"
@@ -650,13 +685,26 @@ override_tamerlane_csp() {
     if [ -f "$tamerlane_index" ]; then
         log_info "Overriding Tamerlane CSP for public HTTP deployment..."
         
-        # Remove existing CSP meta tag and add permissive one
-        sed -i.bak 's/<meta http-equiv="Content-Security-Policy"[^>]*>//g' "$tamerlane_index"
-        
-        # Add new permissive CSP meta tag in the head section
-        sed -i.bak '/<head>/a \
+        # Handle macOS vs Linux sed differences
+        if [[ "$OSTYPE" == "darwin"* ]]; then
+            # macOS sed with empty string (no backup files)
+            # Remove existing CSP meta tag and add permissive one
+            sed -i "" 's/<meta http-equiv="Content-Security-Policy"[^>]*>//g' "$tamerlane_index"
+            
+            # Add new permissive CSP meta tag in the head section
+            sed -i "" '/<head>/a \
     <meta http-equiv="Content-Security-Policy" content="default-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' data: blob: http: https:; img-src '\''self'\'' data: blob: http: https:; script-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' http: https:; style-src '\''self'\'' '\''unsafe-inline'\'' http: https:; font-src '\''self'\'' data: http: https:; connect-src '\''self'\'' http: https:;">
 ' "$tamerlane_index"
+        else
+            # Linux sed doesn't need empty string parameter
+            # Remove existing CSP meta tag and add permissive one
+            sed -i 's/<meta http-equiv="Content-Security-Policy"[^>]*>//g' "$tamerlane_index"
+            
+            # Add new permissive CSP meta tag in the head section
+            sed -i '/<head>/a \
+    <meta http-equiv="Content-Security-Policy" content="default-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' data: blob: http: https:; img-src '\''self'\'' data: blob: http: https:; script-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' http: https:; style-src '\''self'\'' '\''unsafe-inline'\'' http: https:; font-src '\''self'\'' data: http: https:; connect-src '\''self'\'' http: https:;">
+' "$tamerlane_index"
+        fi
         
         log_success "Tamerlane CSP updated for public HTTP deployment"
     else

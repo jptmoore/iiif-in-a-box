@@ -26,3 +26,6 @@ tests/
 # Ignore README and markdown docs (optional)
 README.md
 *.md
+
+# Exclude template files from Docker build
+pages/_template.html

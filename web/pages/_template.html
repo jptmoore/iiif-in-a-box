@@ -50,50 +50,17 @@
       width: auto;
     }
 
-    /* Navigation breadcrumbs */
-    .tna-breadcrumbs {
-      background-color: #f4f4f4;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid #d9d9d6;
+    .tna-header__beta {
+      color: #000000;
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-left: 0.75rem;
+      background-color: #ffffff;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0.25rem;
     }
 
-    .tna-breadcrumbs__list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-    }
 
-    .tna-breadcrumbs__item {
-      display: flex;
-      align-items: center;
-    }
-
-    .tna-breadcrumbs__item:not(:last-child)::after {
-      content: "›";
-      margin: 0 0.5rem;
-      color: #8c9694;
-    }
-
-    .tna-breadcrumbs__link {
-      color: #0062a8;
-      text-decoration: underline;
-      text-decoration-thickness: 2px;
-      text-underline-offset: 2px;
-      font-size: 0.875rem;
-    }
-
-    .tna-breadcrumbs__link:hover {
-      color: #004c7e;
-      text-decoration-thickness: 3px;
-    }
-
-    .tna-breadcrumbs__current {
-      color: #26262a;
-      font-size: 0.875rem;
-    }
 
     /* Main content */
     .tna-section {
@@ -190,7 +157,7 @@
 
     .tna-footer__content {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
       align-items: center;
       flex-wrap: wrap;
       gap: 1rem;
@@ -240,25 +207,10 @@
         <img src="/assets/tna-square-logo.svg" 
              alt="IIIF-in-a-Box" 
              class="tna-header__logo">
+        <span class="tna-header__beta">Beta</span>
       </div>
     </div>
   </header>
-
-  <nav class="tna-breadcrumbs">
-    <div class="tna-container">
-      <ol class="tna-breadcrumbs__list">
-        <li class="tna-breadcrumbs__item">
-          <a href="/" class="tna-breadcrumbs__link">Home</a>
-        </li>
-        <li class="tna-breadcrumbs__item">
-          <a href="/pages/" class="tna-breadcrumbs__link">Collections</a>
-        </li>
-        <li class="tna-breadcrumbs__item">
-          <span class="tna-breadcrumbs__current">Demo</span>
-        </li>
-      </ol>
-    </div>
-  </nav>
 
   <main id="main-content" class="tna-section">
     <div class="tna-container">
@@ -286,13 +238,8 @@
     <div class="tna-container">
       <div class="tna-footer__content">
         <div class="tna-footer__text">
-          Powered by IIIF-in-a-Box
+          Powered by <a href="/" class="tna-footer__link">IIIF-in-a-Box</a>
         </div>
-        <ul class="tna-footer__links">
-          <li><a href="/accessibility/" class="tna-footer__link">Accessibility</a></li>
-          <li><a href="/cookies/" class="tna-footer__link">Cookies</a></li>
-          <li><a href="/" class="tna-footer__link">Home</a></li>
-        </ul>
       </div>
     </div>
   </footer>

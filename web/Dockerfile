@@ -27,6 +27,7 @@ RUN mkdir -p /usr/local/apache2/conf/conf.d
 
 # Copy Apache configuration
 COPY iiif-in-a-box/web/apache-cors.conf /usr/local/apache2/conf/conf.d/cors.conf
+COPY iiif-in-a-box/web/apache-security.conf /usr/local/apache2/conf/conf.d/security.conf
 
 # Include conf.d directory
 RUN echo "IncludeOptional conf/conf.d/*.conf" >> /usr/local/apache2/conf/httpd.conf

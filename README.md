@@ -87,7 +87,7 @@ projects:
 
 - **🌐 nginx** (8080) - Main access point
 - **📄 Apache** - Viewer at `/viewer/`
-- **🖼️ Cantaloupe** - IIIF Image API at `/cantaloupe/`
+- **🖼️ IIPImage** - IIIF Image API at `/iiif/`
 - **🔍 AnnoSearch** - Search at `/annosearch/`
 - **📝 Miiify** - Annotation server at `/miiify/`
 

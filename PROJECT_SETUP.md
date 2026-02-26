@@ -105,7 +105,7 @@ web/
 ├── pages/
 │   └── myproject.html       # Your project page
 └── images/
-    └── *.tif                # Image files for Cantaloupe
+    └── *.tif                # Image files for IIPImage server
 ```
 
 ## URLs After Setup

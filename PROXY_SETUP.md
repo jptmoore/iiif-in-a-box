@@ -87,7 +87,7 @@ The bootstrap script now includes proxy-friendly options.
 
 ### New Files:
 - `configure-docker-proxy.sh` - Docker proxy configuration script
-- `cantaloupe/Dockerfile.proxy` - Proxy-friendly Cantaloupe Dockerfile
+- `iipimage/Dockerfile` - IIPImage server Dockerfile
 - `web/Dockerfile.proxy` - Proxy-friendly web Dockerfile  
 - `proxy/docker-compose.proxy.yml` - Proxy-friendly compose file
 - `PROXY_SETUP.md` - This documentation

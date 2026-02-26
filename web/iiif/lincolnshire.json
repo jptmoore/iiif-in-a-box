@@ -1,6 +1,6 @@
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "http://127.0.0.1:8080/iiif/lincolnshire.json",
+  "id": "http://localhost:8080/iiif/lincolnshire.json",
   "type": "Manifest",
   "label": {
     "en": [
@@ -9,27 +9,27 @@
   },
   "items": [
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0680",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0680",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0680/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0680/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0680/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0680/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0680",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0680",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0680.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0680.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0680.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0680.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -41,33 +41,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0680/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0680/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0684",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0684",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0684/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0684/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0684/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0684/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0684",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0684",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0684.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0684.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0684.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0684.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -79,33 +79,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0684/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0684/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0685",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0685",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0685/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0685/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0685/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0685/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0685",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0685",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0685.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0685.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0685.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0685.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -117,33 +117,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0685/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0685/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0689",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0689",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0689/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0689/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0689/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0689/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0689",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0689",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0689.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0689.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0689.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0689.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -155,33 +155,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0689/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0689/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0690",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0690",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0690/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0690/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0690/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0690/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0690",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0690",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0690.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0690.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0690.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0690.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -193,33 +193,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0690/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0690/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0694",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0694",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0694/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0694/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0694/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0694/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0694",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0694",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0694.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0694.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0694.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0694.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -231,33 +231,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0694/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0694/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0695",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0695",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0695/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0695/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0695/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0695/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0695",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0695",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0695.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0695.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0695.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0695.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -269,33 +269,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0695/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0695/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0699",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0699",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0699/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0699/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0699/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0699/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0699",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0699",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0699.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0699.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0699.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0699.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -307,33 +307,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0699/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0699/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0700",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0700",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0700/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0700/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0700/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0700/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0700",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0700",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0700.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0700.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0700.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0700.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -345,33 +345,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0700/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0700/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0704",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0704",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0704/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0704/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0704/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0704/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0704",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0704",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0704.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0704.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0704.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0704.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -383,33 +383,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0704/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0704/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0705",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0705",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0705/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0705/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0705/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0705/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0705",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0705",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0705.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0705.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0705.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0705.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -421,33 +421,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0705/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0705/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0709",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0709",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0709/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0709/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0709/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0709/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0709",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0709",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0709.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0709.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0709.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0709.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -459,33 +459,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0709/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0709/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0710",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0710",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0710/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0710/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0710/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0710/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0710",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0710",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0710.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0710.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0710.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0710.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -497,33 +497,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0710/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0710/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0714",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0714",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0714/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0714/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0714/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0714/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0714",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0714",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0714.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0714.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0714.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0714.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -535,33 +535,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0714/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0714/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0715",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0715",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0715/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0715/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0715/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0715/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0715",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0715",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0715.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0715.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0715.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0715.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -573,33 +573,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0715/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0715/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0719",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0719",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0719/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0719/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0719/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0719/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0719",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0719",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0719.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0719.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0719.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0719.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -611,33 +611,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0719/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0719/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0720",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0720",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0720/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0720/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0720/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0720/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0720",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0720",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0720.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0720.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0720.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0720.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -649,33 +649,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0720/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0720/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0724",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0724",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0724/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0724/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0724/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0724/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0724",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0724",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0724.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0724.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0724.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0724.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -687,33 +687,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0724/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0724/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0725",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0725",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0725/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0725/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0725/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0725/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0725",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0725",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0725.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0725.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0725.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0725.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -725,33 +725,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0725/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0725/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0729",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0729",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0729/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0729/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0729/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0729/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0729",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0729",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0729.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0729.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0729.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0729.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -763,33 +763,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0729/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0729/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0730",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0730",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0730/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0730/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0730/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0730/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0730",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0730",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0730.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0730.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0730.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0730.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -801,33 +801,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0730/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0730/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0734",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0734",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0734/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0734/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0734/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0734/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0734",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0734",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0734.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0734.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0734.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0734.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -839,33 +839,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0734/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0734/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0735",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0735",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0735/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0735/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0735/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0735/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0735",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0735",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0735.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0735.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0735.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0735.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -877,33 +877,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0735/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0735/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0739",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0739",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0739/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0739/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0739/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0739/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0739",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0739",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0739.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0739.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0739.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0739.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -915,33 +915,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0739/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0739/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0740",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0740",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0740/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0740/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0740/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0740/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0740",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0740",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0740.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0740.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0740.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0740.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -953,33 +953,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0740/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0740/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0744",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0744",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0744/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0744/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0744/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0744/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0744",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0744",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0744.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0744.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0744.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0744.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -991,33 +991,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0744/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0744/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0745",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0745",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0745/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0745/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0745/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0745/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0745",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0745",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0745.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0745.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0745.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0745.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1029,33 +1029,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0745/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0745/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0749",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0749",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0749/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0749/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0749/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0749/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0749",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0749",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0749.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0749.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0749.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0749.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1067,33 +1067,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0749/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0749/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0750",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0750",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0750/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0750/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0750/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0750/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0750",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0750",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0750.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0750.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0750.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0750.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1105,33 +1105,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0750/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0750/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0754",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0754",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0754/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0754/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0754/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0754/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0754",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0754",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0754.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0754.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0754.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0754.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1143,33 +1143,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0754/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0754/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0755",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0755",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0755/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0755/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0755/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0755/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0755",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0755",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0755.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0755.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0755.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0755.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1181,33 +1181,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0755/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0755/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0759",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0759",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0759/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0759/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0759/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0759/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0759",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0759",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0759.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0759.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0759.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0759.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1219,33 +1219,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0759/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0759/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0760",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0760",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0760/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0760/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0760/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0760/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0760",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0760",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0760.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0760.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0760.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0760.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1257,33 +1257,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0760/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0760/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0764",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0764",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0764/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0764/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0764/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0764/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0764",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0764",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0764.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0764.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0764.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0764.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1295,33 +1295,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0764/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0764/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0765",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0765",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0765/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0765/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0765/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0765/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0765",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0765",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0765.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0765.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0765.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0765.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1333,33 +1333,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0765/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0765/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0769",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0769",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0769/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0769/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0769/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0769/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0769",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0769",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0769.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0769.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0769.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0769.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1371,33 +1371,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0769/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0769/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0770",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0770",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0770/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0770/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0770/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0770/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0770",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0770",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0770.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0770.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0770.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0770.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1409,33 +1409,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0770/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0770/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0774",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0774",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0774/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0774/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0774/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0774/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0774",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0774",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0774.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0774.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0774.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0774.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1447,33 +1447,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0774/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0774/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0775",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0775",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0775/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0775/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0775/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0775/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0775",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0775",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0775.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0775.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0775.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0775.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1485,33 +1485,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0775/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0775/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0779",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0779",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0779/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0779/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0779/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0779/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0779",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0779",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0779.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0779.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0779.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0779.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1523,33 +1523,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0779/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0779/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0780",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0780",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0780/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0780/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0780/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0780/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0780",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0780",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0780.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0780.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0780.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0780.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1561,33 +1561,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0780/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0780/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0784",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0784",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0784/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0784/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0784/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0784/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0784",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0784",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0784.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0784.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0784.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0784.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1599,33 +1599,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0784/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0784/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0785",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0785",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0785/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0785/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0785/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0785/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0785",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0785",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0785.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0785.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0785.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0785.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1637,33 +1637,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0785/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0785/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0789",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0789",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0789/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0789/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0789/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0789/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0789",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0789",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0789.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0789.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0789.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0789.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1675,33 +1675,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0789/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0789/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0790",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0790",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0790/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0790/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0790/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0790/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0790",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0790",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0790.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0790.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0790.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0790.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1713,33 +1713,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0790/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0790/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0794",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0794",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0794/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0794/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0794/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0794/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0794",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0794",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0794.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0794.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0794.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0794.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1751,33 +1751,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0794/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0794/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0795",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0795",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0795/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0795/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0795/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0795/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0795",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0795",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0795.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0795.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0795.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0795.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1789,33 +1789,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0795/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0795/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0799",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0799",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0799/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0799/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0799/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0799/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0799",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0799",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0799.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0799.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0799.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0799.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1827,33 +1827,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0799/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0799/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0800",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0800",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0800/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0800/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0800/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0800/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0800",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0800",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0800.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0800.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0800.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0800.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1865,33 +1865,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0800/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0800/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0804",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0804",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0804/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0804/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0804/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0804/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0804",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0804",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0804.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0804.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0804.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0804.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1903,33 +1903,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0804/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0804/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0805",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0805",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0805/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0805/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0805/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0805/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0805",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0805",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0805.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0805.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0805.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0805.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1941,33 +1941,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0805/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0805/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0809",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0809",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0809/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0809/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0809/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0809/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0809",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0809",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0809.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0809.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0809.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0809.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -1979,33 +1979,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0809/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0809/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0810",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0810",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0810/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0810/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0810/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0810/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0810",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0810",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0810.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0810.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0810.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0810.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2017,33 +2017,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0810/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0810/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0814",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0814",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0814/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0814/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0814/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0814/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0814",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0814",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0814.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0814.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0814.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0814.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2055,33 +2055,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0814/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0814/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0815",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0815",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0815/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0815/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0815/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0815/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0815",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0815",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0815.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0815.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0815.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0815.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2093,33 +2093,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0815/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0815/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0819",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0819",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0819/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0819/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0819/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0819/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0819",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0819",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0819.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0819.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0819.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0819.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2131,33 +2131,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0819/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0819/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0820",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0820",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0820/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0820/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0820/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0820/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0820",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0820",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0820.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0820.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0820.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0820.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2169,33 +2169,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0820/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0820/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0824",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0824",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0824/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0824/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0824/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0824/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0824",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0824",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0824.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0824.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0824.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0824.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2207,33 +2207,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0824/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0824/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0825",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0825",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0825/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0825/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0825/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0825/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0825",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0825",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0825.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0825.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0825.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0825.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2245,33 +2245,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0825/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0825/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0829",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0829",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0829/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0829/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0829/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0829/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0829",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0829",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0829.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0829.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0829.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0829.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2283,33 +2283,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0829/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0829/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0830",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0830",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0830/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0830/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0830/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0830/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0830",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0830",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0830.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0830.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0830.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0830.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2321,33 +2321,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0830/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0830/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0834",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0834",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0834/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0834/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0834/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0834/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0834",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0834",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0834.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0834.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0834.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0834.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2359,33 +2359,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0834/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0834/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0835",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0835",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0835/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0835/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0835/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0835/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0835",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0835",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0835.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0835.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0835.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0835.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2397,33 +2397,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0835/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0835/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0839",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0839",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0839/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0839/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0839/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0839/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0839",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0839",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0839.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0839.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0839.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0839.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2435,33 +2435,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0839/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0839/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0840",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0840",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0840/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0840/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0840/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0840/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0840",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0840",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0840.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0840.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0840.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0840.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2473,33 +2473,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0840/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0840/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0844",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0844",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0844/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0844/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0844/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0844/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0844",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0844",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0844.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0844.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0844.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0844.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2511,33 +2511,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0844/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0844/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0845",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0845",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0845/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0845/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0845/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0845/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0845",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0845",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0845.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0845.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0845.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0845.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2549,33 +2549,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0845/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0845/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0849",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0849",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0849/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0849/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0849/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0849/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0849",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0849",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0849.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0849.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0849.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0849.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2587,33 +2587,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0849/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0849/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0850",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0850",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0850/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0850/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0850/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0850/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0850",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0850",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0850.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0850.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0850.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0850.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2625,33 +2625,33 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0850/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0850/?page=0",
           "type": "AnnotationPage"
         }
       ]
     },
     {
-      "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0854",
+      "id": "http://localhost:8080/domesday/lincolnshire/canvas/0854",
       "type": "Canvas",
       "width": 3191,
       "height": 4573,
       "items": [
         {
-          "id": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0854/painting",
+          "id": "http://localhost:8080/domesday/lincolnshire/canvas/0854/painting",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "http://127.0.0.1:8080/cantaloupe/iiif/manifest/0854/annotation",
+              "id": "http://localhost:8080/cantaloupe/iiif/manifest/0854/annotation",
               "type": "Annotation",
               "motivation": "painting",
-              "target": "http://127.0.0.1:8080/domesday/lincolnshire/canvas/0854",
+              "target": "http://localhost:8080/domesday/lincolnshire/canvas/0854",
               "body": {
-                "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0854.tif/full/max/0/default.jpg",
+                "id": "http://localhost:8080/cantaloupe/iiif/3/0854.tif/full/max/0/default.jpg",
                 "type": "Image",
                 "format": "image/jpeg",
                 "service": [
                   {
-                    "id": "http://127.0.0.1:8080/cantaloupe/iiif/3/0854.tif/info.json",
+                    "id": "http://localhost:8080/cantaloupe/iiif/3/0854.tif/info.json",
                     "type": "ImageService3",
                     "profile": "level2"
                   }
@@ -2663,7 +2663,7 @@
       ],
       "annotations": [
         {
-          "id": "http://127.0.0.1:8080/miiify/annotations/domesday-lincolnshire-canvas-0854/?page=0",
+          "id": "http://localhost:8080/miiify/annotations/domesday-lincolnshire-canvas-0854/?page=0",
           "type": "AnnotationPage"
         }
       ]

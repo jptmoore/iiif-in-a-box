@@ -1,6 +1,6 @@
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "http://127.0.0.1:8080/iiif/domesday.json",
+  "id": "http://localhost:8080/iiif/domesday.json",
   "type": "Collection",
   "label": {
     "en": [
@@ -14,11 +14,11 @@
   },
   "service": [
     {
-      "id": "http://127.0.0.1:8080/annosearch/domesday/search",
+      "id": "http://localhost:8080/annosearch/domesday/search",
       "type": "SearchService2",
       "service": [
         {
-          "id": "http://127.0.0.1:8080/annosearch/domesday/autocomplete",
+          "id": "http://localhost:8080/annosearch/domesday/autocomplete",
           "type": "AutoCompleteService2"
         }
       ]
@@ -26,7 +26,7 @@
   ],
   "items": [
     {
-      "id": "http://127.0.0.1:8080/iiif/lincolnshire.json",
+      "id": "http://localhost:8080/iiif/lincolnshire.json",
       "type": "Manifest",
       "label": {
         "en": [

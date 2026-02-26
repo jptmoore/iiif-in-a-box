@@ -33,19 +33,20 @@ services:
     networks:
       - appnet
 
-  cantaloupe:
-    container_name: iiif-cantaloupe
-    build: ../../iiif-in-a-box/cantaloupe
-    image: cantaloupe:5.0.7
+  iipimage:
+    container_name: iiif-iipimage
+    image: iipsrv/iipsrv:latest
     volumes:
       - ../../iiif-in-a-box/web/images:/images
+    environment:
+      - FILESYSTEM_PREFIX=/images/
+      - MAX_IMAGE_CACHE_SIZE=1000
+      - JPEG_QUALITY=90
+      - MAX_CVT=5000
     networks:
       - appnet
-    command: >
-      java
-      -Dcantaloupe.config=cantaloupe.properties
-      -Xmx2g
-      -jar cantaloupe-5.0.7.jar
+    expose:
+      - "9000"
 
   nginx:
     container_name: iiif-nginx

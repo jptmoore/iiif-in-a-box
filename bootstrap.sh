@@ -115,7 +115,7 @@ Options:
                                     (optional - defaults to project name from YAML)
   --hostname, --host HOSTNAME       Base URL for the IIIF service 
                                     (default: http://localhost:8080)
-  --force, -f                       Force rebuild all Docker images (including slow Cantaloupe)
+  --force, -f                       Force rebuild all Docker images
   --help, -h                        Show this help message
 
 Commands:
@@ -145,13 +145,13 @@ Examples:
   # Build with hostname using flags
   $0 build --project domesday --hostname http://192.168.1.100:8080
   
-  # Force complete rebuild (slow - rebuilds everything including Cantaloupe)
+  # Force complete rebuild (slow - rebuilds all images)
   $0 build domesday --force
 
 Collection Directory Structure:
   The collection directory should contain:
     manifests/       - IIIF manifest/collection files (.json)
-    images/          - Image files (served via Cantaloupe IIIF Image API)
+    images/          - Image files (served via IIPImage IIIF Image API)
     annotations/     - Annotation files (.json)
 
   Example layout:
@@ -167,7 +167,7 @@ Collection Directory Structure:
 
   The system will:
     - Look for {project-name}.json in manifests/ or use the first manifest found
-    - Serve images via Cantaloupe at http://localhost:8080/cantaloupe/
+    - Serve images via IIPImage at http://localhost:8080/iiif/
     - Make annotations available at http://localhost:8080/annotations/
     - Create a viewer at http://localhost:8080/pages/{project-name}.html
 
@@ -619,7 +619,7 @@ setup_project_files() {
     log_info "IIIF Manifest: web/iiif/${project_name}.json"
     log_info "HTML Page: web/pages/${project_name}.html"
     log_info "Viewer URL: ${HOSTNAME}/pages/${project_name}.html"
-    log_info "Images served via: ${HOSTNAME}/cantaloupe/"
+    log_info "Images served via: ${HOSTNAME}/iiif/"
     log_info "Annotations available at: ${HOSTNAME}/annotations/"
 }
 
@@ -662,27 +662,10 @@ update_project() {
     fi
 }
 
-# Function to update cantaloupe configuration with correct base_uri
-update_cantaloupe_config() {
-    local cantaloupe_config="cantaloupe/cantaloupe.properties"
-    
-    if [ -f "$cantaloupe_config" ]; then
-        log_info "Updating cantaloupe base_uri to: ${HOSTNAME}/cantaloupe"
-        
-        # Update base_uri with the provided hostname (using # as delimiter to avoid URL conflicts)
-        # Handle macOS vs Linux sed differences
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS sed requires empty string for -i flag
-            sed -i "" "s#base_uri = .*#base_uri = ${HOSTNAME}/cantaloupe#g" "$cantaloupe_config"
-        else
-            # Linux sed doesn't need the empty string
-            sed -i "s#base_uri = .*#base_uri = ${HOSTNAME}/cantaloupe#g" "$cantaloupe_config"
-        fi
-        
-        log_success "Cantaloupe configuration updated"
-    else
-        log_warning "Cantaloupe config not found at $cantaloupe_config"
-    fi
+# IIPImage server doesn't require configuration updates like Cantaloupe did
+# This function is kept as a no-op for backwards compatibility
+update_iipimage_config() {
+    log_info "IIPImage server configuration is handled via environment variables in docker-compose.yml"
 }
 
 # Function to override Tamerlane's CSP for public HTTP deployment
@@ -1049,8 +1032,8 @@ main() {
     # Override Tamerlane CSP for public HTTP deployment
     override_tamerlane_csp
     
-    # Update cantaloupe base_uri if hostname is specified
-    update_cantaloupe_config
+    # IIPImage configuration (handled via docker-compose environment variables)
+    update_iipimage_config
     
     # Setup miiify config from cloned repository
     setup_miiify_config
@@ -1065,7 +1048,7 @@ main() {
             
             log_info "🏗️  Building IIIF service for project: $PROJECT_NAME"
             if [ "$FORCE_REBUILD" = "true" ]; then
-                log_info "🔄 Force rebuild mode enabled - will rebuild all images including Cantaloupe"
+                log_info "🔄 Force rebuild mode enabled - will rebuild all images"
             else
                 log_info "⚡ Fast build mode - will reuse existing Docker images where possible"
             fi

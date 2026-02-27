@@ -64,7 +64,7 @@ parse_arguments() {
                 show_help
                 exit 0
                 ;;
-            build|dev|clean|status|stop|restart|logs)
+            build|dev|clean|status|stop|restart|logs|maintenance)
                 # Store command
                 BOOTSTRAP_COMMAND="$1"
                 shift
@@ -125,6 +125,7 @@ Commands:
   stop                         - Stop all services
   restart                      - Restart all services
   logs                         - Show service logs
+  maintenance                  - Enable maintenance mode (stops services, shows maintenance page)
 
 Examples:
   # Build IIIF service (uses the project defined in config/projects.yml)
@@ -147,6 +148,12 @@ Examples:
   
   # Force complete rebuild (slow - rebuilds all images)
   $0 build domesday --force
+
+  # Put service into maintenance mode
+  $0 maintenance
+  
+  # Bring service back online (rebuild after maintenance)
+  $0 build
 
 Collection Directory Structure:
   The collection directory should contain:
@@ -806,6 +813,12 @@ build_core_services() {
     
     cd proxy
     
+    # Check if maintenance mode is running and stop it
+    if docker ps --format "{{.Names}}" | grep -q "^iiif-nginx-maintenance$"; then
+        log_info "Maintenance mode detected - stopping it first..."
+        $DOCKER_COMPOSE_CMD -f docker-compose.maintenance.yml down 2>/dev/null
+    fi
+    
     # Stop any running services
     if $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
         log_info "Stopping existing services..."
@@ -1014,7 +1027,7 @@ main() {
     
     # Setup project files (skip for service management commands)
     case "$BOOTSTRAP_COMMAND" in
-        "stop"|"status"|"restart"|"logs")
+        "stop"|"status"|"restart"|"logs"|"maintenance")
             log_info "Service management command detected - skipping project setup"
             ;;
         *)
@@ -1022,21 +1035,28 @@ main() {
             ;;
     esac
     
-    # Update/clone projects
-    log_info "Updating project dependencies..."
-    for project_info in "${PROJECTS[@]}"; do
-        IFS=':' read -r project_path repo_url <<< "$project_info"
-        update_project "$project_path" "$repo_url"
-    done
-    
-    # Override Tamerlane CSP for public HTTP deployment
-    override_tamerlane_csp
-    
-    # IIPImage configuration (handled via docker-compose environment variables)
-    update_iipimage_config
-    
-    # Setup miiify config from cloned repository
-    setup_miiify_config
+    # Update/clone projects (skip for quick service commands)
+    case "$BOOTSTRAP_COMMAND" in
+        "stop"|"status"|"restart"|"logs"|"maintenance")
+            # Skip project updates and setup for these commands
+            ;;
+        *)
+            log_info "Updating project dependencies..."
+            for project_info in "${PROJECTS[@]}"; do
+                IFS=':' read -r project_path repo_url <<< "$project_info"
+                update_project "$project_path" "$repo_url"
+            done
+            
+            # Override Tamerlane CSP for public HTTP deployment
+            override_tamerlane_csp
+            
+            # IIPImage configuration (handled via docker-compose environment variables)
+            update_iipimage_config
+            
+            # Setup miiify config from cloned repository
+            setup_miiify_config
+            ;;
+    esac
     
     # Execute the requested command
     case "$BOOTSTRAP_COMMAND" in
@@ -1155,6 +1175,30 @@ main() {
             cd proxy
             $DOCKER_COMPOSE_CMD -p "$service_project_name" logs -f
             cd - > /dev/null
+            ;;
+        "maintenance")
+            log_info "🔧 Enabling maintenance mode..."
+            
+            # Stop all services first
+            log_info "Stopping all IIIF services..."
+            cd proxy
+            
+            # Try to detect and stop running services (suppress docker output)
+            for container_name in iiif-nginx iiif-web iiif-miiify iiif-iipimage iiif-annosearch iiif-quickwit; do
+                if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
+                    docker stop "$container_name" >/dev/null 2>&1 && docker rm "$container_name" >/dev/null 2>&1
+                    log_info "Stopped: $container_name"
+                fi
+            done
+            
+            # Start minimal nginx with maintenance page
+            log_info "Starting maintenance mode (nginx only)..."
+            $DOCKER_COMPOSE_CMD -f docker-compose.maintenance.yml up -d
+            
+            cd - > /dev/null
+            log_success "✅ Maintenance mode enabled"
+            log_info "📄 Maintenance page available at: http://localhost:8080"
+            log_info "💡 Run './bootstrap.sh build' to bring services back online"
             ;;
         *)
             show_help

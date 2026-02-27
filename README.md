@@ -45,6 +45,9 @@ web/iiif/              ← Generated IIIF collections + manifests (auto-created)
 ./bootstrap.sh restart                         # Restart services
 ./bootstrap.sh logs                            # View logs
 
+# Maintenance mode
+./bootstrap.sh maintenance                     # Enable maintenance mode (stops services, shows maintenance page)
+
 # Hostname configuration for deployment
 ./bootstrap.sh build --hostname http://localhost:8080     # Local development (default)
 ./bootstrap.sh build --hostname http://18.135.130.106:8080  # VM deployment
@@ -97,3 +100,22 @@ projects:
 - **git, docker, docker-compose**
 - **At least one annotation file** in `web/annotations/` (build will fail if empty)
 
+## Maintenance Mode
+
+Put your service into maintenance mode during updates or troubleshooting:
+
+```bash
+# Enable maintenance mode (stops all services, shows maintenance page)
+./bootstrap.sh maintenance
+
+# Bring services back online
+./bootstrap.sh build
+```
+
+Maintenance mode:
+- ✅ Stops all IIIF services gracefully
+- ✅ Shows users a professional maintenance page
+- ✅ Returns proper HTTP 503 status codes
+- ✅ Runs only minimal nginx (very lightweight)
+
+See [proxy/MAINTENANCE.md](proxy/MAINTENANCE.md) for details.

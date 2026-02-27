@@ -1,0 +1,19 @@
+# Minimal configuration for maintenance mode
+# Only runs nginx with a maintenance page
+
+services:
+  nginx:
+    container_name: iiif-nginx-maintenance
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+      - "80:80"
+    volumes:
+      - ./nginx/maintenance.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../iiif-in-a-box/web/maintenance.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      - appnet
+
+networks:
+  appnet:
+    driver: bridge

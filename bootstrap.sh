@@ -1,17 +1,7 @@
 #!/bin/bash
-# IIIF-In-A-Box Bootstrap Script
+# IIIF-In-A-Box Bootstrap Script v2
+# Uses Miiify v2 with separate input/output directories
 set -e
-
-# Configuration - clone to parent directory
-PROJECTS=(
-    "../tamerlane:https://github.com/jptmoore/tamerlane.git"
-    "../miiify:https://github.com/jptmoore/miiify.git" 
-    "../annosearch:https://github.com/jptmoore/annosearch.git"
-)
-
-# Default configuration
-DEFAULT_COLLECTION_DIR=""
-DEFAULT_HOSTNAME="http://localhost:8080"
 
 # Colors for output
 RED='\033[0;31m'
@@ -26,1186 +16,519 @@ log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
-# Function to get service URL - bootstrap script runs on host, so use localhost
-get_service_url() {
-    local service_name="$1"
-    local port="$2"
-    
-    # Bootstrap script always runs on host, so use localhost
-    echo "http://localhost:${port}"
+# Default configuration
+DEFAULT_OUTPUT_DIR="./output"
+DEFAULT_HOSTNAME="http://localhost:8080"
+DOCKER_COMPOSE_CMD="docker compose"
+
+# Source helper scripts
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/scripts/config-helpers.sh"
+source "${SCRIPT_DIR}/scripts/miiify-helpers.sh"
+source "${SCRIPT_DIR}/scripts/image-helpers.sh"
+source "${SCRIPT_DIR}/scripts/annosearch-helpers.sh"
+
+# Function to show help
+show_help() {
+    cat << EOF
+IIIF-In-A-Box Bootstrap Script v2 (Miiify v2)
+
+Usage: $0 [OPTIONS] [COMMAND]
+
+Options:
+  --input-dir, -i DIR         Input directory containing source data (required for build)
+                               Example: /home/john/git/domesday-in-a-box
+  --output-dir, -o DIR        Output directory for generated files
+                               (default: ./output)
+  --hostname, --host URL      Base URL for the IIIF service 
+                               (default: http://localhost:8080)
+  --help, -h                   Show this help message
+
+Commands:
+  build                        - Build IIIF service from input directory
+  status                       - Show service status
+  stop                         - Stop all services
+  restart                      - Restart all services
+  logs                         - Show service logs
+  clean                        - Stop services and clean output directory
+  maintenance                  - Enable maintenance mode (stops services, shows maintenance page)
+
+Examples:
+  # Build from input directory (first time)
+  $0 build --input-dir /home/john/git/domesday-in-a-box
+  
+  # Build with custom output directory
+  $0 build -i /home/john/git/domesday-in-a-box -o /home/john/iiif-output
+  
+  # Build for deployment with external hostname
+  $0 build -i ~/domesday-in-a-box --hostname http://192.168.1.100:8080
+  
+  # Check service status
+  $0 status
+  
+  # View logs
+  $0 logs
+  
+  # Stop all services
+  $0 stop
+  
+  # Clean everything (stop services, remove output)
+  $0 clean
+
+Input Directory Structure:
+  <input-dir>/
+  ├── config.yml          # Project configuration (required)
+  ├── images/             # Source images (optional)
+  │   ├── image1.jpg
+  │   └── image2.jpg
+  └── annotations/        # W3C Web Annotations (optional)
+      ├── canvas-1/
+      │   ├── annotation-1.json
+      │   └── annotation-2.json
+      └── canvas-2/
+          └── annotation-3.json
+
+Output Directory Structure:
+  <output-dir>/
+  ├── miiify/
+  │   ├── git_store/      # Miiify git storage
+  │   └── pack_store/     # Miiify pack storage (served)
+  ├── web/
+  │   ├── iiif/           # Generated IIIF manifests
+  │   ├── pages/          # Generated HTML pages
+  │   └── images/         # Processed images
+  └── logs/               # Service logs
+
+EOF
 }
 
 # Function to parse command line arguments
 parse_arguments() {
-    COLLECTION_DIR="$DEFAULT_COLLECTION_DIR"
-    FORCE_REBUILD="false"
-    PROJECT_NAME=""
+    INPUT_DIR=""
+    OUTPUT_DIR="$DEFAULT_OUTPUT_DIR"
     HOSTNAME="$DEFAULT_HOSTNAME"
+    COMMAND=""
     
     while [[ $# -gt 0 ]]; do
         case $1 in
-            --collection|-c)
-                COLLECTION_DIR="$2"
+            --input-dir|-i)
+                INPUT_DIR="$2"
                 shift 2
                 ;;
-            --project|-p)
-                PROJECT_NAME="$2"
+            --output-dir|-o)
+                OUTPUT_DIR="$2"
                 shift 2
                 ;;
             --hostname|--host)
                 HOSTNAME="$2"
                 shift 2
                 ;;
-            --force|-f)
-                FORCE_REBUILD="true"
-                shift
-                ;;
             --help|-h)
                 show_help
                 exit 0
                 ;;
-            build|dev|clean|status|stop|restart|logs|maintenance)
-                # Store command
-                BOOTSTRAP_COMMAND="$1"
+            build|status|stop|restart|logs|clean|maintenance)
+                COMMAND="$1"
                 shift
-                # Check if next argument is a project name (not a flag)
-                if [[ $# -gt 0 && ! "$1" =~ ^-- ]]; then
-                    PROJECT_NAME="$1"
-                    shift
-                fi
                 ;;
             *)
-                # Check if it's a URL (hostname) - if so, set it as HOSTNAME
-                if [[ "$1" =~ ^https?:// ]]; then
-                    HOSTNAME="$1"
-                    shift
-                else
-                    # Unknown argument
-                    log_error "Unknown option: $1"
-                    show_help
-                    exit 1
-                fi
+                log_error "Unknown option: $1"
+                show_help
+                exit 1
                 ;;
         esac
     done
     
     # Set default command if none provided
-    if [ -z "$BOOTSTRAP_COMMAND" ]; then
-        BOOTSTRAP_COMMAND="build"
+    if [ -z "$COMMAND" ]; then
+        COMMAND="build"
     fi
     
-    # Get project name from YAML if not provided via command line
-    if [ "$BOOTSTRAP_COMMAND" = "build" ] && [ -z "$PROJECT_NAME" ]; then
-        PROJECT_NAME=$(get_single_project)
-        if [ $? -ne 0 ]; then
-            exit 1
-        fi
-    fi
-}
-
-# Function to show help
-show_help() {
-    cat << EOF
-IIIF-In-A-Box Bootstrap Script
-
-Usage: $0 [OPTIONS] [COMMAND]
-
-Options:
-  --collection, -c COLLECTION_DIR   Directory containing IIIF resources 
-                                    (optional - defaults to project name from YAML)
-  --hostname, --host HOSTNAME       Base URL for the IIIF service 
-                                    (default: http://localhost:8080)
-  --force, -f                       Force rebuild all Docker images
-  --help, -h                        Show this help message
-
-Commands:
-  build                        - Build IIIF service (uses project from config/projects.yml)
-  update-only                  - Only update git repositories
-  status                       - Show service status
-  stop                         - Stop all services
-  restart                      - Restart all services
-  logs                         - Show service logs
-  maintenance                  - Enable maintenance mode (stops services, shows maintenance page)
-
-Examples:
-  # Build IIIF service (uses the project defined in config/projects.yml)
-  $0 build
-  
-  # Build specific project
-  $0 build domesday
-  
-  # Build with explicit project flag
-  $0 build --project domesday
-  
-  # Build for deployment on a VM with external hostname
-  $0 build domesday --hostname http://my-vm-ip:8080
-  
-  # Build for AWS Lightsail with static IP
-  $0 build domesday --hostname http://3.15.123.45:8080
-  
-  # Build with hostname using flags
-  $0 build --project domesday --hostname http://192.168.1.100:8080
-  
-  # Force complete rebuild (slow - rebuilds all images)
-  $0 build domesday --force
-
-  # Put service into maintenance mode
-  $0 maintenance
-  
-  # Bring service back online (rebuild after maintenance)
-  $0 build
-
-Collection Directory Structure:
-  The collection directory should contain:
-    manifests/       - IIIF manifest/collection files (.json)
-    images/          - Image files (served via IIPImage IIIF Image API)
-    annotations/     - Annotation files (.json)
-
-  Example layout:
-    ../your-iiif-collection/
-    ├── manifests/
-    │   ├── collection.json
-    │   └── manifest1.json
-    ├── images/
-    │   ├── page001.jpg
-    │   └── page002.jpg
-    └── annotations/
-        └── annotations.json
-
-  The system will:
-    - Look for {project-name}.json in manifests/ or use the first manifest found
-    - Serve images via IIPImage at http://localhost:8080/iiif/
-    - Make annotations available at http://localhost:8080/annotations/
-    - Create a viewer at http://localhost:8080/pages/{project-name}.html
-
-EOF
-}
-
-# Function to get the single project from YAML
-get_single_project() {
-    if [ ! -f "config/projects.yml" ]; then
-        log_error "config/projects.yml not found"
-        return 1
-    fi
-    
-    # Simple approach: find "domesday:" line (or similar project) in the YAML
-    # This assumes proper YAML structure with projects under "projects:"
-    local available_projects=($(grep -A 100 "^projects:" config/projects.yml | grep "^  [a-zA-Z0-9_-]*:" | sed 's/^  //' | sed 's/:.*$//' | grep -v "defaults" | grep -v "_template"))
-    
-    if [ ${#available_projects[@]} -eq 0 ]; then
-        log_error "No projects found in config/projects.yml (excluding defaults and _template)"
-        return 1
-    elif [ ${#available_projects[@]} -gt 1 ]; then
-        log_error "Multiple projects found in config/projects.yml. Only one project is allowed:"
-        printf '  - %s\n' "${available_projects[@]}"
-        log_error "Please keep only one project in the YAML file"
-        return 1
-    fi
-    
-    echo "${available_projects[0]}"
-    return 0
-}
-
-# Function to validate project name
-validate_project_name() {
-    local name="$1"
-    
-    if [ -z "$name" ]; then
-        log_error "Project name cannot be empty"
-        return 1
-    fi
-    
-    # Check for valid characters (alphanumeric, hyphens, underscores)
-    if [[ ! "$name" =~ ^[a-zA-Z0-9_-]+$ ]]; then
-        log_error "Project name must contain only alphanumeric characters, hyphens, and underscores"
-        return 1
-    fi
-    
-    return 0
-}
-
-# Function to setup project from filesystem directory
-setup_project_from_directory() {
-    local project_name="$1"
-    local collection_dir="$2"
-    
-    log_info "Setting up project: $project_name"
-    
-    # Ensure we have a main manifest
-    if [ ! -f "web/iiif/${project_name}.json" ]; then
-        log_error "No manifest found for project ${project_name}. Expected web/iiif/${project_name}.json"
-        return 1
-    fi
-    
-    # Update hostname in existing files (optional - only if hostname specified)
-    if [ "$HOSTNAME" != "$DEFAULT_HOSTNAME" ]; then
-        update_hostname_in_files "$project_name" "$HOSTNAME"
-    else
-        log_info "Using default localhost URLs in HTML pages"
-    fi
-    
-    log_success "Project setup completed"
-}
-
-# Function to load annotations into miiify annotation server
-load_annotations_to_miiify() {
-    local project_name="$1"
-    
-    log_info "Checking for annotations to load into miiify..."
-    
-    # Check if there are annotation files
-    if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
-        log_info "No annotations found to load"
-        return 0
-    fi
-    
-    # Look for annotation files (JSON format)
-    local annotation_files=$(find web/annotations -name "*.json" | head -1)
-    
-    if [ -z "$annotation_files" ]; then
-        log_info "No JSON annotation files found in web/annotations"
-        return 0
-    fi
-    
-    log_info "Found annotation files. Loading into miiify annotation server..."
-    
-    # Ensure miiify database directory exists
-    mkdir -p "miiify/db"
-    
-    # Copy the annotation file to miiify directory for processing
-    local annotation_file=$(echo "$annotation_files" | head -1)
-    cp "$annotation_file" "miiify/${project_name}-annotations.json"
-    
-    # Wait for miiify service to be ready
-    log_info "Waiting for miiify service to be ready..."
-    local miiify_url=$(get_service_url "miiify" "10000")
-    log_info "Checking miiify at: $miiify_url"
-    local retries=30
-    while [ $retries -gt 0 ]; do
-        if curl -s -f --noproxy '*' --max-time 5 "${miiify_url}/" > /dev/null 2>&1; then
-            log_info "Miiify service is ready"
-            break
-        fi
-        sleep 2
-        retries=$((retries - 1))
-    done
-    
-    if [ $retries -eq 0 ]; then
-        log_error "Miiify service did not become ready within timeout"
-        return 1
-    fi
-    
-    # Create a project-specific load script
-    cd miiify
-    
-    # Run the annotation processing with project name as argument
-    log_info "Processing annotations using ts-node..."
-    if npx ts-node process-annotations.ts "$project_name" "$HOSTNAME"; then
-        log_success "Annotations processed successfully into miiify"
-        log_info "Updated manifest with annotation references in both project and web directories"
-    else
-        log_error "Failed to load annotations into miiify"
-        cd - > /dev/null
-        return 1
-    fi
-    
-    # Clean up temporary files (no longer needed since load.ts writes directly to correct locations)
-    rm -f "${project_name}-annotations.json"
-    cd - > /dev/null
-    log_success "Annotation loading completed"
-}
-
-# Function to ensure Node.js dependencies are installed for load.ts
-ensure_nodejs_dependencies() {
-    log_info "Checking Node.js dependencies for process-annotations.ts..."
-    
-    # Check if Node.js is installed
-    if ! command -v node &> /dev/null; then
-        log_error "Node.js is not installed. Please install Node.js to run the annotation processing."
-        log_error "Install with: sudo apt update && sudo apt install nodejs npm"
-        return 1
-    fi
-    
-    # Check if npm is installed
-    if ! command -v npm &> /dev/null; then
-        log_error "npm is not installed. Please install npm to manage dependencies."
-        log_error "Install with: sudo apt update && sudo apt install npm"
-        return 1
-    fi
-    
-    # Install dependencies in the miiify directory
-    if [ -f "miiify/package.json" ]; then
-        log_info "Installing Node.js dependencies for annotation processing..."
-        cd miiify
-        
-        # Check if node_modules exists and has the required packages
-        if [ ! -d "node_modules" ] || [ ! -f "node_modules/node-fetch/package.json" ] || [ ! -f "node_modules/yaml/package.json" ]; then
-            log_info "Installing missing dependencies with npm..."
-            if npm install; then
-                log_success "Node.js dependencies installed successfully"
-            else
-                log_error "Failed to install Node.js dependencies"
-                cd - > /dev/null
-                return 1
-            fi
-        else
-            log_info "Node.js dependencies already installed ✓"
-        fi
-        
-        cd - > /dev/null
-    else
-        log_error "package.json not found in miiify directory"
-        return 1
-    fi
-    
-    return 0
-}
-
-load_annotations_from_web() {
-    local project_name="$1"
-    local hostname="$2"
-    
-    # Ensure Node.js dependencies are installed
-    if ! ensure_nodejs_dependencies; then
-        log_error "Failed to ensure Node.js dependencies - cannot run process-annotations.ts"
-        return 1
-    fi
-    
-    log_info "Loading annotations from web/annotations/ directory..."
-    
-    # Check if annotations directory exists and has files
-    if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
-        log_error "No annotations found in web/annotations/ directory"
-        log_error "Annotations are required to generate IIIF manifests"
-        log_error "Please add your annotation JSON files to web/annotations/"
-        return 1
-    fi
-    
-    # Find annotation files
-    local annotation_files
-    annotation_files=$(find "web/annotations" -name "*.json" -type f)
-    
-    if [ -z "$annotation_files" ]; then
-        log_error "No JSON annotation files found in web/annotations/"
-        log_error "Please ensure your annotation files have .json extension"
-        return 1
-    fi
-    
-    log_info "Found annotation files: $(echo "$annotation_files" | wc -l) files"
-    log_info "Load script will read directly from web/annotations/ directory"
-    
-    # Ensure miiify database directory exists
-    mkdir -p "miiify/db"
-    
-    # Wait for miiify service to be ready
-    log_info "Waiting for miiify service to be ready..."
-    local miiify_url=$(get_service_url "miiify" "10000")
-    log_info "Checking miiify at: $miiify_url"
-    local retries=30
-    while [ $retries -gt 0 ]; do
-        if curl -s -f --noproxy '*' --max-time 5 "${miiify_url}/" > /dev/null 2>&1; then
-            log_info "Miiify service is ready"
-            break
-        fi
-        sleep 2
-        retries=$((retries - 1))
-    done
-    
-    if [ $retries -eq 0 ]; then
-        log_error "Miiify service did not become ready within timeout"
-        return 1
-    fi
-    
-    # Run annotation processing - process-annotations.ts will read directly from web/annotations/
-    cd miiify
-    
-    log_info "Processing annotations using ts-node..."
-    # Set environment variable to indicate Docker environment
-    if [ -f /.dockerenv ] || docker network ls 2>/dev/null | grep -q "appnet"; then
-        export DOCKER_ENV=true
-    fi
-    if npx ts-node process-annotations.ts "$project_name" "$HOSTNAME"; then
-        log_success "Annotations processed successfully into miiify"
-        log_info "Generated manifest with annotation references in web/iiif/"
-        cd - > /dev/null
-        return 0
-    else
-        log_error "Failed to process annotations with ts-node"
-        cd - > /dev/null
-        return 1
-    fi
-}
-
-# Function to index annotations with annosearch
-index_annotations_with_annosearch() {
-    local project_name="$1"
-    
-    log_info "Indexing annotations for search functionality..."
-    
-    # Check if annosearch load script exists
-    if [ ! -f "annosearch/load.sh" ]; then
-        log_warning "AnnoSearch load script not found - skipping search indexing"
-        return 0
-    fi
-    
-    # Run the annosearch indexing script with hostname
-    export IIIF_HOSTNAME="$HOSTNAME"
-    if ./annosearch/load.sh "$project_name"; then
-        log_success "Annotations indexed successfully for search"
-        log_info "Search API available at: ${HOSTNAME}/annosearch/${project_name}/search"
-        return 0
-    else
-        log_warning "Failed to index annotations for search, but continuing..."
-        return 0  # Don't fail the build if search indexing fails
-    fi
-}
-
-# Function to read project title from YAML config
-get_project_title_from_yaml() {
-    local project_name="$1"
-    local config_file="config/projects.yml"
-    
-    if [ ! -f "$config_file" ]; then
-        echo "$project_name"
-        return 0
-    fi
-    
-    # Use a simpler approach with awk to extract the title
-    local project_title=$(awk -v project="$project_name" '
-        BEGIN { in_section = 0; title = "" }
-        /^[[:space:]]*[a-zA-Z0-9_-]+:[[:space:]]*$/ {
-            if ($0 ~ "^[[:space:]]*" project ":[[:space:]]*$") {
-                in_section = 1
-            } else {
-                in_section = 0
-            }
-        }
-        in_section && /^[[:space:]]*title:[[:space:]]*/ {
-            gsub(/^[[:space:]]*title:[[:space:]]*["\x27]?/, "")
-            gsub(/["\x27]?[[:space:]]*$/, "")
-            title = $0
-            exit
-        }
-        END { print title }
-    ' "$config_file")
-    
-    # Return the found title or fallback
-    if [ -n "$project_title" ]; then
-        echo "$project_title"
-    else
-        echo "$project_name"
-    fi
-}
-
-
-# Function to update template file with correct hostname
-update_template_hostname() {
-    local template_file="web/pages/_template.html"
-    
-    if [ -f "$template_file" ]; then
-        log_info "Updating template hostname to: $HOSTNAME"
-        
-        # Handle macOS vs Linux sed differences
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS sed with empty string (no backup files)
-            sed -i "" "s#http://localhost:8080#${HOSTNAME}#g" "$template_file"
-        else
-            # Linux sed doesn't need empty string parameter
-            sed -i "s#http://localhost:8080#${HOSTNAME}#g" "$template_file"
-        fi
-        
-        log_success "Template hostname updated"
-    else
-        log_warning "Template file not found at $template_file"
-    fi
-}
-
-# Function to create HTML page from template
-create_html_page() {
-    local project_name="$1"
-    local template_file="web/pages/_template.html"
-    local page_file="web/pages/${project_name}.html"
-    
-    log_info "Creating HTML page: $page_file"
-    
-    # Create directory if it doesn't exist
-    mkdir -p "web/pages"
-    
-    # Check if template exists
-    if [ ! -f "$template_file" ]; then
-        log_error "Template file not found: $template_file"
-        return 1
-    fi
-    
-    # Get project title from YAML configuration
-    local project_title=$(get_project_title_from_yaml "$project_name")
-    if [ -z "$project_title" ]; then
-        # Fallback: capitalize first letter of project name
-        project_title="$(echo ${project_name:0:1} | tr '[:lower:]' '[:upper:]')${project_name:1}"
-    fi
-    local project_description="Explore the ${project_title} collection using our interactive IIIF viewer"
-    
-    log_info "Using project name: $project_name"
-    log_info "Using project title: $project_title"
-    
-    # Copy template and replace project-specific content
-    cp "$template_file" "$page_file"
-    
-    # Replace project-specific content in the copied file (order matters!)
-    # Handle macOS vs Linux sed differences for all replacements
-    if [[ "$OSTYPE" == "darwin"* ]]; then
-        # macOS sed with empty string (no backup files)
-        sed -i "" "s/demo\.json/${project_name}.json/g" "$page_file"
-        sed -i "" "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
-        sed -i "" "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
-        sed -i "" "s/IIIF Viewer showing the Demo collection/IIIF Viewer showing the ${project_title} collection/g" "$page_file"
-        sed -i "" "s/<span class=\"tna-breadcrumbs__current\">Demo<\/span>/<span class=\"tna-breadcrumbs__current\">${project_title}<\/span>/g" "$page_file"
-        sed -i "" "s/<h1 class=\"tna-heading-xl\">Demo<\/h1>/<h1 class=\"tna-heading-xl\">${project_title}<\/h1>/g" "$page_file"
-        sed -i "" "s/Demo collection/${project_title} collection/g" "$page_file"
-        sed -i "" "s/Demo/${project_title}/g" "$page_file"
-        # Update hostname in the iframe src
-        sed -i "" "s#http://localhost:8080#${HOSTNAME}#g" "$page_file"
-    else
-        # Linux sed doesn't need empty string parameter
-        sed -i "s/demo\.json/${project_name}.json/g" "$page_file"
-        sed -i "s/Demo - IIIF-in-a-Box/${project_title} - IIIF-in-a-Box/g" "$page_file"
-        sed -i "s/Explore the Demo collection in our interactive IIIF viewer/${project_description}/g" "$page_file"
-        sed -i "s/IIIF Viewer showing the Demo collection/IIIF Viewer showing the ${project_title} collection/g" "$page_file"
-        sed -i "s/<span class=\"tna-breadcrumbs__current\">Demo<\/span>/<span class=\"tna-breadcrumbs__current\">${project_title}<\/span>/g" "$page_file"
-        sed -i "s/<h1 class=\"tna-heading-xl\">Demo<\/h1>/<h1 class=\"tna-heading-xl\">${project_title}<\/h1>/g" "$page_file"
-        sed -i "s/Demo collection/${project_title} collection/g" "$page_file"
-        sed -i "s/Demo/${project_title}/g" "$page_file"
-        # Update hostname in the iframe src
-        sed -i "s#http://localhost:8080#${HOSTNAME}#g" "$page_file"
-    fi
-    
-    log_success "HTML page created: $page_file"
-    if [ -n "$project_title" ]; then
-        log_info "Title: $project_title"
-    fi
-    if [ -n "$project_description" ]; then
-        log_info "Description: $project_description"
-    fi
-}
-
-# Function to setup project files
-setup_project_files() {
-    local project_name="$PROJECT_NAME"
-    local collection_dir="$COLLECTION_DIR"
-    
-    log_info "Setting up project files for: $project_name"
-    
-    # Validate project name
-    if ! validate_project_name "$project_name"; then
-        return 1
-    fi
-    
-    # If no collection directory specified, use project name as directory name
-    if [ -z "$collection_dir" ]; then
-        collection_dir="$project_name"
-        log_info "No collection directory specified, using project name: $collection_dir"
-    fi
-    
-    # Setup from filesystem directory (required)
-    if ! setup_project_from_directory "$project_name" "$collection_dir"; then
-        log_error "Failed to setup project from directory"
-        return 1
-    fi
-    
-    # Update template hostname before creating HTML pages
-    update_template_hostname
-    
-    # Always create HTML page from template to ensure it's up-to-date
-    if ! create_html_page "$project_name"; then
-        log_error "Failed to create HTML page"
-        return 1
-    fi
-    
-    log_success "Project files created successfully for: $project_name"
-    log_info "Collection Directory: $collection_dir"
-    log_info "IIIF Manifest: web/iiif/${project_name}.json"
-    log_info "HTML Page: web/pages/${project_name}.html"
-    log_info "Viewer URL: ${HOSTNAME}/pages/${project_name}.html"
-    log_info "Images served via: ${HOSTNAME}/iiif/"
-    log_info "Annotations available at: ${HOSTNAME}/annotations/"
-}
-
-# Function to clone or update a project
-update_project() {
-    local project_path="$1"
-    local repo_url="$2"
-    local project_name=$(basename "$project_path")
-    
-    if [ -d "$project_path" ]; then
-        log_info "Updating $project_name..."
-        cd "$project_path"
-        
-        # Check if it's a git repository
-        if [ ! -d ".git" ]; then
-            log_error "$project_name exists but is not a git repository!"
-            cd - > /dev/null
-            return 1
-        fi
-        
-        # Get current branch
-        current_branch=$(git branch --show-current)
-        log_info "$project_name on branch: $current_branch"
-        
-        # Fetch and pull latest changes with fast-forward only
-        git fetch origin
-        git pull --ff-only origin "$current_branch" || {
-            log_warning "$project_name has diverged from upstream. Manual intervention required."
-            log_info "To resolve: cd $project_path && git pull --rebase origin $current_branch"
-            cd - > /dev/null
-            return 1
-        }
-        
-        log_success "$project_name updated successfully"
-        cd - > /dev/null
-    else
-        log_info "Cloning $project_name..."
-        git clone "$repo_url" "$project_path"
-        log_success "$project_name cloned successfully"
-    fi
-}
-
-# IIPImage server doesn't require configuration updates like Cantaloupe did
-# This function is kept as a no-op for backwards compatibility
-update_iipimage_config() {
-    log_info "IIPImage server configuration is handled via environment variables in docker-compose.yml"
-}
-
-# Function to override Tamerlane's CSP for public HTTP deployment
-override_tamerlane_csp() {
-    local tamerlane_index="../tamerlane/public/index.html"
-    
-    if [ -f "$tamerlane_index" ]; then
-        log_info "Overriding Tamerlane CSP for public HTTP deployment..."
-        
-        # Handle macOS vs Linux sed differences
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            # macOS sed with empty string (no backup files)
-            # Remove existing CSP meta tag and add permissive one
-            sed -i "" 's/<meta http-equiv="Content-Security-Policy"[^>]*>//g' "$tamerlane_index"
-            
-            # Add new permissive CSP meta tag in the head section
-            sed -i "" '/<head>/a \
-    <meta http-equiv="Content-Security-Policy" content="default-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' data: blob: http: https:; img-src '\''self'\'' data: blob: http: https:; script-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' http: https:; style-src '\''self'\'' '\''unsafe-inline'\'' http: https:; font-src '\''self'\'' data: http: https:; connect-src '\''self'\'' http: https:;">
-' "$tamerlane_index"
-        else
-            # Linux sed doesn't need empty string parameter
-            # Remove existing CSP meta tag and add permissive one
-            sed -i 's/<meta http-equiv="Content-Security-Policy"[^>]*>//g' "$tamerlane_index"
-            
-            # Add new permissive CSP meta tag in the head section
-            sed -i '/<head>/a \
-    <meta http-equiv="Content-Security-Policy" content="default-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' data: blob: http: https:; img-src '\''self'\'' data: blob: http: https:; script-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\'' http: https:; style-src '\''self'\'' '\''unsafe-inline'\'' http: https:; font-src '\''self'\'' data: http: https:; connect-src '\''self'\'' http: https:;">
-' "$tamerlane_index"
-        fi
-        
-        log_success "Tamerlane CSP updated for public HTTP deployment"
-    else
-        log_warn "Tamerlane index.html not found at $tamerlane_index"
-    fi
-}
-
-# Function to check if docker and $DOCKER_COMPOSE_CMD are available
-check_dependencies() {
-    log_info "Checking dependencies..."
-    
-    if ! command -v git &> /dev/null; then
-        log_error "git is not installed or not in PATH"
+    # Validate input directory for build command
+    if [ "$COMMAND" = "build" ] && [ -z "$INPUT_DIR" ]; then
+        log_error "Input directory is required for build command"
+        log_info "Use: $0 build --input-dir /path/to/input"
         exit 1
     fi
+}
+
+# Function to check dependencies
+check_dependencies() {
+    log_info "Checking dependencies..."
     
     if ! command -v docker &> /dev/null; then
         log_error "docker is not installed or not in PATH"
         exit 1
     fi
     
-    # Check for docker compose and set the command to use
+    # Check for docker compose
     if docker compose version &> /dev/null; then
         DOCKER_COMPOSE_CMD="docker compose"
-        log_info "Using Docker Compose v2: docker compose"
-    elif command -v $DOCKER_COMPOSE_CMD &> /dev/null; then
+    elif command -v docker-compose &> /dev/null; then
         DOCKER_COMPOSE_CMD="docker-compose"
-        log_info "Using Docker Compose v1: docker-compose"
     else
         log_error "Neither 'docker compose' nor 'docker-compose' is available"
         exit 1
     fi
     
+    # Check for rsync (for image copying)
+    if ! command -v rsync &> /dev/null; then
+        log_warning "rsync not found, will use cp for copying files"
+    fi
+    
     log_success "All dependencies are available"
 }
 
-# Function to rebuild web service after project file changes
-rebuild_web_service() {
-    local compose_file="docker-compose.yml"
+# Function to generate IIIF manifest for a project
+generate_manifest() {
+    local project_name="$1"
+    local project_title="$2"
+    local project_description="$3"
+    local hostname="$4"
     
-    log_info "Rebuilding web service to include project files using $compose_file..."
+    log_info "Generating IIIF manifest for project: $project_name"
     
-    cd proxy
+    mkdir -p "${OUTPUT_DIR}/web/iiif"
+    local manifest_path="${OUTPUT_DIR}/web/iiif/${project_name}.json"
     
-    # Stop web service if running
-    if $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" ps web 2>/dev/null | grep -q "Up"; then
-        log_info "Stopping web service..."
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" stop web
-    fi
+    # Create a IIIF Collection manifest that points to the Miiify pack store
+    cat > "$manifest_path" << EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/${project_name}.json",
+  "type": "Collection",
+  "label": {
+    "en": ["${project_title}"]
+  },
+  "summary": {
+    "en": ["${project_description}"]
+  },
+  "items": [
+    {
+      "id": "${hostname}/miiify/",
+      "type": "Collection",
+      "label": {
+        "en": ["Annotations"]
+      }
+    }
+  ],
+  "seeAlso": [
+    {
+      "id": "${hostname}/miiify/",
+      "type": "Dataset",
+      "label": {
+        "en": ["View all annotations"]
+      },
+      "format": "application/ld+json;profile=\"http://www.w3.org/ns/anno.jsonld\""
+    }
+  ],
+  "service": [
+    {
+      "id": "${hostname}/annosearch/${project_name}/search",
+      "type": "SearchService1",
+      "label": "Search within this collection"
+    }
+  ]
+}
+EOF
     
-    # Rebuild only the web service
-    log_info "Building web service..."
-    $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" build --no-cache web
-    
-    # Start web service
-    log_info "Starting web service..."
-    $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" up -d web
-    
-    cd - > /dev/null
-    
-    log_success "Web service rebuilt with updated project files"
+    log_success "Generated manifest: ${manifest_path}"
 }
 
-# Function to build and start services
-build_and_start() {
-    local compose_file="docker-compose.yml"
+# Function to generate HTML viewer page from template
+generate_viewer_page() {
+    local project_name="$1"
+    local project_title="$2"
+    local project_description="$3"
+    local hostname="$4"
     
-    log_info "Building and starting services using $compose_file..."
+    log_info "Generating viewer page for project: $project_name"
     
-    cd proxy
+    mkdir -p "${OUTPUT_DIR}/web/pages"
+    local page_path="${OUTPUT_DIR}/web/pages/${project_name}.html"
+    local template_path="templates/pages/_template.html"
     
-    # Stop any running services
-    if $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
-        log_info "Stopping existing services..."
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" down
+    if [ ! -f "$template_path" ]; then
+        log_error "Template not found: $template_path"
+        return 1
     fi
     
-    # Build services
-    log_info "Building Docker services..."
-    $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" build --no-cache
+    # Replace placeholders in template
+    sed -e "s/Demo/${project_title}/g" \
+        -e "s/demo/${project_name}/g" \
+        -e "s|https://digitaldomesday.org|${hostname}|g" \
+        "$template_path" > "$page_path"
     
-    # Start services
-    log_info "Starting services..."
-    $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" up -d
+    log_success "Generated viewer page: ${page_path}"
+    log_info "View at: ${hostname}/pages/${project_name}.html"
+}
+
+# Function to setup web content
+setup_web_content() {
+    log_info "Setting up web content..."
+    
+    # Copy static template files to output
+    cp templates/index.html "${OUTPUT_DIR}/web/"
+    cp templates/maintenance.html "${OUTPUT_DIR}/web/"
+    
+    log_success "Web content setup complete"
+}
+
+# Function to create docker network
+create_docker_network() {
+    if ! docker network ls | grep -q "iiif-network"; then
+        log_info "Creating shared Docker network..."
+        docker network create iiif-network
+        log_success "Docker network created"
+    else
+        log_info "Docker network already exists"
+    fi
+}
+
+# AnnoSearch functions are now in scripts/annosearch-helpers.sh
+
+# Function to build project
+build_project() {
+    log_info "============================================"
+    log_info "IIIF-in-a-Box Build Process"
+    log_info "============================================"
+    log_info "Input Directory:  $INPUT_DIR"
+    log_info "Output Directory: $OUTPUT_DIR"
+    log_info "Hostname:         $HOSTNAME"
+    log_info "============================================"
+    
+    # Step 0: Stop any running services to avoid lock file issues
+    log_info "Stopping any running services (including maintenance mode)..."
+    stop_services
+    
+    # Also stop maintenance mode if it's running
+    docker compose -f nginx/docker-compose.maintenance.yml down 2>/dev/null || true
+    
+    # Step 1: Validate input directory
+    if ! validate_input_directory "$INPUT_DIR"; then
+        log_error "Input directory validation failed"
+        exit 1
+    fi
+    
+    # Step 2: Read configuration
+    if ! read_project_config "$INPUT_DIR"; then
+        log_error "Failed to read project configuration"
+        exit 1
+    fi
+    
+    log_info "============================================"
+    log_info "Project: $PROJECT_NAME"
+    log_info "Title: $PROJECT_TITLE"
+    log_info "============================================"
+    
+    # Step 3: Create output directory structure
+    log_info "Creating output directory structure..."
+    mkdir -p "$OUTPUT_DIR"/{miiify/{git_store,pack_store},web/{iiif,pages,images},annosearch/qwdata,logs}
+    
+    # Step 4: Process images
+    if ! process_images "$INPUT_DIR" "$OUTPUT_DIR" "$PROJECT_NAME"; then
+        log_error "Image processing failed"
+        exit 1
+    fi
+    
+    # Step 5: Run Miiify workflow (import → compile)
+    if ! miiify_full_workflow "$INPUT_DIR" "$OUTPUT_DIR" "$HOSTNAME"; then
+        log_error "Miiify workflow failed"
+        exit 1
+    fi
+    
+    # Step 6: Generate IIIF manifests
+    if ! generate_manifest "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME"; then
+        log_error "Manifest generation failed"
+        exit 1
+    fi
+    
+    # Step 7: Generate HTML viewer pages
+    if ! generate_viewer_page "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME"; then
+        log_error "Page generation failed"
+        exit 1
+    fi
+    
+    # Step 8: Setup web content
+    setup_web_content
+    
+    # Step 9: Create Docker network
+    create_docker_network
+    
+    # Step 10: Start all services
+    if ! start_all_services; then
+        log_error "Failed to start all services"
+        exit 1
+    fi
+    
+    # Step 11: Wait for AnnoSearch to be ready
+    if ! wait_for_annosearch; then
+        log_warning "AnnoSearch not ready, skipping search indexing"
+    else
+        # Step 12: Create search index and load data
+        if create_annosearch_index "$PROJECT_NAME"; then
+            load_annosearch_data "$PROJECT_NAME" "$HOSTNAME" || log_warning "Failed to load data into AnnoSearch"
+        fi
+    fi
+    
+    log_info "============================================"
+    log_success "Build completed successfully!"
+    log_info "============================================"
+    log_info "Services:"
+    log_info "  - Viewer:      ${HOSTNAME}/pages/${PROJECT_NAME}.html"
+    log_info "  - Manifests:   ${HOSTNAME}/iiif/"
+    log_info "  - Images:      ${HOSTNAME}/iiif/image/"
+    log_info "  - Annotations: ${HOSTNAME}/miiify/"
+    log_info "  - Search:      ${HOSTNAME}/annosearch/"
+    log_info "============================================"
+}
+
+# Function to start all services
+start_all_services() {
+    log_info "Starting all IIIF services..."
+    
+    # Export environment variables for docker-compose
+    export OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
+    export PROJECT_NAME
+    export MIIIFY_BASE_URL="${HOSTNAME}/miiify"
+    export ANNOSEARCH_PUBLIC_URL="${HOSTNAME}/annosearch"
+    
+    log_info "Output directory: $OUTPUT_DIR"
+    log_info "Miiify base URL: $MIIIFY_BASE_URL"
+    
+    # Start all services using main docker-compose.yml
+    log_info "Starting IIIF-in-a-Box services..."
+    $DOCKER_COMPOSE_CMD up -d
+    
+    if [ $? -ne 0 ]; then
+        log_error "Failed to start services"
+        return 1
+    fi
+    
+    log_success "All services started"
     
     # Wait for services to be ready
     log_info "Waiting for services to be ready..."
-    sleep 10
+    sleep 8
     
-    # Check service status
-    if $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" ps | grep -q "Exit"; then
-        log_error "Some services failed to start!"
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" logs
-        cd - > /dev/null
-        return 1
-    fi
+    # Show service status
+    log_info "Service status:"
+    $DOCKER_COMPOSE_CMD ps
     
-    log_success "All services are running!"
-    log_info "IIIF-In-A-Box is available at: ${HOSTNAME}"
-    log_info "Tamerlane viewer at: ${HOSTNAME}/viewer/"
-    
-    cd - > /dev/null
+    return 0
 }
 
-build_core_services() {
-    local compose_file="docker-compose.yml"
+# Function to show status
+show_status() {
+    log_info "Service Status:"
+    log_info "============================================"
+    $DOCKER_COMPOSE_CMD ps
+    log_info "============================================"
     
-    log_info "Building core services (annotation processing and search infrastructure)..."
-    
-    cd proxy
-    
-    # Check if maintenance mode is running and stop it
-    if docker ps --format "{{.Names}}" | grep -q "^iiif-nginx-maintenance$"; then
-        log_info "Maintenance mode detected - stopping it first..."
-        $DOCKER_COMPOSE_CMD -f docker-compose.maintenance.yml down 2>/dev/null
-    fi
-    
-    # Stop any running services
-    if $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" ps 2>/dev/null | grep -q "Up"; then
-        log_info "Stopping existing services..."
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" down
-    fi
-    
-    # Build and start services needed for annotation processing and search
-    log_info "Building annotation and search services..."
-    build_service_if_needed "$compose_file" "quickwit" "$FORCE_REBUILD"
-    build_service_if_needed "$compose_file" "annosearch" "$FORCE_REBUILD"
-    build_service_if_needed "$compose_file" "miiify" "$FORCE_REBUILD"
-    
-    log_info "Starting annotation and search services..."
-    $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" up -d quickwit annosearch miiify
-    
-    # Wait for services to be ready
-    log_info "Waiting for annotation and search services to be ready..."
-    sleep 10
-    
-    log_success "Annotation processing and search infrastructure ready!"
-    
-    cd - > /dev/null
-}
-
-build_web_service() {
-    local compose_file="docker-compose.yml"
-    
-    log_info "Building complete IIIF service with all content..."
-    log_info "📋 Content includes: manifests (from annotations) + images + static files + viewer"
-    
-    cd proxy
-    
-    # Build all services, checking for existing images to speed up builds
-    log_info "Building all services (using cached images where possible)..."
-    if [ "$FORCE_REBUILD" = "true" ]; then
-        log_info "🔄 Force rebuild requested - rebuilding all images from scratch"
-    fi
-    build_services_optimized "$compose_file" "$FORCE_REBUILD"
-    
-    # Start the complete service stack
-    log_info "Starting complete IIIF service stack..."
-    $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" up -d
-    
-    # Wait for all services to be ready
-    log_info "Waiting for all services to be ready..."
-    sleep 10
-    
-    # Check service status
-    if $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" ps | grep -q "Exit"; then
-        log_error "Some services failed to start!"
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" logs
-        cd - > /dev/null
-        return 1
-    fi
-    
-    log_success "🎉 Complete IIIF service is running!"
-    log_info "📚 IIIF-In-A-Box is available at: ${HOSTNAME}"
-    log_info "👁️  Tamerlane viewer at: ${HOSTNAME}/viewer/"
-    log_info "🖼️  Images served via Cantaloupe image server"
-    log_info "📝 Annotations served via Miiify annotation server"
-    
-    cd - > /dev/null
-}
-
-# Helper function to check if a Docker image exists locally
-image_exists() {
-    local image_name="$1"
-    docker images --format "table {{.Repository}}:{{.Tag}}" | grep -q "^${image_name}$"
-}
-
-# Helper function to build a service only if needed
-build_service_if_needed() {
-    local compose_file="$1"
-    local service="$2"
-    local force_rebuild="${3:-false}"
-    
-    # Get the image name for this service
-    local image_name=$($DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" config | grep -A 5 "^  ${service}:" | grep "image:" | awk '{print $2}' | head -1)
-    
-    # If no explicit image name, it will be built with a default name
-    if [ -z "$image_name" ]; then
-        image_name="${PROJECT_NAME}-${service}"
-    fi
-    
-    if [ "$force_rebuild" = "true" ] || ! image_exists "$image_name"; then
-        log_info "Building $service (image: $image_name)..."
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" build --no-cache "$service"
-    else
-        log_info "Using existing $service image (image: $image_name) ✓"
-        # Still run build without --no-cache to update if Dockerfile changed
-        $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" build "$service"
-    fi
-}
-
-# Helper function to build services with optimization
-build_services_optimized() {
-    local compose_file="$1"
-    local force_rebuild="${2:-false}"
-    
-    # List of services that should be built
-    local services=("quickwit" "annosearch" "cantaloupe" "miiify" "web" "nginx")
-    
-    for service in "${services[@]}"; do
-        # Special handling for cantaloupe (the slow one)
-        if [ "$service" = "cantaloupe" ]; then
-            local cantaloupe_image="cantaloupe:5.0.7"
-            if [ "$force_rebuild" != "true" ] && image_exists "$cantaloupe_image"; then
-                log_info "Using existing Cantaloupe image (cantaloupe:5.0.7) ✓ - skipping slow rebuild"
-            else
-                log_info "Building Cantaloupe (this may take a while due to JAR download)..."
-                $DOCKER_COMPOSE_CMD -p "$PROJECT_NAME" -f "$compose_file" build --no-cache cantaloupe
-            fi
+    # Check individual services
+    for service in iipimage quickwit annosearch miiify nginx; do
+        if docker ps --format '{{.Names}}' | grep -q "iiif-${service}"; then
+            log_success "${service}: Running"
         else
-            build_service_if_needed "$compose_file" "$service" "$force_rebuild"
+            log_warning "${service}: Not running"
         fi
     done
+    
+    log_info "============================================"
 }
 
-# Function to get current or default project name for service operations
-get_service_project_name() {
-    # With consistent container names, we can use a fixed project name
-    # This ensures compatibility across Mac and VM
-    echo "iiif"
+# Function to stop services
+stop_services() {
+    log_info "Stopping all services..."
+    
+    # Stop main docker-compose services
+    $DOCKER_COMPOSE_CMD down 2>/dev/null || true
+    
+    log_success "Services stopped"
 }
 
-# Function to show service status
-show_status() {
-    local service_project_name=$(get_service_project_name)
-    log_info "Service Status for project: $service_project_name"
-    cd proxy
-    $DOCKER_COMPOSE_CMD -p "$service_project_name" ps
-    cd - > /dev/null
+# Function to show logs
+show_logs() {
+    log_info "Showing service logs (Ctrl+C to exit)..."
+    $DOCKER_COMPOSE_CMD logs -f
 }
 
-# Function to update URLs in IIIF manifests and annotations
-update_hostname_in_files() {
-    local project_name="$1"
-    local hostname="$2"
-    
-    log_info "Updating hostname references to: $hostname"
-    
-    # Update HTML pages - change localhost to hostname
-    if [ -d "web/pages" ]; then
-        log_info "Updating HTML pages..."
-        find web/pages -name '*.html' -type f -exec sed -i "s#http://localhost:8080#${hostname}#g" {} \;
-    fi
-    
-    # Update annotation files - change localhost to hostname for annotation IDs and targets
-    if [ -d "web/annotations" ]; then
-        log_info "Updating annotation files..."
-        find web/annotations -name '*.json' -type f -exec sed -i "s#http://localhost:8080#${hostname}#g" {} \;
-    fi
-    
-    log_info "IIIF manifests remain localhost for portability"
-    log_success "Updated HTML pages and annotation files to use: $hostname"
-}
-
-# Function to setup miiify config from cloned repository
-setup_miiify_config() {
-    log_info "Setting up miiify configuration..."
-    
-    local miiify_source="../miiify/miiify/config.json"
-    local miiify_target="miiify/config.json"
-    
-    if [ -f "$miiify_source" ]; then
-        log_info "Copying miiify config from cloned repository..."
-        cp "$miiify_source" "$miiify_target"
+# Function to clean output
+clean_output() {
+    log_warning "This will stop all services and remove the output directory"
+    read -p "Are you sure? (y/N) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        stop_services
         
-        # Set id_proto based on hostname protocol
-        if command -v jq &> /dev/null; then
-            if [[ "$HOSTNAME" == https://* ]]; then
-                local protocol="https"
-            else
-                local protocol="http"
-            fi
-            jq ".id_proto = \"$protocol\"" "$miiify_target" > "${miiify_target}.tmp" && mv "${miiify_target}.tmp" "$miiify_target"
-            log_info "Updated id_proto to $protocol in miiify config"
-        else
-            # Fallback using sed if jq is not available
-            sed -i 's/"id_proto": "https"/"id_proto": "http"/' "$miiify_target"
-            log_info "Updated id_proto to http in miiify config (using sed)"
+        if [ -d "$OUTPUT_DIR" ]; then
+            log_info "Removing output directory: $OUTPUT_DIR"
+            rm -rf "$OUTPUT_DIR"
+            log_success "Output directory removed"
         fi
-        
-        log_success "Miiify configuration ready"
     else
-        log_warning "Miiify config not found at $miiify_source - using existing config"
+        log_info "Clean cancelled"
     fi
+}
+
+# Function to enable maintenance mode
+enable_maintenance() {
+    log_warning "Enabling maintenance mode..."
+    log_info "This will stop all services and show a maintenance page"
+    
+    # Stop all services
+    stop_services
+    
+    # Start maintenance mode using nginx/docker-compose.maintenance.yml
+    log_info "Starting maintenance mode..."
+    docker compose -f nginx/docker-compose.maintenance.yml up -d
+    
+    if [ $? -ne 0 ]; then
+        log_error "Failed to start maintenance mode"
+        return 1
+    fi
+    
+    log_success "Maintenance mode enabled"
+    log_info "Maintenance page available at http://localhost:8080"
+    log_info "To bring services back online, run: ./bootstrap.sh build --input-dir <path>"
+    return 0
 }
 
 # Main execution
 main() {
-    log_info "IIIF-In-A-Box Bootstrap Script"
-    log_info "=============================="
-    
-    # Parse command line arguments
     parse_arguments "$@"
-    
-    # Create .env file for docker-compose (do this early and always)
-    if [ -d "proxy" ]; then
-        echo "ANNOSEARCH_PUBLIC_URL=${HOSTNAME}/annosearch" > proxy/.env
-        log_info "Created .env file with ANNOSEARCH_PUBLIC_URL=${HOSTNAME}/annosearch"
-    fi
-    
-    # Check dependencies
     check_dependencies
     
-    # Setup project files (skip for service management commands)
-    case "$BOOTSTRAP_COMMAND" in
-        "stop"|"status"|"restart"|"logs"|"maintenance")
-            log_info "Service management command detected - skipping project setup"
+    case "$COMMAND" in
+        build)
+            build_project
             ;;
-        *)
-            setup_project_files
-            ;;
-    esac
-    
-    # Update/clone projects (skip for quick service commands)
-    case "$BOOTSTRAP_COMMAND" in
-        "stop"|"status"|"restart"|"logs"|"maintenance")
-            # Skip project updates and setup for these commands
-            ;;
-        *)
-            log_info "Updating project dependencies..."
-            for project_info in "${PROJECTS[@]}"; do
-                IFS=':' read -r project_path repo_url <<< "$project_info"
-                update_project "$project_path" "$repo_url"
-            done
-            
-            # Override Tamerlane CSP for public HTTP deployment
-            override_tamerlane_csp
-            
-            # IIPImage configuration (handled via docker-compose environment variables)
-            update_iipimage_config
-            
-            # Setup miiify config from cloned repository
-            setup_miiify_config
-            ;;
-    esac
-    
-    # Execute the requested command
-    case "$BOOTSTRAP_COMMAND" in
-        "update-only")
-            log_success "Projects updated. Run './bootstrap.sh build' to build and start services."
-            ;;
-        "build")
-            log_info "Using project: $PROJECT_NAME"
-            
-            log_info "🏗️  Building IIIF service for project: $PROJECT_NAME"
-            if [ "$FORCE_REBUILD" = "true" ]; then
-                log_info "🔄 Force rebuild mode enabled - will rebuild all images"
-            else
-                log_info "⚡ Fast build mode - will reuse existing Docker images where possible"
-            fi
-            log_info "📋 Required content:"
-            log_info "   - config/projects.yml (project configuration)"
-            log_info "   - web/images/ (your images)"
-            log_info "   - web/annotations/ (your annotations - required for manifest generation)"
-            
-            # Check if project exists in YAML config
-            if [ -f "config/projects.yml" ]; then
-                if ! grep -q "^[[:space:]]*${PROJECT_NAME}:" config/projects.yml; then
-                    log_error "Project '$PROJECT_NAME' not found in config/projects.yml"
-                    log_error "Available projects:"
-                    grep "^[[:space:]]*[a-zA-Z0-9_-]*:" config/projects.yml | grep -v "defaults:" | sed 's/://g' | sed 's/^[[:space:]]*/  - /'
-                    exit 1
-                fi
-            else
-                log_error "Configuration file config/projects.yml not found"
-                log_error "Please create a projects.yml file with your project definitions"
-                exit 1
-            fi
-            
-            # Check if we have annotations (required for manifest generation)
-            if [ ! -d "web/annotations" ] || [ -z "$(ls -A web/annotations 2>/dev/null)" ]; then
-                log_error "No annotations found in web/annotations/ directory"
-                log_error "Annotations are required to generate IIIF manifests"
-                log_error "Please add your annotation JSON files to web/annotations/"
-                exit 1
-            fi
-            
-            # Step 1: Process annotations to generate manifests
-            build_core_services
-            
-            log_info "📝 Processing annotations from web/annotations/ to generate IIIF manifests..."
-            if ! load_annotations_from_web "$PROJECT_NAME"; then
-                log_error "Failed to process annotations - cannot continue without manifests"
-                exit 1
-            fi
-            
-            # Step 2: Build complete IIIF service with all content
-            log_info "🏗️  Building complete IIIF service with all processed content..."
-            build_web_service
-            
-            # Step 3: Index annotations for search functionality (after full stack is up)
-            log_info "🔍 Indexing annotations for search functionality..."
-            index_annotations_with_annosearch "$PROJECT_NAME"
-            ;;
-        "status")
+        status)
             show_status
             ;;
-        "stop")
-            log_info "Stopping IIIF services..."
-            cd proxy
-            
-            # Try to detect the project name from running containers
-            local detected_project=""
-            for container_name in iiif-nginx iiif-web iiif-miiify iiif-cantaloupe iiif-annosearch iiif-quickwit; do
-                if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
-                    # Extract project name from container labels or networks
-                    detected_project=$(docker inspect "$container_name" --format '{{index .Config.Labels "com.docker.compose.project"}}' 2>/dev/null || echo "")
-                    if [ -n "$detected_project" ]; then
-                        break
-                    fi
-                fi
-            done
-            
-            # If we found a project name, use it; otherwise try common names
-            if [ -n "$detected_project" ]; then
-                log_info "Detected project name: $detected_project"
-                $DOCKER_COMPOSE_CMD -p "$detected_project" down
-            else
-                # Try stopping with different common project names
-                for project_name in domesday iiif lincolnshire; do
-                    if docker ps --format "{{.Names}}" | grep -q "${project_name}_\|${project_name}-"; then
-                        log_info "Stopping services for project: $project_name"
-                        $DOCKER_COMPOSE_CMD -p "$project_name" down
-                        break
-                    fi
-                done
-                
-                # Fallback: stop containers by name directly
-                log_info "Stopping containers by name..."
-                for container_name in iiif-nginx iiif-web iiif-miiify iiif-cantaloupe iiif-annosearch iiif-quickwit; do
-                    if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
-                        docker stop "$container_name" 2>/dev/null && docker rm "$container_name" 2>/dev/null
-                    fi
-                done
-            fi
-            
-            cd - > /dev/null
-            log_success "Services stopped"
+        stop)
+            stop_services
             ;;
-        "restart")
-            local service_project_name=$(get_service_project_name)
-            log_info "Restarting services for project: $service_project_name"
-            cd proxy
-            $DOCKER_COMPOSE_CMD -p "$service_project_name" restart
-            cd - > /dev/null
-            log_success "Services restarted"
+        restart)
+            stop_services
+            start_all_services
             ;;
-        "logs")
-            local service_project_name=$(get_service_project_name)
-            log_info "Showing logs for project: $service_project_name"
-            cd proxy
-            $DOCKER_COMPOSE_CMD -p "$service_project_name" logs -f
-            cd - > /dev/null
+        logs)
+            show_logs
             ;;
-        "maintenance")
-            log_info "🔧 Enabling maintenance mode..."
-            
-            # Stop all services first
-            log_info "Stopping all IIIF services..."
-            cd proxy
-            
-            # Try to detect and stop running services (suppress docker output)
-            for container_name in iiif-nginx iiif-web iiif-miiify iiif-iipimage iiif-annosearch iiif-quickwit; do
-                if docker ps --format "{{.Names}}" | grep -q "^${container_name}$"; then
-                    docker stop "$container_name" >/dev/null 2>&1 && docker rm "$container_name" >/dev/null 2>&1
-                    log_info "Stopped: $container_name"
-                fi
-            done
-            
-            # Start minimal nginx with maintenance page
-            log_info "Starting maintenance mode (nginx only)..."
-            $DOCKER_COMPOSE_CMD -f docker-compose.maintenance.yml up -d
-            
-            cd - > /dev/null
-            log_success "✅ Maintenance mode enabled"
-            log_info "📄 Maintenance page available at: http://localhost:8080"
-            log_info "💡 Run './bootstrap.sh build' to bring services back online"
+        clean)
+            clean_output
+            ;;
+        maintenance)
+            enable_maintenance
             ;;
         *)
+            log_error "Unknown command: $COMMAND"
             show_help
             exit 1
             ;;
     esac
 }
 
-# Run main function with all arguments
+# Run main function
 main "$@"

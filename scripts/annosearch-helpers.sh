@@ -35,17 +35,28 @@ load_annosearch_data() {
     
     log_info "Loading from manifest URL: $manifest_url"
     
-    # Check if manifest exists via nginx (use the public hostname)
-    if ! curl -s -f --max-time 10 "${hostname}/iiif/${project_name}.json" > /dev/null 2>&1; then
+    # Check if manifest exists via nginx (use the public hostname) and detect its type
+    local manifest_json=$(curl -s -f --max-time 10 "${hostname}/iiif/${project_name}.json")
+    if [ $? -ne 0 ] || [ -z "$manifest_json" ]; then
         log_error "Manifest not found at: ${hostname}/iiif/${project_name}.json"
         log_error "Please ensure the manifest has been generated and nginx service is running"
         return 1
     fi
     
+    # Detect whether this is a Manifest or Collection
+    local manifest_type=$(echo "$manifest_json" | grep -o '"type"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
+    
+    if [ -z "$manifest_type" ]; then
+        log_error "Could not detect manifest type (Manifest or Collection)"
+        return 1
+    fi
+    
+    log_info "Detected IIIF type: $manifest_type"
+    
     # Load the manifest into annosearch using Docker exec
-    log_info "Loading IIIF Collection into search index..."
-    if docker exec iiif-annosearch node /app/dist/index.js load --index "$project_name" --type Collection --uri "$manifest_url"; then
-        log_success "IIIF Collection loaded successfully into search index"
+    log_info "Loading IIIF $manifest_type into search index..."
+    if docker exec iiif-annosearch node /app/dist/index.js load --index "$project_name" --type "$manifest_type" --uri "$manifest_url"; then
+        log_success "IIIF $manifest_type loaded successfully into search index"
         
         # Get some stats about what was loaded
         log_info "Manifest URL: $manifest_url"

@@ -304,8 +304,13 @@ CANVAS_EOF
   "service": [
     {
       "id": "${hostname}/annosearch/${project_name}/search",
-      "type": "SearchService1",
-      "label": "Search within this manifest"
+      "type": "SearchService2",
+      "service": [
+        {
+          "id": "${hostname}/annosearch/${project_name}/autocomplete",
+          "type": "AutoCompleteService2"
+        }
+      ]
     }
   ]
 }
@@ -450,8 +455,13 @@ ITEM_EOF
   "service": [
     {
       "id": "${hostname}/annosearch/${project_name}/search",
-      "type": "SearchService1",
-      "label": "Search within this collection"
+      "type": "SearchService2",
+      "service": [
+        {
+          "id": "${hostname}/annosearch/${project_name}/autocomplete",
+          "type": "AutoCompleteService2"
+        }
+      ]
     }
   ]
 }

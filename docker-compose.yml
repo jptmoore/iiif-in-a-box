@@ -1,8 +1,16 @@
+# IIIF-In-A-Box Docker Compose Configuration
+#
+# ARM64 (Apple Silicon) Notes:
+# - IIPImage: Uses AMD64 emulation (platform: linux/amd64)
+# - Miiify & AnnoSearch: Use local ARM64 builds (ghcr.io/nationalarchives/miiify:latest, ghcr.io/annosearch/annosearch:latest)
+#   Build instructions in README.md if needed
+#
 services:
   # IIPImage IIIF Image API server
   iipimage:
     container_name: iiif-iipimage
     image: iipsrv/iipsrv:latest
+    platform: linux/amd64  # Required for Apple Silicon Macs (ARM64)
     volumes:
       - ${OUTPUT_DIR}/web/images:/images:ro
     environment:
@@ -30,8 +38,8 @@ services:
   # AnnoSearch API
   annosearch:
     container_name: iiif-annosearch
-    image: ghcr.io/nationalarchives/annosearch:latest
-    command: ["serve"]
+    image: ghcr.io/annosearch/annosearch:latest  # Use local ARM64 build
+    command: ["serve"]  # ENTRYPOINT already set to: node ./dist/index.js
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
@@ -39,13 +47,15 @@ services:
     environment:
       ANNOSEARCH_PUBLIC_URL: ${ANNOSEARCH_PUBLIC_URL:-http://localhost:8080/annosearch}
       QUICKWIT_BASE_URL: ${QUICKWIT_BASE_URL:-http://quickwit:7280/api/v1/}
+    extra_hosts:
+      - "localhost:host-gateway"  # Allow container to reach host's localhost (for manifest URLs)
     networks:
       - iiif-network
 
   # Miiify v2 annotation server
   miiify:
     container_name: iiif-miiify
-    image: ghcr.io/nationalarchives/miiify:latest
+    image: ghcr.io/nationalarchives/miiify:latest  # Use local ARM64 build
     command:
       - "/home/miiify/miiify-serve"
       - "--repository"
@@ -63,6 +73,15 @@ services:
     networks:
       - iiif-network
 
+  # Tamerlane IIIF Viewer
+  tamerlane:
+    container_name: iiif-tamerlane
+    image: tamerlane_tamerlane:latest
+    ports:
+      - "127.0.0.1:3001:3001"
+    networks:
+      - iiif-network
+
   # Nginx reverse proxy and static file server
   nginx:
     container_name: iiif-nginx
@@ -76,6 +95,7 @@ services:
       - iipimage
       - miiify
       - annosearch
+      - tamerlane
     networks:
       - iiif-network
 

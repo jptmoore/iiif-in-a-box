@@ -189,10 +189,252 @@ generate_manifest() {
     log_info "Generating IIIF manifest for project: $project_name"
     
     mkdir -p "${OUTPUT_DIR}/web/iiif"
-    local manifest_path="${OUTPUT_DIR}/web/iiif/${project_name}.json"
+    local images_dir="${OUTPUT_DIR}/web/images"
     
-    # Create a IIIF Collection manifest that points to the Miiify pack store
+    # Check if images are organized in subdirectories or flat
+    local has_subdirs=false
+    if [ -d "$images_dir" ]; then
+        # Check if there are any subdirectories with images
+        if find "$images_dir" -mindepth 2 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | head -1 | grep -q .; then
+            has_subdirs=true
+        fi
+    fi
+    
+    if [ "$has_subdirs" = true ]; then
+        log_info "Detected subdirectory structure - generating Collection with multiple Manifests"
+        generate_collection_with_manifests "$project_name" "$project_title" "$project_description" "$hostname"
+    else
+        log_info "Detected flat structure - generating single Manifest"
+        generate_single_manifest "$project_name" "$project_title" "$project_description" "$hostname"
+    fi
+}
+
+# Generate a single manifest (for flat image directory)
+generate_single_manifest() {
+    local project_name="$1"
+    local project_title="$2"
+    local project_description="$3"
+    local hostname="$4"
+    
+    local manifest_path="${OUTPUT_DIR}/web/iiif/${project_name}.json"
+    local images_dir="${OUTPUT_DIR}/web/images"
+    local canvases_json=""
+    local canvas_count=0
+    
+    # Process each image as a Canvas
+    if [ -d "$images_dir" ]; then
+        for image_file in $(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | sort); do
+            local image_basename=$(basename "$image_file")
+            local image_name="${image_basename%.*}"
+            ((canvas_count++))
+            
+            # Get image dimensions
+            local width=3000
+            local height=2000
+            if command -v identify &> /dev/null; then
+                local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
+                width=$(echo "$dims" | awk '{print $1}')
+                height=$(echo "$dims" | awk '{print $2}')
+            fi
+            
+            # Add to canvases
+            [ $canvas_count -gt 1 ] && canvases_json+=","
+            canvases_json+=$(cat << CANVAS_EOF
+
+    {
+      "id": "${hostname}/iiif/canvas/${image_name}",
+      "type": "Canvas",
+      "label": { "en": ["${image_name}"] },
+      "height": ${height},
+      "width": ${width},
+      "items": [
+        {
+          "id": "${hostname}/iiif/canvas/${image_name}/page/1",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "${hostname}/iiif/canvas/${image_name}/page/1/annotation/1",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "${hostname}/iiif/${image_basename}/full/max/0/default.jpg",
+                "type": "Image",
+                "format": "image/jpeg",
+                "height": ${height},
+                "width": ${width},
+                "service": [
+                  {
+                    "id": "${hostname}/iiif/${image_basename}",
+                    "type": "ImageService2",
+                    "profile": "level1"
+                  }
+                ]
+              },
+              "target": "${hostname}/iiif/canvas/${image_name}"
+            }
+          ]
+        }
+      ],
+      "annotations": [
+        {
+          "id": "${hostname}/miiify/${image_name}/?page=0",
+          "type": "AnnotationPage"
+        }
+      ]
+    }
+CANVAS_EOF
+)
+        done
+    fi
+    
+    # Create single Manifest with all Canvases
     cat > "$manifest_path" << EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/${project_name}.json",
+  "type": "Manifest",
+  "label": {
+    "en": ["${project_title}"]
+  },
+  "summary": {
+    "en": ["${project_description}"]
+  },
+  "items": [${canvases_json}
+  ],
+  "service": [
+    {
+      "id": "${hostname}/annosearch/${project_name}/search",
+      "type": "SearchService1",
+      "label": "Search within this manifest"
+    }
+  ]
+}
+EOF
+    
+    log_success "Generated single Manifest with ${canvas_count} canvas(es): ${manifest_path}"
+}
+
+# Generate collection with multiple manifests (for subdirectory structure)
+generate_collection_with_manifests() {
+    local project_name="$1"
+    local project_title="$2"
+    local project_description="$3"
+    local hostname="$4"
+    
+    local collection_path="${OUTPUT_DIR}/web/iiif/${project_name}.json"
+    local images_dir="${OUTPUT_DIR}/web/images"
+    local manifests_json=""
+    local manifest_count=0
+    
+    # Process each subdirectory as a separate Manifest
+    for subdir in $(find "$images_dir" -mindepth 1 -maxdepth 1 -type d | sort); do
+        local subdir_name=$(basename "$subdir")
+        ((manifest_count++))
+        
+        local manifest_path="${OUTPUT_DIR}/web/iiif/manifest-${subdir_name}.json"
+        local canvases_json=""
+        local canvas_count=0
+        
+        # Process images in this subdirectory
+        for image_file in $(find "$subdir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | sort); do
+            local image_basename=$(basename "$image_file")
+            local image_name="${image_basename%.*}"
+            # Relative path from images_dir (e.g., "chapter1/page001")
+            local rel_path="${subdir_name}/${image_name}"
+            # Container name for Miiify (replace / with -)
+            local container_name="${subdir_name}-${image_name}"
+            ((canvas_count++))
+            
+            # Get image dimensions
+            local width=3000
+            local height=2000
+            if command -v identify &> /dev/null; then
+                local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
+                width=$(echo "$dims" | awk '{print $1}')
+                height=$(echo "$dims" | awk '{print $2}')
+            fi
+            
+            # Relative path for image file in IIPImage
+            local image_rel_path="${subdir_name}/${image_basename}"
+            
+            # Add to canvases
+            [ $canvas_count -gt 1 ] && canvases_json+=","
+            canvases_json+=$(cat << CANVAS_EOF
+
+    {
+      "id": "${hostname}/iiif/canvas/${rel_path}",
+      "type": "Canvas",
+      "label": { "en": ["${image_name}"] },
+      "height": ${height},
+      "width": ${width},
+      "items": [
+        {
+          "id": "${hostname}/iiif/canvas/${rel_path}/page/1",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "${hostname}/iiif/canvas/${rel_path}/page/1/annotation/1",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "${hostname}/iiif/${image_rel_path}/full/max/0/default.jpg",
+                "type": "Image",
+                "format": "image/jpeg",
+                "height": ${height},
+                "width": ${width},
+                "service": [
+                  {
+                    "id": "${hostname}/iiif/${image_rel_path}",
+                    "type": "ImageService2",
+                    "profile": "level1"
+                  }
+                ]
+              },
+              "target": "${hostname}/iiif/canvas/${rel_path}"
+            }
+          ]
+        }
+      ],
+      "annotations": [
+        {
+          "id": "${hostname}/miiify/${container_name}/?page=0",
+          "type": "AnnotationPage"
+        }
+      ]
+    }
+CANVAS_EOF
+)
+        done
+        
+        # Create manifest for this subdirectory
+        cat > "$manifest_path" << MANIFEST_EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/manifest-${subdir_name}.json",
+  "type": "Manifest",
+  "label": {
+    "en": ["${subdir_name}"]
+  },
+  "items": [${canvases_json}
+  ]
+}
+MANIFEST_EOF
+        
+        # Add to collection items
+        [ $manifest_count -gt 1 ] && manifests_json+=","
+        manifests_json+=$(cat << ITEM_EOF
+
+    {
+      "id": "${hostname}/iiif/manifest-${subdir_name}.json",
+      "type": "Manifest",
+      "label": { "en": ["${subdir_name}"] }
+    }
+ITEM_EOF
+)
+    done
+    
+    # Create the collection
+    cat > "$collection_path" << EOF
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
   "id": "${hostname}/iiif/${project_name}.json",
@@ -203,24 +445,7 @@ generate_manifest() {
   "summary": {
     "en": ["${project_description}"]
   },
-  "items": [
-    {
-      "id": "${hostname}/miiify/",
-      "type": "Collection",
-      "label": {
-        "en": ["Annotations"]
-      }
-    }
-  ],
-  "seeAlso": [
-    {
-      "id": "${hostname}/miiify/",
-      "type": "Dataset",
-      "label": {
-        "en": ["View all annotations"]
-      },
-      "format": "application/ld+json;profile=\"http://www.w3.org/ns/anno.jsonld\""
-    }
+  "items": [${manifests_json}
   ],
   "service": [
     {
@@ -232,7 +457,7 @@ generate_manifest() {
 }
 EOF
     
-    log_success "Generated manifest: ${manifest_path}"
+    log_success "Generated Collection with ${manifest_count} manifest(s): ${collection_path}"
 }
 
 # Function to generate HTML viewer page from template
@@ -388,7 +613,7 @@ start_all_services() {
     log_info "Starting all IIIF services..."
     
     # Export environment variables for docker-compose
-    export OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
+    export OUTPUT_DIR
     export PROJECT_NAME
     export MIIIFY_BASE_URL="${HOSTNAME}/miiify"
     export ANNOSEARCH_PUBLIC_URL="${HOSTNAME}/annosearch"
@@ -498,6 +723,18 @@ enable_maintenance() {
 main() {
     parse_arguments "$@"
     check_dependencies
+    
+    # Convert paths to absolute paths (required for Docker volume mounts)
+    if [ -n "$INPUT_DIR" ]; then
+        INPUT_DIR="$(cd "$INPUT_DIR" && pwd)" || {
+            log_error "Invalid input directory: $INPUT_DIR"
+            exit 1
+        }
+    fi
+    
+    # Convert OUTPUT_DIR to absolute path, creating it if it doesn't exist
+    mkdir -p "$OUTPUT_DIR"
+    OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
     
     case "$COMMAND" in
         build)

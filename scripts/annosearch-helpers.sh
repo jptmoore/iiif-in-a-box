@@ -10,11 +10,11 @@ create_annosearch_index() {
     
     # Try to delete existing index (silently ignore errors - 404 is expected if index doesn't exist)
     log_info "Cleaning up any existing index: $project_name"
-    docker exec iiif-annosearch npm start -- delete --index "$project_name" >/dev/null 2>&1 || true
+    docker exec iiif-annosearch node /app/dist/index.js delete --index "$project_name" >/dev/null 2>&1 || true
     
     # Create new index
     log_info "Creating new search index: $project_name"
-    if docker exec iiif-annosearch npm start -- init --index "$project_name"; then
+    if docker exec iiif-annosearch node /app/dist/index.js init --index "$project_name"; then
         log_success "Search index '$project_name' created successfully"
         return 0
     else
@@ -35,16 +35,16 @@ load_annosearch_data() {
     
     log_info "Loading from manifest URL: $manifest_url"
     
-    # Check if manifest exists via nginx
-    if ! curl -s -f --max-time 10 "http://localhost:8080/iiif/${project_name}.json" > /dev/null 2>&1; then
-        log_error "Manifest not found at: http://localhost:8080/iiif/${project_name}.json"
+    # Check if manifest exists via nginx (use the public hostname)
+    if ! curl -s -f --max-time 10 "${hostname}/iiif/${project_name}.json" > /dev/null 2>&1; then
+        log_error "Manifest not found at: ${hostname}/iiif/${project_name}.json"
         log_error "Please ensure the manifest has been generated and nginx service is running"
         return 1
     fi
     
     # Load the manifest into annosearch using Docker exec
     log_info "Loading IIIF Collection into search index..."
-    if docker exec iiif-annosearch npm start -- load --index "$project_name" --type Collection --uri "$manifest_url"; then
+    if docker exec iiif-annosearch node /app/dist/index.js load --index "$project_name" --type Collection --uri "$manifest_url"; then
         log_success "IIIF Collection loaded successfully into search index"
         
         # Get some stats about what was loaded

@@ -8,7 +8,10 @@ Transform images and annotations into a complete IIIF service with viewer, searc
 # 1. Create Docker network (one-time setup)
 docker network create iiif-network
 
-# 2. Create a minimal test project
+# 2. Clone Tamerlane viewer (required)
+git clone https://github.com/tamerlaneviewer/tamerlane.git
+
+# 3. Create a minimal test project
 mkdir -p /tmp/my-iiif-project
 cat > /tmp/my-iiif-project/config.yml << 'EOF'
 project:
@@ -17,10 +20,10 @@ project:
   description: "Testing IIIF-in-a-Box"
 EOF
 
-# 3. Build and start services
+# 4. Build and start services
 ./bootstrap.sh build --input-dir /tmp/my-iiif-project
 
-# 4. Open in browser
+# 5. Open in browser
 # http://localhost:8080/pages/demo.html
 # You should see a IIIF viewer (empty because we didn't add images yet)
 ```
@@ -47,18 +50,54 @@ cp /path/to/your/*.jpg /tmp/my-iiif-project/images/
 
 ## Input Directory Structure
 
+**Simple Project (Single Manifest):**
 ```
 my-project/
 ├── config.yml          # Project configuration (required)
-├── images/             # Your images (optional)
+├── images/             # Your images (flat structure)
 │   ├── image1.tif
 │   └── image2.jpg
 └── annotations/        # W3C annotations (optional)
-    ├── canvas-1/
+    ├── image1/
     │   └── annotation-1.json
-    └── canvas-2/
+    └── image2/
         └── annotation-2.json
 ```
+
+**Complex Project (Collection with Manifests):**
+```
+my-book/
+├── config.yml          # Project configuration (required)
+├── images/             # Your images (organized in subdirectories)
+│   ├── chapter1/
+│   │   ├── page001.jpg
+│   │   └── page002.jpg
+│   └── chapter2/
+│       ├── page001.jpg
+│       └── page002.jpg
+└── annotations/        # Annotation containers (match: subdir-imagename)
+    ├── chapter1-page001/
+    │   └── annotation-1.json
+    ├── chapter1-page002/
+    │   └── annotation-1.json
+    ├── chapter2-page001/
+    │   └── annotation-1.json
+    └── chapter2-page002/
+        └── annotation-1.json
+```
+
+The system automatically detects:
+- **Flat structure** → Generates single Manifest with multiple Canvases
+- **Subdirectories** → Generates Collection with multiple Manifests (one per subdirectory)
+
+**Annotation Naming Convention:**
+- For flat images: annotation folder = image filename (without extension)
+  - `images/photo.jpg` → `annotations/photo/`
+- For subdirectories: annotation folder = subdirectory + hyphen + image filename
+  - `images/chapter1/page001.jpg` → `annotations/chapter1-page001/`
+- Annotations must target the correct Canvas ID:
+  - Flat: `http://localhost:8080/iiif/canvas/photo`
+  - Nested: `http://localhost:8080/iiif/canvas/chapter1/page001`
 
 ## Configuration
 
@@ -168,6 +207,30 @@ output/
 - Docker & Docker Compose v2
 - Git
 
+**Apple Silicon Macs (M1/M2/M3):**
+- IIPImage server runs using AMD64 emulation (configured automatically)
+- Miiify and AnnoSearch: Use local ARM64 builds if available, otherwise pull AMD64 images
+- To build ARM64 images locally:
+  ```bash
+  # Clone and build miiify
+  git clone https://github.com/nationalarchives/miiify.git
+  cd miiify && docker build -t ghcr.io/nationalarchives/miiify:latest .
+  
+  # Clone and build annosearch  
+  git clone https://github.com/annosearch/annosearch.git
+  cd annosearch && docker build -t ghcr.io/annosearch/annosearch:latest .
+  ```
+
+**Tamerlane Viewer (Required):**
+The viewer requires Tamerlane to be built locally (no published image yet):
+```bash
+# Clone Tamerlane into the iiif-in-a-box directory
+git clone https://github.com/tamerlaneviewer/tamerlane.git
+
+# Tamerlane will be built automatically by docker-compose
+# when you run the bootstrap script
+```
+
 **First-time setup:**
 ```bash
 # Create the shared Docker network (only needed once)
@@ -196,13 +259,24 @@ The bootstrap script automatically:
 - Wait ~10 seconds after services start for indexing
 - Check manifest exists: `ls output/web/iiif/`
 
+**ARM64 architecture error (Apple Silicon Macs):**
+- IIPImage runs using AMD64 emulation (already configured)
+- If you still see platform errors, ensure Docker Desktop is updated
+- Performance may be slightly slower than native ARM64 images
+
+**Viewer not loading:**
+- Ensure Tamerlane is cloned: `git clone https://github.com/tamerlaneviewer/tamerlane.git`
+- The `tamerlane` directory must be in the same directory as `docker-compose.yml`
+- Run `./bootstrap.sh stop && ./bootstrap.sh build --input-dir /path/to/input` to rebuild
+
 ## Architecture
 
 Pre-built Docker images:
 - **nginx** - Reverse proxy & static files
-- **IIPImage** (`iipsrv/iipsrv:latest`) - IIIF Image API 2.0/3.0
-- **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server
-- **AnnoSearch** (`ghcr.io/nationalarchives/annosearch:latest`) - IIIF Content Search API
+- **IIPImage** (`iipsrv/iipsrv:latest`) - IIIF Image API 2.0/3.0 [AMD64 only]
+- **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server [ARM64 via local build]
+- **AnnoSearch** (`ghcr.io/annosearch/annosearch:latest`) - IIIF Content Search API [ARM64 via local build]
 - **Quickwit** (`quickwit/quickwit`) - Full-text search engine
+- **Tamerlane** (local build required) - IIIF Viewer with annotation support
 
 All services on Docker network `iiif-network`.

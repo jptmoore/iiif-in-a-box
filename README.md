@@ -54,28 +54,26 @@ cp /path/to/your/*.jpg /tmp/my-iiif-project/images/
 ```
 my-project/
 ├── config.yml          # Project configuration (required)
-├── images/             # Your images (flat structure)
+├── images/             # Your images (flat - no dashes in names)
 │   ├── image1.tif
 │   └── image2.jpg
-└── annotations/        # W3C annotations (optional)
+└── annotations/        # Annotation folders (match image names exactly)
     ├── image1/
     │   └── annotation-1.json
     └── image2/
         └── annotation-2.json
 ```
 
-**Complex Project (Collection with Manifests):**
+**Collection Project (organized with dashes):**
 ```
 my-book/
 ├── config.yml          # Project configuration (required)
-├── images/             # Your images (organized in subdirectories)
-│   ├── chapter1/
-│   │   ├── page001.jpg
-│   │   └── page002.jpg
-│   └── chapter2/
-│       ├── page001.jpg
-│       └── page002.jpg
-└── annotations/        # Annotation containers (match: subdir-imagename)
+├── images/             # Images with dash-separated names (flat directory)
+│   ├── chapter1-page001.jpg
+│   ├── chapter1-page002.jpg
+│   ├── chapter2-page001.jpg
+│   └── chapter2-page002.jpg
+└── annotations/        # Annotation folders (match image names exactly)
     ├── chapter1-page001/
     │   └── annotation-1.json
     ├── chapter1-page002/
@@ -85,23 +83,19 @@ my-book/
     └── chapter2-page002/
         └── annotation-1.json
 ```
-**Nested Collections (Multi-level):**
+
+**Nested Collections (multi-level with dashes):**
 ```
 domesday/
 ├── config.yml
-├── images/
-│   ├── volume1/
-│   │   ├── chapter1/
-│   │   │   ├── page001.jpg
-│   │   │   └── page002.jpg
-│   │   └── chapter2/
-│   │       ├── page001.jpg
-│   │       └── page002.jpg
-│   └── volume2/
-│       └── chapter1/
-│           ├── page001.jpg
-│           └── page002.jpg
-└── annotations/        # Annotation containers (full path with dashes)
+├── images/             # All images flat with dash-separated names
+│   ├── volume1-chapter1-page001.jpg
+│   ├── volume1-chapter1-page002.jpg
+│   ├── volume1-chapter2-page001.jpg
+│   ├── volume1-chapter2-page002.jpg
+│   ├── volume2-chapter1-page001.jpg
+│   └── volume2-chapter1-page002.jpg
+└── annotations/        # Annotation folders (match image names exactly)
     ├── volume1-chapter1-page001/
     │   └── annotation-1.json
     ├── volume1-chapter1-page002/
@@ -115,23 +109,26 @@ domesday/
     └── volume2-chapter1-page002/
         └── annotation-1.json
 ```
+
 The system automatically detects:
-- **Flat structure** → Generates single Manifest with multiple Canvases
-- **Subdirectories** → Generates Collection with multiple Manifests (one per subdirectory)
-- **Nested subdirectories** → Generates nested Collections recursively
+- **No dashes** in image names → Generates single Manifest with multiple Canvases
+- **One dash level** (e.g., `chapter1-page001`) → Generates Collection with Manifests (one per first segment)
+- **Multiple dash levels** (e.g., `volume1-chapter1-page001`) → Generates nested Collections recursively
 
-**Annotation Naming Convention:**
-- For flat images: annotation folder = image filename (without extension)
-  - `images/photo.jpg` → `annotations/photo/`
-- For subdirectories: annotation folder = full path with slashes replaced by hyphens
-  - `images/chapter1/page001.jpg` → `annotations/chapter1-page001/`
-  - `images/volume1/chapter1/page001.jpg` → `annotations/volume1-chapter1-page001/`
-- Annotations must target the correct Canvas ID:
-  - Flat: `http://localhost:8080/iiif/canvas/photo`
-  - Nested: `http://localhost:8080/iiif/canvas/chapter1/page001`
-  - Deeply nested: `http://localhost:8080/iiif/canvas/volume1/chapter1/page001`
+**Key Principles:**
+- **All images remain flat** in the input `images/` directory
+- **Use dashes** (`-`) in filenames to define hierarchy (e.g., `volume1-chapter1-page001.jpg`)
+- **Annotation folders match image names exactly** (without extension)
+- The system **reorganizes images into nested directories** in the output automatically
+- Dashes become directory separators: `volume1-chapter1-page001.jpg` → `volume1/chapter1/page001.jpg`
 
-**Important:** The build process validates annotation folder naming and will fail if folders don't match the expected pattern.
+**Annotation Targets:**
+Annotations must target the correct Canvas ID based on the dash-separated structure:
+- No dashes: `http://localhost:8080/iiif/canvas/photo`
+- One level: `http://localhost:8080/iiif/canvas/chapter1/page001`
+- Multiple levels: `http://localhost:8080/iiif/canvas/volume1/chapter1/page001`
+
+**Important:** The build process validates that annotation folders match image filenames exactly and will fail if they don't match.
 
 ## Configuration
 

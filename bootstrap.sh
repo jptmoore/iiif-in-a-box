@@ -188,9 +188,9 @@ validate_annotation_naming() {
     if [ ! -d "$annotations_dir" ]; then
         log_error "No annotations directory found: ${input_dir}/annotations"
         log_error "IIIF-in-a-Box requires annotations for all images"
-        log_error "Create annotation directories matching your image structure:"
-        log_error "  Flat: images/photo.jpg → annotations/photo/"
-        log_error "  Nested: images/ch1/p01.jpg → annotations/ch1-p01/"
+        log_error "Create annotation directories matching your image filenames:"
+        log_error "  images/photo.jpg → annotations/photo/"
+        log_error "  images/volume1-chapter1-page001.jpg → annotations/volume1-chapter1-page001/"
         return 1
     fi
     
@@ -211,52 +211,24 @@ validate_annotation_naming() {
         local image_basename=$(basename "$image_file")
         local image_name="${image_basename%.*}"
         
-        # Get relative path from images_dir
-        local rel_path="${image_file#$images_dir/}"
-        local image_dir=$(dirname "$rel_path")
+        # Expected annotation folder name is simply the image name (without extension)
+        local expected_annotation_folder="${image_name}"
         
-        # Calculate expected annotation folder name
-        local expected_annotation_folder
-        if [ "$image_dir" = "." ]; then
-            # Flat structure: just the image name
-            expected_annotation_folder="${image_name}"
-        else
-            # Nested structure: replace / with -
-            expected_annotation_folder=$(echo "${rel_path%.*}" | tr '/' '-')
+        # Check if annotation folder exists
+        if [ ! -d "${annotations_dir}/${expected_annotation_folder}" ]; then
+            log_error "Missing annotation folder for image: $image_basename"
+            log_error "  Expected: ${annotations_dir}/${expected_annotation_folder}/"
+            ((validation_errors++))
         fi
-        
-        # Check if annotation folder exists (in any form)
-        local annotation_folders=()
-        while IFS= read -r -d '' anno_dir; do
-            annotation_folders+=("$(basename "$anno_dir")")
-        done < <(find "$annotations_dir" -maxdepth 1 -type d -name "*${image_name}*" -print0 2>/dev/null || true)
-        
-        # If we found annotation folders, validate the naming
-        if [ ${#annotation_folders[@]} -gt 0 ]; then
-            local found_correct=false
-            for anno_folder in "${annotation_folders[@]}"; do
-                if [ "$anno_folder" = "$expected_annotation_folder" ]; then
-                    found_correct=true
-                    break
-                fi
-            done
-            
-            if [ "$found_correct" = false ]; then
-                log_error "Annotation naming mismatch for image: $rel_path"
-                log_error "  Expected annotation folder: ${annotations_dir}/${expected_annotation_folder}/"
-                log_error "  Found: ${annotation_folders[*]}"
-                ((validation_errors++))
-            fi
-        fi
-    done < <(find "$images_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
+    done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
     
     if [ $validation_errors -gt 0 ]; then
         log_error "Found $validation_errors annotation naming error(s)"
-        log_error "Annotation folders must match image paths with / replaced by -"
+        log_error "Annotation folders must match image filenames (without extension)"
         log_error "Examples:"
         log_error "  images/photo.jpg        → annotations/photo/"
-        log_error "  images/ch1/page01.jpg   → annotations/ch1-page01/"
-        log_error "  images/v1/ch1/p01.jpg   → annotations/v1-ch1-p01/"
+        log_error "  images/ch1-p01.jpg      → annotations/ch1-p01/"
+        log_error "  images/v1-ch1-p01.jpg   → annotations/v1-ch1-p01/"
         return 1
     fi
     

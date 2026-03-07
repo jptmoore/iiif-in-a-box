@@ -17,7 +17,7 @@ process_images() {
     fi
     
     # Count images
-    local image_count=$(find "${input_dir}/images" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | wc -l)
+    local image_count=$(find "${input_dir}/images" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | wc -l)
     
     if [ "$image_count" -eq 0 ]; then
         log_warning "No image files found in ${input_dir}/images"
@@ -29,13 +29,31 @@ process_images() {
     # Create output directory for images
     mkdir -p "${output_dir}/web/images"
     
-    # Copy or symlink images
-    # Using rsync for efficient copying (only copies if changed)
-    log_info "Copying images to output directory..."
-    rsync -av --delete "${input_dir}/images/" "${output_dir}/web/images/"
+    # Process each image and organize based on dash-separated naming
+    log_info "Reorganizing images into nested structure..."
+    for image_file in $(find "${input_dir}/images" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | sort); do
+        local image_basename=$(basename "$image_file")
+        local image_name="${image_basename%.*}"
+        local image_ext="${image_basename##*.}"
+        
+        # Check if filename contains dashes (nested structure)
+        if [[ "$image_name" == *"-"* ]]; then
+            # Split on dashes and create directory structure
+            # e.g., volume1-chapter1-page001.jpg → volume1/chapter1/page001.jpg
+            local path_with_slashes=$(echo "$image_name" | sed 's/-/\//g')
+            local target_dir="${output_dir}/web/images/$(dirname "$path_with_slashes")"
+            local target_filename="$(basename "$path_with_slashes").${image_ext}"
+            
+            mkdir -p "$target_dir"
+            cp "$image_file" "${target_dir}/${target_filename}"
+        else
+            # No dashes, keep flat
+            cp "$image_file" "${output_dir}/web/images/${image_basename}"
+        fi
+    done
     
     if [ $? -ne 0 ]; then
-        log_error "Failed to copy images"
+        log_error "Failed to process images"
         return 1
     fi
     

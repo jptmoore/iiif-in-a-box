@@ -85,19 +85,53 @@ my-book/
     └── chapter2-page002/
         └── annotation-1.json
 ```
-
+**Nested Collections (Multi-level):**
+```
+domesday/
+├── config.yml
+├── images/
+│   ├── volume1/
+│   │   ├── chapter1/
+│   │   │   ├── page001.jpg
+│   │   │   └── page002.jpg
+│   │   └── chapter2/
+│   │       ├── page001.jpg
+│   │       └── page002.jpg
+│   └── volume2/
+│       └── chapter1/
+│           ├── page001.jpg
+│           └── page002.jpg
+└── annotations/        # Annotation containers (full path with dashes)
+    ├── volume1-chapter1-page001/
+    │   └── annotation-1.json
+    ├── volume1-chapter1-page002/
+    │   └── annotation-1.json
+    ├── volume1-chapter2-page001/
+    │   └── annotation-1.json
+    ├── volume1-chapter2-page002/
+    │   └── annotation-1.json
+    ├── volume2-chapter1-page001/
+    │   └── annotation-1.json
+    └── volume2-chapter1-page002/
+        └── annotation-1.json
+```
 The system automatically detects:
 - **Flat structure** → Generates single Manifest with multiple Canvases
 - **Subdirectories** → Generates Collection with multiple Manifests (one per subdirectory)
+- **Nested subdirectories** → Generates nested Collections recursively
 
 **Annotation Naming Convention:**
 - For flat images: annotation folder = image filename (without extension)
   - `images/photo.jpg` → `annotations/photo/`
-- For subdirectories: annotation folder = subdirectory + hyphen + image filename
+- For subdirectories: annotation folder = full path with slashes replaced by hyphens
   - `images/chapter1/page001.jpg` → `annotations/chapter1-page001/`
+  - `images/volume1/chapter1/page001.jpg` → `annotations/volume1-chapter1-page001/`
 - Annotations must target the correct Canvas ID:
   - Flat: `http://localhost:8080/iiif/canvas/photo`
   - Nested: `http://localhost:8080/iiif/canvas/chapter1/page001`
+  - Deeply nested: `http://localhost:8080/iiif/canvas/volume1/chapter1/page001`
+
+**Important:** The build process validates annotation folder naming and will fail if folders don't match the expected pattern.
 
 ## Configuration
 

@@ -2,8 +2,7 @@
 #
 # ARM64 (Apple Silicon) Notes:
 # - IIPImage: Uses AMD64 emulation (platform: linux/amd64)
-# - Miiify & AnnoSearch: Use local ARM64 builds (ghcr.io/nationalarchives/miiify:latest, ghcr.io/annosearch/annosearch:latest)
-#   Build instructions in README.md if needed
+# - All other images: Pull from respective registries (multi-arch support where available)
 #
 services:
   # IIPImage IIIF Image API server

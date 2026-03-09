@@ -865,6 +865,12 @@ build_project() {
     # Step 10: Create Docker network
     create_docker_network
     
+    # Step 10.5: Prepare Tamerlane image
+    if ! prepare_tamerlane_image; then
+        log_error "Failed to prepare Tamerlane image"
+        exit 1
+    fi
+    
     # Step 11: Start all services
     if ! start_all_services; then
         log_error "Failed to start all services"
@@ -891,6 +897,35 @@ build_project() {
     log_info "  - Annotations: ${HOSTNAME}/miiify/"
     log_info "  - Search:      ${HOSTNAME}/annosearch/"
     log_info "============================================"
+}
+
+# Function to prepare Tamerlane image (pull from ghcr or use local)
+prepare_tamerlane_image() {
+    local ghcr_image="ghcr.io/tamerlaneviewer/tamerlane:latest"
+    local local_image="tamerlane_tamerlane:latest"
+    
+    log_info "Preparing Tamerlane viewer image..."
+    
+    # Check if image already exists locally
+    if docker image inspect "$ghcr_image" &> /dev/null; then
+        log_info "Tamerlane image already exists locally"
+        docker tag "$ghcr_image" "$local_image"
+        log_success "Tagged ${ghcr_image} as ${local_image}"
+        return 0
+    fi
+    
+    # Try to pull from GitHub Container Registry
+    log_info "Pulling Tamerlane from GitHub Container Registry..."
+    if docker pull "$ghcr_image" 2>/dev/null; then
+        log_success "Successfully pulled Tamerlane from ghcr.io"
+        docker tag "$ghcr_image" "$local_image"
+        log_info "Tagged ${ghcr_image} as ${local_image}"
+        return 0
+    else
+        log_error "Failed to pull Tamerlane from ghcr.io"
+        log_error "Image not available - please authenticate with: docker login ghcr.io"
+        return 1
+    fi
 }
 
 # Function to start all services

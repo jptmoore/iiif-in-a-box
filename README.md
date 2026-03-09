@@ -31,10 +31,7 @@ If you have images and want to publish them with IIIF standards but don't want t
 # 1. Create Docker network (one-time setup)
 docker network create iiif-network
 
-# 2. Clone Tamerlane viewer (required)
-git clone https://github.com/tamerlaneviewer/tamerlane.git
-
-# 3. Create a minimal test project
+# 2. Create a minimal test project
 mkdir -p /tmp/my-iiif-project
 cat > /tmp/my-iiif-project/config.yml << 'EOF'
 project:
@@ -43,10 +40,11 @@ project:
   description: "Testing IIIF-in-a-Box"
 EOF
 
-# 4. Build and start services
+# 3. Build and start services
+# (Tamerlane viewer will be pulled from ghcr.io automatically)
 ./bootstrap.sh build --input-dir /tmp/my-iiif-project
 
-# 5. Open in browser
+# 4. Open in browser
 # http://localhost:8080/pages/demo.html
 # Done! Your IIIF viewer is running.
 ```
@@ -294,15 +292,8 @@ Works on any platform: Linux servers, macOS, Windows, cloud VMs, Raspberry Pi, o
   cd annosearch && docker build -t ghcr.io/annosearch/annosearch:latest .
   ```
 
-**Tamerlane Viewer (Required):**
-The viewer requires Tamerlane to be built locally (no published image yet):
-```bash
-# Clone Tamerlane into the iiif-in-a-box directory
-git clone https://github.com/tamerlaneviewer/tamerlane.git
-
-# Tamerlane will be built automatically by docker-compose
-# when you run the bootstrap script
-```
+**Tamerlane Viewer:**
+The bootstrap script automatically pulls Tamerlane from GitHub Container Registry (ghcr.io).
 
 **First-time setup:**
 ```bash
@@ -338,8 +329,8 @@ The bootstrap script automatically:
 - Performance may be slightly slower than native ARM64 images
 
 **Viewer not loading:**
-- Ensure Tamerlane is cloned: `git clone https://github.com/tamerlaneviewer/tamerlane.git`
-- The `tamerlane` directory must be in the same directory as `docker-compose.yml`
+- Bootstrap script automatically pulls Tamerlane from ghcr.io
+- Ensure the Tamerlane image is available for your architecture
 - Run `./bootstrap.sh stop && ./bootstrap.sh build --input-dir /path/to/input` to rebuild
 
 ## Architecture
@@ -349,10 +340,10 @@ The bootstrap script automatically:
 Pre-built Docker images:
 - **nginx** - Reverse proxy & static files
 - **IIPImage** (`iipsrv/iipsrv:latest`) - Fast IIIF Image API 2.0/3.0 server [AMD64]
-- **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server with Git storage [ARM64 via local build]
-- **AnnoSearch** (`ghcr.io/annosearch/annosearch:latest`) - IIIF Content Search API implementation [ARM64 via local build]
+- **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server with Git storage
+- **AnnoSearch** (`ghcr.io/annosearch/annosearch:latest`) - IIIF Content Search API implementation
 - **Quickwit** (`quickwit/quickwit`) - High-performance search engine
-- **Tamerlane** (local build required) - Modern IIIF viewer with rich annotation support
+- **Tamerlane** (`ghcr.io/tamerlaneviewer/tamerlane:latest`) - Modern IIIF viewer with rich annotation support
 
 **Design Philosophy:**
 - Shell scripts for transparency and hackability

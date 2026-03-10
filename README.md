@@ -136,6 +136,37 @@ domesday/
 **Naming pattern:** `{collection}-{manifest}-{canvas}.{ext}`  
 **System parses dashes** to detect: collection=domesday, manifest=lincolnshire, canvas=0680
 
+**Nested Collections (arbitrary depth):**
+```
+archive/
+├── config.yml
+├── images/             # Dash-separated: collection-subcollection-manifest-canvas
+│   ├── archive-volume1-chapter1-page01.tif
+│   ├── archive-volume1-chapter1-page02.tif
+│   ├── archive-volume1-chapter2-page01.tif
+│   ├── archive-volume2-chapter1-page01.tif
+│   └── archive-volume2-chapter1-page02.tif
+└── annotations/        # Folders match image names exactly
+    ├── archive-volume1-chapter1-page01/
+    │   └── anno-001.json
+    ├── archive-volume1-chapter1-page02/
+    │   └── anno-001.json
+    ├── archive-volume1-chapter2-page01/
+    │   └── anno-001.json
+    ├── archive-volume2-chapter1-page01/
+    │   └── anno-001.json
+    └── archive-volume2-chapter1-page02/
+        └── anno-001.json
+```
+→ Creates:
+- **archive.json** (Collection) → volume1.json, volume2.json
+- **volume1.json** (Collection) → chapter1.json, chapter2.json
+- **volume2.json** (Collection) → chapter1.json
+- **chapter1.json**, **chapter2.json** (Manifests with canvases)
+
+**Pattern for arbitrary depth:** `{level1}-{level2}-{level3}-...-{canvas}.{ext}`  
+**System automatically detects** nesting depth and creates appropriate Collections/Manifests
+
 ### Approach 2: Directory-Based Hierarchy
 
 Use actual directories to organize images. System preserves structure as-is.
@@ -201,18 +232,24 @@ The system analyzes your image filenames/folders to automatically create the cor
 
 ### Dash-Separated Naming (Flat Files)
 
-**Pattern:** `{collection}-{manifest}-{canvas}.{ext}`
+**Pattern (2 levels):** `{collection}-{manifest}-{canvas}.{ext}`
 
 Example: `domesday-lincolnshire-0680.tif`
 - Collection: `domesday`
 - Manifest: `lincolnshire`  
 - Canvas: `0680`
 
+**Pattern (arbitrary depth):** `{level1}-{level2}-{level3}-...-{canvas}.{ext}`
+
+Example: `archive-volume1-chapter1-page01.tif`
+- Collection: `archive` → Sub-collection: `volume1` → Manifest: `chapter1` → Canvas: `page01`
+
 **How detection works:**
-1. System scans image files
-2. Finds common dash prefix (e.g., `domesday-lincolnshire-`)
-3. Groups files by prefix
-4. Generates Collection + Manifest automatically
+1. System scans all image files
+2. Detects common dash-separated prefixes
+3. Builds hierarchy tree (arbitrarily deep)
+4. Generates nested Collections + Manifests automatically
+5. Last level before canvas ID = Manifest, all others = Collections
 
 ### Directory-Based Naming
 

@@ -288,7 +288,8 @@ detect_dash_hierarchy() {
 }
 
 # Generate collection structure from dash-separated flat files
-# E.g., domesday-lincolnshire-0680.tif → domesday.json (Collection) → lincolnshire.json (Manifest)
+# Supports arbitrary nesting: domesday-volume1-chapter1-page01.tif
+# Creates: domesday.json (Collection) → volume1.json (Collection) → chapter1.json (Manifest)
 generate_collection_from_dashed_files() {
     local project_name="$1"
     local project_title="$2"
@@ -307,41 +308,165 @@ generate_collection_from_dashed_files() {
         return 1
     fi
     
-    # Extract collection and manifest names from first file
+    # Extract collection name from first file (first segment)
     local first_file=$(basename "${all_files[0]}")
     local first_basename="${first_file%.*}"
-    
-    # For depth 2: domesday-lincolnshire-0680 → collection=domesday, manifest=lincolnshire
     local collection_name=$(echo "$first_basename" | cut -d'-' -f1)
-    local manifest_name=$(echo "$first_basename" | cut -d'-' -f2)
     
-    log_info "Generating Collection: $collection_name, Manifest: $manifest_name"
+    log_info "Generating Collection structure for: $collection_name (depth: $hierarchy_depth)"
     
-    # Generate manifest first
-    local manifest_path="${OUTPUT_DIR}/web/iiif/${manifest_name}.json"
+    # Build the collection recursively
+    build_dashed_collection_recursive "$images_dir" "$collection_name" "$hostname" 1 "$hierarchy_depth"
+    
+    # Set MANIFEST_NAME and VIEWER_MANIFEST for later use (top-level collection)
+    export MANIFEST_NAME="$collection_name"
+    export VIEWER_MANIFEST="${collection_name}.json"
+}
+
+# Recursive function to build collections/manifests from dash-separated files
+# $1: images_dir
+# $2: prefix at this level (e.g., "domesday", "domesday-volume1")
+# $3: hostname
+# $4: current_depth (1-based)
+# $5: max_depth
+build_dashed_collection_recursive() {
+    local images_dir="$1"
+    local prefix="$2"
+    local hostname="$3"
+    local current_depth="$4"
+    local max_depth="$5"
+    
+    # Get the simple name (last segment of prefix)
+    local simple_name="${prefix##*-}"
+    [ -z "$simple_name" ] && simple_name="$prefix"
+    
+    # If we're at the second-to-last level, create Manifest
+    if [ "$current_depth" -eq "$max_depth" ]; then
+        build_dashed_manifest "$images_dir" "$prefix" "$simple_name" "$hostname"
+        return
+    fi
+    
+    # Otherwise, create Collection and recurse
+    # Find all unique child prefixes
+    declare -A children
+    while IFS= read -r -d '' image_file; do
+        local basename=$(basename "$image_file")
+        local name="${basename%.*}"
+        
+        # Check if this file matches our prefix
+        if [[ "$name" == "$prefix-"* ]]; then
+            # Extract the next segment
+            local remainder="${name#$prefix-}"
+            local next_segment=$(echo "$remainder" | cut -d'-' -f1)
+            children["$next_segment"]=1
+        fi
+    done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
+    
+    # Build items for this collection
+    local items_json=""
+    local item_count=0
+    for child in $(echo "${!children[@]}" | tr ' ' '\n' | sort); do
+        local child_prefix="$prefix-$child"
+        local next_depth=$((current_depth + 1))
+        
+        # Recursively build child
+        build_dashed_collection_recursive "$images_dir" "$child_prefix" "$hostname" "$next_depth" "$max_depth"
+        
+        # Determine type
+        local child_type="Manifest"
+        if [ "$next_depth" -lt "$max_depth" ]; then
+            child_type="Collection"
+        fi
+        
+        ((item_count++))
+        [ $item_count -gt 1 ] && items_json+=","
+        items_json+=$(cat << ITEM_EOF
+
+    {
+      "id": "${hostname}/iiif/${child}.json",
+      "type": "${child_type}",
+      "label": { "en": ["$(echo $child | sed 's/.*/\u&/')"] }
+    }
+ITEM_EOF
+)
+    done
+    
+    # Create the collection JSON
+    local collection_path="${OUTPUT_DIR}/web/iiif/${simple_name}.json"
+    local service_block=""
+    
+    # Add search service only to top-level (depth 1)
+    if [ "$current_depth" -eq 1 ]; then
+        service_block=",
+  \"service\": [
+    {
+      \"id\": \"${hostname}/annosearch/${simple_name}/search\",
+      \"type\": \"SearchService2\",
+      \"service\": [
+        {
+          \"id\": \"${hostname}/annosearch/${simple_name}/autocomplete\",
+          \"type\": \"AutoCompleteService2\"
+        }
+      ]
+    }
+  ]"
+    fi
+    
+    cat > "$collection_path" << EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/${simple_name}.json",
+  "type": "Collection",
+  "label": {
+    "en": ["$(echo $simple_name | sed 's/.*/\u&/')"]
+  },
+  "items": [${items_json}
+  ]${service_block}
+}
+EOF
+    
+    log_success "Generated Collection: ${simple_name}.json with ${item_count} item(s)"
+}
+
+# Build a manifest from dash-separated files with given prefix
+# $1: images_dir
+# $2: prefix (e.g., "domesday-lincolnshire")
+# $3: simple_name (e.g., "lincolnshire")
+# $4: hostname
+build_dashed_manifest() {
+    local images_dir="$1"
+    local prefix="$2"
+    local simple_name="$3"
+    local hostname="$4"
+    
+    local manifest_path="${OUTPUT_DIR}/web/iiif/${simple_name}.json"
     local canvases_json=""
     local canvas_count=0
     
-    for image_file in "${all_files[@]}"; do
+    # Find all images matching this prefix
+    while IFS= read -r -d '' image_file; do
         local image_basename=$(basename "$image_file")
         local image_name="${image_basename%.*}"
-        ((canvas_count++))
         
-        # Convert dashes to slashes for Canvas ID
-        local canvas_id=$(echo "$image_name" | tr '-' '/')
-        
-        # Get image dimensions
-        local width=3000
-        local height=2000
-        if command -v identify &> /dev/null; then
-            local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
-            width=$(echo "$dims" | awk '{print $1}')
-            height=$(echo "$dims" | awk '{print $2}')
-        fi
-        
-        # Add to canvases
-        [ $canvas_count -gt 1 ] && canvases_json+=","
-        canvases_json+=$(cat << CANVAS_EOF
+        # Check if this file matches our prefix
+        if [[ "$image_name" == "$prefix-"* ]]; then
+            ((canvas_count++))
+            
+            # Convert dashes to slashes for Canvas ID
+            local canvas_id=$(echo "$image_name" | tr '-' '/')
+            
+            # Get image dimensions
+            local width=3000
+            local height=2000
+            if command -v identify &> /dev/null; then
+                local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
+                width=$(echo "$dims" | awk '{print $1}')
+                height=$(echo "$dims" | awk '{print $2}')
+            fi
+            
+            # Add to canvases
+            [ $canvas_count -gt 1 ] && canvases_json+=","
+            canvases_json+=$(cat << CANVAS_EOF
 
     {
       "id": "${hostname}/iiif/canvas/${canvas_id}",
@@ -386,69 +511,24 @@ generate_collection_from_dashed_files() {
     }
 CANVAS_EOF
 )
-    done
+        fi
+    done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
     
     # Create Manifest
     cat > "$manifest_path" << EOF
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "${hostname}/iiif/${manifest_name}.json",
+  "id": "${hostname}/iiif/${simple_name}.json",
   "type": "Manifest",
   "label": {
-    "en": ["$(echo $manifest_name | sed 's/.*/\u&/')"]
-  },
-  "summary": {
-    "en": ["${project_description}"]
+    "en": ["$(echo $simple_name | sed 's/.*/\u&/')"]
   },
   "items": [${canvases_json}
   ]
 }
 EOF
     
-    log_success "Generated Manifest with ${canvas_count} canvas(es): ${manifest_path}"
-    
-    # Generate Collection containing the Manifest
-    local collection_path="${OUTPUT_DIR}/web/iiif/${collection_name}.json"
-    cat > "$collection_path" << EOF
-{
-  "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "${hostname}/iiif/${collection_name}.json",
-  "type": "Collection",
-  "label": {
-    "en": ["$(echo $collection_name | sed 's/.*/\u&/')"]
-  },
-  "summary": {
-    "en": ["${project_title}"]
-  },
-  "items": [
-    {
-      "id": "${hostname}/iiif/${manifest_name}.json",
-      "type": "Manifest",
-      "label": {
-        "en": ["$(echo $manifest_name | sed 's/.*/\u&/')"]
-      }
-    }
-  ],
-  "service": [
-    {
-      "id": "${hostname}/annosearch/${collection_name}/search",
-      "type": "SearchService2",
-      "service": [
-        {
-          "id": "${hostname}/annosearch/${collection_name}/autocomplete",
-          "type": "AutoCompleteService2"
-        }
-      ]
-    }
-  ]
-}
-EOF
-    
-    log_success "Generated Collection: ${collection_path}"
-    
-    # Set MANIFEST_NAME and VIEWER_MANIFEST for later use
-    export MANIFEST_NAME="$collection_name"
-    export VIEWER_MANIFEST="${collection_name}.json"
+    log_success "Generated Manifest: ${simple_name}.json with ${canvas_count} canvas(es)"
 }
 
 # Function to generate IIIF manifest for a project

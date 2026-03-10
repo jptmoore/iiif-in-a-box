@@ -37,7 +37,7 @@ services:
   # AnnoSearch API
   annosearch:
     container_name: iiif-annosearch
-    image: ghcr.io/annosearch/annosearch:latest  # Use local ARM64 build
+    image: ghcr.io/nationalarchives/annosearch:latest
     command: ["serve"]  # ENTRYPOINT already set to: node ./dist/index.js
     ports:
       - "127.0.0.1:3000:3000"

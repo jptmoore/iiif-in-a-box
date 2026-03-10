@@ -288,8 +288,8 @@ Works on any platform: Linux servers, macOS, Windows, cloud VMs, Raspberry Pi, o
   cd miiify && docker build -t ghcr.io/nationalarchives/miiify:latest .
   
   # Clone and build annosearch  
-  git clone https://github.com/annosearch/annosearch.git
-  cd annosearch && docker build -t ghcr.io/annosearch/annosearch:latest .
+  git clone https://github.com/nationalarchives/annosearch.git
+  cd annosearch && docker build -t ghcr.io/nationalarchives/annosearch:latest .
   ```
 
 **Tamerlane Viewer:**
@@ -341,7 +341,7 @@ Pre-built Docker images:
 - **nginx** - Reverse proxy & static files
 - **IIPImage** (`iipsrv/iipsrv:latest`) - Fast IIIF Image API 2.0/3.0 server [AMD64]
 - **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server with Git storage
-- **AnnoSearch** (`ghcr.io/annosearch/annosearch:latest`) - IIIF Content Search API implementation
+- **AnnoSearch** (`ghcr.io/nationalarchives/annosearch:latest`) - IIIF Content Search API implementation
 - **Quickwit** (`quickwit/quickwit`) - High-performance search engine
 - **Tamerlane** (`ghcr.io/tamerlaneviewer/tamerlane:latest`) - Modern IIIF viewer with rich annotation support
 

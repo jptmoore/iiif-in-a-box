@@ -825,6 +825,18 @@ build_project() {
     log_info "Title: $PROJECT_TITLE"
     log_info "============================================"
     
+    # Step 2.5: Auto-detect project change and clean if needed
+    LAST_PROJECT_FILE="$OUTPUT_DIR/.project"
+    if [ -f "$LAST_PROJECT_FILE" ]; then
+        LAST_PROJECT=$(cat "$LAST_PROJECT_FILE" 2>/dev/null || echo "")
+        if [ -n "$LAST_PROJECT" ] && [ "$LAST_PROJECT" != "$PROJECT_NAME" ]; then
+            log_warning "Detected project change: '$LAST_PROJECT' → '$PROJECT_NAME'"
+            log_info "Cleaning output directory to prevent mixed content..."
+            rm -rf "$OUTPUT_DIR"/{miiify,web,annosearch,logs} 2>/dev/null || true
+            log_success "Output directory cleaned"
+        fi
+    fi
+    
     # Step 3: Validate annotation naming
     if ! validate_annotation_naming "$INPUT_DIR"; then
         log_error "Annotation naming validation failed"
@@ -886,6 +898,9 @@ build_project() {
             load_annosearch_data "$PROJECT_NAME" "$HOSTNAME" || log_warning "Failed to load data into AnnoSearch"
         fi
     fi
+    
+    # Store current project name for future builds
+    echo "$PROJECT_NAME" > "$OUTPUT_DIR/.project"
     
     log_info "============================================"
     log_success "Build completed successfully!"

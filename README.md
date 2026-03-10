@@ -257,15 +257,21 @@ Generated files go to `./output/` (or your specified directory):
 output/
 ├── miiify/
 │   ├── git_store/      # Miiify internal storage
-│   └── pack_store/     # Annotation packs
-├── web/                # Static web content (served by nginx)
+│   └── pack_store/     # Annotation packs (mounted into miiify container)
+├── web/                # Static web content (mounted into nginx container)
 │   ├── iiif/          # Generated IIIF manifests
 │   ├── pages/         # Generated viewer pages
-│   └── images/        # Processed images
+│   └── images/        # Processed images (mounted into iipimage container)
 ├── annosearch/
-│   └── qwdata/        # Quickwit search index data
+│   └── qwdata/        # Quickwit search index data (mounted into quickwit container)
 └── logs/              # Service logs
 ```
+
+**Important:** The output directory is **mounted as Docker volumes** into containers, not baked into images. This means:
+- ✅ Content persists outside containers and survives rebuilds
+- ✅ You can update content without recreating containers
+- ✅ Easy to backup, version control, or move to another server
+- ✅ Switching projects automatically cleans the output directory to prevent mixed content
 
 ## Requirements
 
@@ -348,6 +354,7 @@ Pre-built Docker images:
 **Design Philosophy:**
 - Shell scripts for transparency and hackability
 - Docker for isolation and portability  
+- **Volume mounts for content** - Generated content lives in `./output/` and is mounted into containers, not baked into images
 - Single network, single port (8080) for simplicity
 - Convention over configuration (smart defaults)
 - Fail fast with clear error messages

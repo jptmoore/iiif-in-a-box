@@ -248,6 +248,56 @@ Example: `archive-volume1-chapter1-page01.tif`
 1. System scans all image files
 2. Detects common dash-separated prefixes
 3. Builds hierarchy tree (arbitrarily deep)
+4. Creates Collections (for prefixes) and Manifests (for leaves)
+5. Sorts canvases using lexical/alphabetical sort
+
+### File Ordering (Canvas Sequence)
+
+**Images within a Manifest are automatically sorted using lexical/alphabetical sort**, consistent with the Miiify annotation server sorting. This requires proper file naming:
+
+✅ **Zero-padded numbers (REQUIRED):** `0001, 0002, 0003... 0100, 0101`  
+❌ **Unpadded numbers:** `1, 2, 3... 10` → sorts incorrectly as `1, 10, 11, 2`  
+✅ **Consistent alphanumeric prefixes:** `page0001, page0002... page0010`
+
+**Examples:**
+
+```
+# Correct (zero-padded):
+domesday-lincolnshire-0680.tif  →  Canvas 1
+domesday-lincolnshire-0684.tif  →  Canvas 2
+domesday-lincolnshire-0685.tif  →  Canvas 3
+domesday-lincolnshire-0689.tif  →  Canvas 4
+domesday-lincolnshire-0690.tif  →  Canvas 5
+
+# Incorrect (unpadded):
+page1.jpg, page10.jpg, page100.jpg, page2.jpg, page20.jpg  # WRONG ORDER
+```
+
+**Required practices for correct ordering:**
+
+1. **ALWAYS use zero-padding for numeric sequences:**
+   - ✅ Required: `page0001.jpg, page0002.jpg, page0010.jpg, page0100.jpg`
+   - ❌ Wrong: `page1.jpg, page2.jpg, page10.jpg, page100.jpg` (sorts as 1, 10, 100, 2)
+
+2. **Be consistent with padding width:**
+   - ✅ Good: `0001, 0002... 0999` (all 4 digits)
+   - ❌ Wrong: `001, 02, 3, 0010` (inconsistent widths)
+
+3. **For folio numbering (recto/verso), use zero-padded prefix:**
+   - ✅ Good: `001-123r.tif, 002-123v.tif, 003-124r.tif`
+   - ✅ Good: `0123r.tif, 0123v.tif, 0124r.tif` (r < v alphabetically)
+
+4. **Control ordering explicitly with sequence prefixes:**
+   ```
+   001-frontcover.tif
+   002-titlepage.tif
+   003-chapter1-page01.tif
+   004-chapter1-page02.tif
+   ```
+
+**Note:** Collections, sub-collections, and annotations all use lexical/alphabetical sorting for consistency.
+
+### Canvas Naming
 4. Generates nested Collections + Manifests automatically
 5. Last level before canvas ID = Manifest, all others = Collections
 

@@ -469,8 +469,8 @@ build_dashed_manifest() {
     local canvases_json=""
     local canvas_count=0
     
-    # Find all images matching this prefix
-    while IFS= read -r -d '' image_file; do
+    # Find all images matching this prefix and sort them
+    for image_file in $(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | sort); do
         local image_basename=$(basename "$image_file")
         local image_name="${image_basename%.*}"
         
@@ -538,7 +538,7 @@ build_dashed_manifest() {
 CANVAS_EOF
 )
         fi
-    done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
+    done
     
     # Build optional blocks
     local metadata_block=""

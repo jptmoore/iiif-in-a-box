@@ -7,8 +7,8 @@ Transform images and annotations into a complete IIIF service with viewer, searc
 ## Why IIIF-in-a-Box?
 
 ✅ **One Dependency** - Just Docker. No language runtimes, no build chains, no complexity.  
-✅ **Simple File Structure** - Flat directories with dash-separated names. No nested folders to manage.  
-✅ **Automatic Organization** - System creates proper IIIF Collections and Manifests from your naming.  
+✅ **Flexible Structure** - Use flat files with dashes OR nested directories - your choice.  
+✅ **Automatic Organization** - System detects hierarchy and creates proper IIIF Collections/Manifests.  
 ✅ **Deploy Anywhere** - Works on any VM, cloud instance, or local machine with Docker.  
 ✅ **Complete Solution** - Image server, annotations, search, and viewer - all integrated.  
 ✅ **Shell Scripts Only** - Easy to understand, modify, and maintain. No magic frameworks.
@@ -51,23 +51,31 @@ EOF
 
 ### Add Your Content
 
-**No nested directories. No complex paths. Just simple, flat file naming.**
+**Use flat files with dash-separated names (recommended):**
 
 ```bash
-# Copy your images (use dashes to organize)
+# Simple manifest (flat files)
 mkdir -p /tmp/my-iiif-project/images
-cp chapter1-page01.jpg /tmp/my-iiif-project/images/
-cp chapter1-page02.jpg /tmp/my-iiif-project/images/
-cp chapter2-page01.jpg /tmp/my-iiif-project/images/
+mkdir -p /tmp/my-iiif-project/annotations/page01
+mkdir -p /tmp/my-iiif-project/annotations/page02
+
+cp image1.jpg /tmp/my-iiif-project/images/page01.jpg
+cp image2.jpg /tmp/my-iiif-project/images/page02.jpg
+
+# Collection + Manifest (dash-separated hierarchy)
+cp image1.tif /tmp/my-iiif-project/images/book-chapter1-001.tif
+cp image2.tif /tmp/my-iiif-project/images/book-chapter1-002.tif
+mkdir -p /tmp/my-iiif-project/annotations/book-chapter1-001
+mkdir -p /tmp/my-iiif-project/annotations/book-chapter1-002
 
 # Rebuild
 ./bootstrap.sh build --input-dir /tmp/my-iiif-project
 
-# System automatically creates:
-# - Collection with nested structure
-# - IIIF Manifests for each chapter
-# - Viewer pages
-# - Search indexes
+# System automatically:
+# - Detects 'book-chapter1-' pattern
+# - Creates Collection: book.json
+# - Creates Manifest: chapter1.json
+# - Generates viewer, search indexes, etc.
 ```
 
 ## What You Get
@@ -83,86 +91,230 @@ cp chapter2-page01.jpg /tmp/my-iiif-project/images/
 
 ## Input Directory Structure
 
-**Simple Project (Single Manifest):**
+**The system supports two approaches for organizing your images:**
+
+### Approach 1: Flat Files with Dash-Separated Names (Recommended)
+
+Use dashes to encode hierarchy in flat filenames. This mirrors the Miiify annotation server's container structure.
+
+**Simple Manifest (single level):**
 ```
 my-project/
 ├── config.yml          # Project configuration (required)
-├── images/             # Your images (flat - no dashes in names)
-│   ├── image1.tif
-│   └── image2.jpg
-└── annotations/        # Annotation folders (match image names exactly)
-    ├── image1/
+├── images/             # Flat directory with simple names
+│   ├── page01.jpg
+│   └── page02.jpg
+└── annotations/        # Annotation folders match image names
+    ├── page01/
     │   └── annotation-1.json
-    └── image2/
+    └── page02/
         └── annotation-2.json
 ```
+→ Creates: **my-project.json** (Manifest with 2 canvases)
 
-**Collection Project (organized with dashes):**
-```
-my-book/
-├── config.yml          # Project configuration (required)
-├── images/             # Images with dash-separated names (flat directory)
-│   ├── chapter1-page001.jpg
-│   ├── chapter1-page002.jpg
-│   ├── chapter2-page001.jpg
-│   └── chapter2-page002.jpg
-└── annotations/        # Annotation folders (match image names exactly)
-    ├── chapter1-page001/
-    │   └── annotation-1.json
-    ├── chapter1-page002/
-    │   └── annotation-1.json
-    ├── chapter2-page001/
-    │   └── annotation-1.json
-    └── chapter2-page002/
-        └── annotation-1.json
-```
-
-**Nested Collections (multi-level with dashes):**
+**Collection with Manifest (two levels):**
 ```
 domesday/
 ├── config.yml
-├── images/             # All images flat with dash-separated names
-│   ├── volume1-chapter1-page001.jpg
-│   ├── volume1-chapter1-page002.jpg
-│   ├── volume1-chapter2-page001.jpg
-│   ├── volume1-chapter2-page002.jpg
-│   ├── volume2-chapter1-page001.jpg
-│   └── volume2-chapter1-page002.jpg
-└── annotations/        # Annotation folders (match image names exactly)
-    ├── volume1-chapter1-page001/
+├── images/             # Dash-separated: collection-manifest-canvas
+│   ├── domesday-lincolnshire-0680.tif
+│   ├── domesday-lincolnshire-0714.tif
+│   └── domesday-lincolnshire-0740.tif
+└── annotations/        # Folders match image names exactly
+    ├── domesday-lincolnshire-0680/
+    │   ├── anno-001.json
+    │   └── anno-002.json
+    ├── domesday-lincolnshire-0714/
+    │   └── anno-001.json
+    └── domesday-lincolnshire-0740/
+        └── anno-001.json
+```
+→ Creates:
+- **domesday.json** (Collection) 
+- **lincolnshire.json** (Manifest with 3 canvases)
+
+**Naming pattern:** `{collection}-{manifest}-{canvas}.{ext}`  
+**System parses dashes** to detect: collection=domesday, manifest=lincolnshire, canvas=0680
+
+### Approach 2: Directory-Based Hierarchy
+
+Use actual directories to organize images. System preserves structure as-is.
+
+**Collection with subdirectories:**
+```
+my-book/
+├── config.yml
+├── images/
+│   ├── chapter1/
+│   │   ├── page01.jpg
+│   │   └── page02.jpg
+│   └── chapter2/
+│       ├── page01.jpg
+│       └── page02.jpg
+└── annotations/
+    ├── chapter1-page01/       # Note: flattened with dashes
     │   └── annotation-1.json
-    ├── volume1-chapter1-page002/
+    ├── chapter1-page02/
     │   └── annotation-1.json
-    ├── volume1-chapter2-page001/
+    ├── chapter2-page01/
     │   └── annotation-1.json
-    ├── volume1-chapter2-page002/
-    │   └── annotation-1.json
-    ├── volume2-chapter1-page001/
-    │   └── annotation-1.json
-    └── volume2-chapter1-page002/
+    └── chapter2-page02/
         └── annotation-1.json
 ```
+→ Creates Collection with 2 Manifests (chapter1.json, chapter2.json)
 
-The system automatically detects:
-- **No dashes** in image names → Generates single Manifest with multiple Canvases
-- **One dash level** (e.g., `chapter1-page001`) → Generates Collection with Manifests (one per first segment)
-- **Multiple dash levels** (e.g., `volume1-chapter1-page001`) → Generates nested Collections recursively
+**Nested structure:**
+```
+archive/
+├── config.yml
+├── images/
+│   ├── volume1/
+│   │   ├── chapter1/
+│   │   │   ├── page01.jpg
+│   │   │   └── page02.jpg
+│   │   └── chapter2/
+│   │       └── page01.jpg
+│   └── volume2/
+│       └── chapter1/
+│           └── page01.jpg
+└── annotations/
+    ├── volume1-chapter1-page01/   # Flattened: slashes → dashes
+    │   └── annotation-1.json
+    ├── volume1-chapter1-page02/
+    │   └── annotation-1.json
+    ├── volume1-chapter2-page01/
+    │   └── annotation-1.json
+    └── volume2-chapter1-page01/
+        └── annotation-1.json
+```
+→ Creates nested Collections and Manifests
 
-**Why This Approach is Better:**
-- ✅ **All images in one folder** - No creating nested directory structures
-- ✅ **Visual clarity** - See your entire collection at a glance
-- ✅ **Easy bulk operations** - Rename, sort, filter files with standard tools
-- ✅ **Annotation folders match exactly** - Simple one-to-one naming (without extension)
-- ✅ **System handles complexity** - Automatic reorganization into proper IIIF structure
-- ✅ **Future-proof** - Dashes become slashes: `volume1-chapter1-page001.jpg` → `volume1/chapter1/page001.jpg`
+## How It Works: Images → IIIF Hierarchy
 
-**Annotation Targets:**
-Annotations must target the correct Canvas ID based on the dash-separated structure:
-- No dashes: `http://localhost:8080/iiif/canvas/photo`
-- One level: `http://localhost:8080/iiif/canvas/chapter1/page001`
-- Multiple levels: `http://localhost:8080/iiif/canvas/volume1/chapter1/page001`
+### Structure Detection
 
-**Important:** The build process validates that annotation folders match image filenames exactly and will fail if they don't match.
+The system analyzes your image filenames/folders to automatically create the correct IIIF structure:
+
+**Flat files (no dashes):** Single Manifest  
+**Flat files with dashes:** Detects hierarchy from dash patterns  
+**Subdirectories:** Collection with Manifests per directory  
+
+### Dash-Separated Naming (Flat Files)
+
+**Pattern:** `{collection}-{manifest}-{canvas}.{ext}`
+
+Example: `domesday-lincolnshire-0680.tif`
+- Collection: `domesday`
+- Manifest: `lincolnshire`  
+- Canvas: `0680`
+
+**How detection works:**
+1. System scans image files
+2. Finds common dash prefix (e.g., `domesday-lincolnshire-`)
+3. Groups files by prefix
+4. Generates Collection + Manifest automatically
+
+### Directory-Based Naming
+
+**Pattern:** `{collection}/{manifest}/{canvas}.{ext}`
+
+Example: `images/domesday/lincolnshire/0680.tif`
+- Collection: `domesday`
+- Manifest: `lincolnshire`
+- Canvas: `0680`
+
+**How detection works:**
+1. System walks directory tree
+2. Each subdirectory = hierarchy level
+3. Generates nested Collections/Manifests
+
+### Annotation Folder Naming
+
+**Critical:** Annotation folders must use **flattened** format (always with dashes), regardless of which image approach you use.
+
+**Flat files:**
+```
+images/domesday-lincolnshire-0680.tif  →  annotations/domesday-lincolnshire-0680/
+```
+
+**Directories:**
+```
+images/domesday/lincolnshire/0680.tif  →  annotations/domesday-lincolnshire-0680/
+```
+
+**Why?** The Miiify annotation server uses Git for version control, which requires flat container names (no slashes in branch names).
+
+### Canvas IDs (IIIF URLs)
+
+Canvas IDs **always** use slashes (hierarchical paths):
+
+```
+Flat file: domesday-lincolnshire-0680.tif
+→ Canvas ID: /iiif/canvas/domesday/lincolnshire/0680
+
+Directory: domesday/lincolnshire/0680.tif  
+→ Canvas ID: /iiif/canvas/domesday/lincolnshire/0680
+```
+
+**Result:** Same Canvas ID regardless of source structure!
+
+### Annotation URLs
+
+Individual annotations use the **flattened** container name:
+
+```
+Container: domesday-lincolnshire-0680
+Annotation: anno-001
+URL: http://localhost:8080/miiify/domesday-lincolnshire-0680/anno-001
+```
+
+**Example annotation JSON:**
+```json
+{
+  "id": "http://localhost:8080/miiify/domesday-lincolnshire-0680/anno-001",
+  "type": "Annotation",
+  "target": "http://localhost:8080/iiif/canvas/domesday/lincolnshire/0680#xywh=172,412,1236,456"
+}
+```
+
+**Key difference:**  
+- `id`: Uses container format (dashes) → `/miiify/domesday-lincolnshire-0680/anno-001`
+- `target`: Uses canvas ID (slashes) → `/iiif/canvas/domesday/lincolnshire/0680`
+
+### Generated Manifest Files
+
+**Flat files (no pattern):**
+```
+images/page01.jpg → {project-name}.json
+```
+Uses `project.name` from config.yml
+
+**Flat files with dash pattern:**
+```
+images/domesday-lincolnshire-0680.tif
+→ domesday.json (Collection)
+→ lincolnshire.json (Manifest)
+```
+
+**Directories:**
+```
+images/chapter1/page01.jpg
+→ {project-name}.json (Collection)
+→ chapter1.json (Manifest)
+```
+
+### Validation
+
+The build process validates:
+- ✅ Annotation folders match image naming (flattened)
+- ✅ Canvas IDs are correctly formatted
+- ✅ Annotation targets reference valid canvases
+- ✅ Collection/Manifest structure is valid IIIF
+
+**Build fails if:**
+- ❌ Annotation folder doesn't match image name
+- ❌ Annotation target references non-existent canvas
+- ❌ Mixed naming patterns in same project
 
 ## Configuration
 

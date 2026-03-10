@@ -188,52 +188,267 @@ validate_annotation_naming() {
     if [ ! -d "$annotations_dir" ]; then
         log_error "No annotations directory found: ${input_dir}/annotations"
         log_error "IIIF-in-a-Box requires annotations for all images"
-        log_error "Create annotation directories matching your image filenames:"
+        log_error "Create annotation directories matching your image paths (with / converted to -):"
         log_error "  images/photo.jpg → annotations/photo/"
-        log_error "  images/volume1-chapter1-page001.jpg → annotations/volume1-chapter1-page001/"
+        log_error "  images/chapter1/page01.jpg → annotations/chapter1-page01/"
         return 1
     fi
     
-    # Check if annotations directory has any content
-    local anno_count=$(find "$annotations_dir" -mindepth 1 -maxdepth 1 -type d | wc -l)
-    if [ "$anno_count" -eq 0 ]; then
-        log_error "Annotations directory is empty: ${annotations_dir}"
-        log_error "IIIF-in-a-Box requires annotation folders for images"
-        return 1
-    fi
-    
-    log_info "Validating annotation folder naming..."
+    log_info "Validating annotation folder structure..."
     
     local validation_errors=0
     
-    # Check all images and validate their corresponding annotation folders
+    # Check all images (recursively) and validate their corresponding annotation folders
     while IFS= read -r -d '' image_file; do
         local image_basename=$(basename "$image_file")
         local image_name="${image_basename%.*}"
         
-        # Expected annotation folder name is simply the image name (without extension)
-        local expected_annotation_folder="${image_name}"
+        # Get relative path from images directory (without extension)
+        local rel_path="${image_file#$images_dir/}"
+        local rel_path_no_ext="${rel_path%.*}"
+        
+        # Convert slashes to dashes for annotation folder name (Miiify container format)
+        local expected_annotation_folder=$(echo "$rel_path_no_ext" | tr '/' '-')
         
         # Check if annotation folder exists
         if [ ! -d "${annotations_dir}/${expected_annotation_folder}" ]; then
-            log_error "Missing annotation folder for image: $image_basename"
+            log_error "Missing annotation folder for image: $rel_path"
             log_error "  Expected: ${annotations_dir}/${expected_annotation_folder}/"
             ((validation_errors++))
         fi
-    done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
+    done < <(find "$images_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
     
     if [ $validation_errors -gt 0 ]; then
-        log_error "Found $validation_errors annotation naming error(s)"
-        log_error "Annotation folders must match image filenames (without extension)"
+        log_error "Found $validation_errors annotation folder error(s)"
+        log_error "Annotation folders must match image paths with / converted to -"
         log_error "Examples:"
-        log_error "  images/photo.jpg        → annotations/photo/"
-        log_error "  images/ch1-p01.jpg      → annotations/ch1-p01/"
-        log_error "  images/v1-ch1-p01.jpg   → annotations/v1-ch1-p01/"
+        log_error "  images/photo.jpg               → annotations/photo/"
+        log_error "  images/chapter1/page01.jpg     → annotations/chapter1-page01/"
+        log_error "  images/vol1/ch1/p01.jpg        → annotations/vol1-ch1-p01/"
         return 1
     fi
     
-    log_success "Annotation naming validation passed"
+    log_success "Annotation structure validation passed"
     return 0
+}
+
+# Detect if flat files use dash-separated hierarchical naming
+# Returns the hierarchy depth (number of common dash-separated segments before the unique part)
+detect_dash_hierarchy() {
+    local images_dir="$1"
+    
+    # Get first few image files
+    local sample_files=($(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | head -5))
+    
+    if [ ${#sample_files[@]} -eq 0 ]; then
+        echo "0"
+        return
+    fi
+    
+    # Extract basenames without extensions
+    local basenames=()
+    for file in "${sample_files[@]}"; do
+        local basename=$(basename "$file")
+        basenames+=("${basename%.*}")
+    done
+    
+    # Count dashes in first file to determine max possible depth
+    local first_basename="${basenames[0]}"
+    local dash_count=$(echo "$first_basename" | tr -cd '-' | wc -c)
+    
+    if [ "$dash_count" -eq 0 ]; then
+        echo "0"
+        return
+    fi
+    
+    # Check each level of dashes to find common prefix
+    local max_common_depth=0
+    for ((depth=1; depth<=dash_count; depth++)); do
+        # Get the prefix up to the Nth dash
+        local first_prefix=$(echo "$first_basename" | cut -d'-' -f1-$depth)
+        
+        # Check if all files share this prefix
+        local all_match=true
+        for basename in "${basenames[@]}"; do
+            local this_prefix=$(echo "$basename" | cut -d'-' -f1-$depth)
+            if [ "$this_prefix" != "$first_prefix" ]; then
+                all_match=false
+                break
+            fi
+        done
+        
+        if [ "$all_match" = true ]; then
+            max_common_depth=$depth
+        else
+            break
+        fi
+    done
+    
+    echo "$max_common_depth"
+}
+
+# Generate collection structure from dash-separated flat files
+# E.g., domesday-lincolnshire-0680.tif → domesday.json (Collection) → lincolnshire.json (Manifest)
+generate_collection_from_dashed_files() {
+    local project_name="$1"
+    local project_title="$2"
+    local project_description="$3"
+    local hostname="$4"
+    local input_dir="$5"
+    local hierarchy_depth="$6"
+    
+    local images_dir="${OUTPUT_DIR}/web/images"
+    
+    # Get all image files
+    local all_files=($(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | sort))
+    
+    if [ ${#all_files[@]} -eq 0 ]; then
+        log_error "No image files found"
+        return 1
+    fi
+    
+    # Extract collection and manifest names from first file
+    local first_file=$(basename "${all_files[0]}")
+    local first_basename="${first_file%.*}"
+    
+    # For depth 2: domesday-lincolnshire-0680 → collection=domesday, manifest=lincolnshire
+    local collection_name=$(echo "$first_basename" | cut -d'-' -f1)
+    local manifest_name=$(echo "$first_basename" | cut -d'-' -f2)
+    
+    log_info "Generating Collection: $collection_name, Manifest: $manifest_name"
+    
+    # Generate manifest first
+    local manifest_path="${OUTPUT_DIR}/web/iiif/${manifest_name}.json"
+    local canvases_json=""
+    local canvas_count=0
+    
+    for image_file in "${all_files[@]}"; do
+        local image_basename=$(basename "$image_file")
+        local image_name="${image_basename%.*}"
+        ((canvas_count++))
+        
+        # Convert dashes to slashes for Canvas ID
+        local canvas_id=$(echo "$image_name" | tr '-' '/')
+        
+        # Get image dimensions
+        local width=3000
+        local height=2000
+        if command -v identify &> /dev/null; then
+            local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
+            width=$(echo "$dims" | awk '{print $1}')
+            height=$(echo "$dims" | awk '{print $2}')
+        fi
+        
+        # Add to canvases
+        [ $canvas_count -gt 1 ] && canvases_json+=","
+        canvases_json+=$(cat << CANVAS_EOF
+
+    {
+      "id": "${hostname}/iiif/canvas/${canvas_id}",
+      "type": "Canvas",
+      "label": { "en": ["${canvas_id##*/}"] },
+      "height": ${height},
+      "width": ${width},
+      "items": [
+        {
+          "id": "${hostname}/iiif/canvas/${canvas_id}/page/1",
+          "type": "AnnotationPage",
+          "items": [
+            {
+              "id": "${hostname}/iiif/canvas/${canvas_id}/page/1/annotation/1",
+              "type": "Annotation",
+              "motivation": "painting",
+              "body": {
+                "id": "${hostname}/iiif/${image_basename}/full/max/0/default.jpg",
+                "type": "Image",
+                "format": "image/jpeg",
+                "height": ${height},
+                "width": ${width},
+                "service": [
+                  {
+                    "id": "${hostname}/iiif/${image_basename}",
+                    "type": "ImageService2",
+                    "profile": "level1"
+                  }
+                ]
+              },
+              "target": "${hostname}/iiif/canvas/${canvas_id}"
+            }
+          ]
+        }
+      ],
+      "annotations": [
+        {
+          "id": "${hostname}/miiify/${image_name}/?page=0",
+          "type": "AnnotationPage"
+        }
+      ]
+    }
+CANVAS_EOF
+)
+    done
+    
+    # Create Manifest
+    cat > "$manifest_path" << EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/${manifest_name}.json",
+  "type": "Manifest",
+  "label": {
+    "en": ["$(echo $manifest_name | sed 's/.*/\u&/')"]
+  },
+  "summary": {
+    "en": ["${project_description}"]
+  },
+  "items": [${canvases_json}
+  ]
+}
+EOF
+    
+    log_success "Generated Manifest with ${canvas_count} canvas(es): ${manifest_path}"
+    
+    # Generate Collection containing the Manifest
+    local collection_path="${OUTPUT_DIR}/web/iiif/${collection_name}.json"
+    cat > "$collection_path" << EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/${collection_name}.json",
+  "type": "Collection",
+  "label": {
+    "en": ["$(echo $collection_name | sed 's/.*/\u&/')"]
+  },
+  "summary": {
+    "en": ["${project_title}"]
+  },
+  "items": [
+    {
+      "id": "${hostname}/iiif/${manifest_name}.json",
+      "type": "Manifest",
+      "label": {
+        "en": ["$(echo $manifest_name | sed 's/.*/\u&/')"]
+      }
+    }
+  ],
+  "service": [
+    {
+      "id": "${hostname}/annosearch/${collection_name}/search",
+      "type": "SearchService2",
+      "service": [
+        {
+          "id": "${hostname}/annosearch/${collection_name}/autocomplete",
+          "type": "AutoCompleteService2"
+        }
+      ]
+    }
+  ]
+}
+EOF
+    
+    log_success "Generated Collection: ${collection_path}"
+    
+    # Set MANIFEST_NAME and VIEWER_MANIFEST for later use
+    export MANIFEST_NAME="$collection_name"
+    export VIEWER_MANIFEST="${collection_name}.json"
 }
 
 # Function to generate IIIF manifest for a project
@@ -242,8 +457,19 @@ generate_manifest() {
     local project_title="$2"
     local project_description="$3"
     local hostname="$4"
+    local input_dir="$5"
     
     log_info "Generating IIIF manifest for project: $project_name"
+    
+    # Directory structure determines IIIF hierarchy (images are copied as-is):
+    # - Flat (no subdirs) = Single Manifest with all images as Canvases
+    # - 1 level (e.g., chapter1/) = Collection with Manifest per directory
+    # - 2+ levels (e.g., volume1/chapter1/) = Nested Collections + Manifests
+    #
+    # Naming strategy:
+    # - Flat structure uses project_name from config.yml
+    # - Subdirectories: first directory name becomes collection/manifest name
+    # - Canvas IDs match the relative file path (without extension)
     
     mkdir -p "${OUTPUT_DIR}/web/iiif"
     local images_dir="${OUTPUT_DIR}/web/images"
@@ -259,10 +485,17 @@ generate_manifest() {
     
     if [ "$has_subdirs" = true ]; then
         log_info "Detected subdirectory structure - generating Collection with multiple Manifests"
-        generate_collection_with_manifests "$project_name" "$project_title" "$project_description" "$hostname"
+        generate_collection_with_manifests "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir"
     else
-        log_info "Detected flat structure - generating single Manifest"
-        generate_single_manifest "$project_name" "$project_title" "$project_description" "$hostname"
+        # Check if flat files have dash-separated hierarchical naming
+        local hierarchy_depth=$(detect_dash_hierarchy "$images_dir")
+        if [ "$hierarchy_depth" -ge 2 ]; then
+            log_info "Detected dash-separated hierarchical naming (depth: $hierarchy_depth) - generating Collection structure"
+            generate_collection_from_dashed_files "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir" "$hierarchy_depth"
+        else
+            log_info "Detected flat structure - generating single Manifest"
+            generate_single_manifest "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir"
+        fi
     fi
 }
 
@@ -272,8 +505,12 @@ generate_single_manifest() {
     local project_title="$2"
     local project_description="$3"
     local hostname="$4"
+    local input_dir="$5"
     
-    local manifest_path="${OUTPUT_DIR}/web/iiif/${project_name}.json"
+    # For flat structure, use project name from config
+    local manifest_name="$project_name"
+    
+    local manifest_path="${OUTPUT_DIR}/web/iiif/${manifest_name}.json"
     local images_dir="${OUTPUT_DIR}/web/images"
     local canvases_json=""
     local canvas_count=0
@@ -348,7 +585,7 @@ CANVAS_EOF
     cat > "$manifest_path" << EOF
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "${hostname}/iiif/${project_name}.json",
+  "id": "${hostname}/iiif/${manifest_name}.json",
   "type": "Manifest",
   "label": {
     "en": ["${project_title}"]
@@ -360,11 +597,11 @@ CANVAS_EOF
   ],
   "service": [
     {
-      "id": "${hostname}/annosearch/${project_name}/search",
+      "id": "${hostname}/annosearch/${manifest_name}/search",
       "type": "SearchService2",
       "service": [
         {
-          "id": "${hostname}/annosearch/${project_name}/autocomplete",
+          "id": "${hostname}/annosearch/${manifest_name}/autocomplete",
           "type": "AutoCompleteService2"
         }
       ]
@@ -392,9 +629,31 @@ generate_collection_with_manifests() {
     local project_title="$2"
     local project_description="$3"
     local hostname="$4"
+    local input_dir="$5"
     
-    local collection_path="${OUTPUT_DIR}/web/iiif/${project_name}.json"
     local images_dir="${OUTPUT_DIR}/web/images"
+    
+    # Count first-level directories
+    local dir_count=$(find "$images_dir" -mindepth 1 -maxdepth 1 -type d | wc -l)
+    local first_subdir=$(find "$images_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -1)
+    
+    # If there's only one first-level directory with subdirectories, use it directly as the collection
+    if [ "$dir_count" -eq 1 ] && [ -n "$first_subdir" ] && has_subdirectories_with_images "$first_subdir"; then
+        local collection_name=$(basename "$first_subdir")
+        log_info "Single top-level directory detected, using '$collection_name' as collection"
+        # For single top-level, we want lincolnshire.json, not domesday-lincolnshire.json
+        # So we call with empty prefix
+        generate_simple_nested_collection "$first_subdir" "$collection_name" "${collection_name}.json" "$hostname" "$project_title" "$project_description"
+        return 0
+    fi
+    
+    # Multiple first-level directories or flat structure - create wrapping collection
+    local collection_name="$project_name"
+    if [ -n "$first_subdir" ]; then
+        collection_name=$(basename "$first_subdir")
+    fi
+    
+    local collection_path="${OUTPUT_DIR}/web/iiif/${collection_name}.json"
     local items_json=""
     local item_count=0
     
@@ -406,7 +665,7 @@ generate_collection_with_manifests() {
         # Check if this subdirectory has nested subdirectories with images
         if has_subdirectories_with_images "$subdir"; then
             # Create a nested Collection
-            local collection_filename="collection-${subdir_name}.json"
+            local collection_filename="${subdir_name}.json"
             generate_nested_collection "$subdir" "$subdir_name" "$collection_filename" "$hostname"
             
             # Add to items
@@ -422,7 +681,7 @@ ITEM_EOF
 )
         else
             # Create a Manifest for this subdirectory
-            local manifest_path="${OUTPUT_DIR}/web/iiif/manifest-${subdir_name}.json"
+            local manifest_path="${OUTPUT_DIR}/web/iiif/${subdir_name}.json"
         local canvases_json=""
         local canvas_count=0
         
@@ -432,8 +691,8 @@ ITEM_EOF
             local image_name="${image_basename%.*}"
             # Relative path from images_dir (e.g., "chapter1/page001")
             local rel_path="${subdir_name}/${image_name}"
-            # Container name for Miiify (replace / with -)
-            local container_name="${subdir_name}-${image_name}"
+            # Container name for Miiify (convert / to -)
+            local container_name=$(echo "$rel_path" | tr '/' '-')
             ((canvas_count++))
             
             # Get image dimensions
@@ -501,7 +760,7 @@ CANVAS_EOF
         cat > "$manifest_path" << MANIFEST_EOF
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "${hostname}/iiif/manifest-${subdir_name}.json",
+  "id": "${hostname}/iiif/${subdir_name}.json",
   "type": "Manifest",
   "label": {
     "en": ["${subdir_name}"]
@@ -516,7 +775,7 @@ MANIFEST_EOF
             items_json+=$(cat << ITEM_EOF
 
     {
-      "id": "${hostname}/iiif/manifest-${subdir_name}.json",
+      "id": "${hostname}/iiif/${subdir_name}.json",
       "type": "Manifest",
       "label": { "en": ["${subdir_name}"] }
     }
@@ -529,7 +788,7 @@ ITEM_EOF
     cat > "$collection_path" << EOF
 {
   "@context": "http://iiif.io/api/presentation/3/context.json",
-  "id": "${hostname}/iiif/${project_name}.json",
+  "id": "${hostname}/iiif/${collection_name}.json",
   "type": "Collection",
   "label": {
     "en": ["${project_title}"]
@@ -541,11 +800,11 @@ ITEM_EOF
   ],
   "service": [
     {
-      "id": "${hostname}/annosearch/${project_name}/search",
+      "id": "${hostname}/annosearch/${collection_name}/search",
       "type": "SearchService2",
       "service": [
         {
-          "id": "${hostname}/annosearch/${project_name}/autocomplete",
+          "id": "${hostname}/annosearch/${collection_name}/autocomplete",
           "type": "AutoCompleteService2"
         }
       ]
@@ -557,7 +816,101 @@ EOF
     log_success "Generated Collection with ${item_count} item(s): ${collection_path}"
 }
 
-# Generate a nested collection for a subdirectory
+# Generate simple nested collection (for single top-level directory)
+# Creates manifests with simple names, not prefixed with parent directory
+# $1: subdirectory path (e.g., output/web/images/domesday/)
+# $2: collection name (e.g., "domesday")
+# $3: collection filename (e.g., "domesday.json")
+# $4: hostname
+# $5: project title
+# $6: project description
+generate_simple_nested_collection() {
+    local subdir_path="$1"
+    local collection_name="$2"
+    local collection_filename="$3"
+    local hostname="$4"
+    local project_title="$5"
+    local project_description="$6"
+    
+    local collection_path="${OUTPUT_DIR}/web/iiif/${collection_filename}"
+    local items_json=""
+    local item_count=0
+    
+    # Process each subdirectory within this directory
+    for nested_dir in $(find "$subdir_path" -mindepth 1 -maxdepth 1 -type d | sort); do
+        local nested_name=$(basename "$nested_dir")
+        ((item_count++))
+        
+        # Check if this has further nesting
+        if has_subdirectories_with_images "$nested_dir"; then
+            # Create another nested Collection with simple name
+            local nested_collection_filename="${nested_name}.json"
+            generate_simple_nested_collection "$nested_dir" "$nested_name" "$nested_collection_filename" "$hostname" "$project_title" "$project_description"
+            
+            # Add to items
+            [ $item_count -gt 1 ] && items_json+=","
+            items_json+=$(cat << ITEM_EOF
+
+    {
+      "id": "${hostname}/iiif/${nested_collection_filename}",
+      "type": "Collection",
+      "label": { "en": ["${nested_name}"] }
+    }
+ITEM_EOF
+)
+        else
+            # Create a Manifest for this directory with simple name
+            local manifest_filename="${nested_name}.json"
+            generate_manifest_for_subdir "$nested_dir" "$nested_name" "$manifest_filename" "$hostname"
+            
+            # Add to items
+            [ $item_count -gt 1 ] && items_json+=","
+            items_json+=$(cat << ITEM_EOF
+
+    {
+      "id": "${hostname}/iiif/${manifest_filename}",
+      "type": "Manifest",
+      "label": { "en": ["${nested_name}"] }
+    }
+ITEM_EOF
+)
+        fi
+    done
+    
+    # Create the collection JSON
+    cat > "$collection_path" << EOF
+{
+  "@context": "http://iiif.io/api/presentation/3/context.json",
+  "id": "${hostname}/iiif/${collection_filename}",
+  "type": "Collection",
+  "label": {
+    "en": ["${project_title}"]
+  },
+  "summary": {
+    "en": ["${project_description}"]
+  },
+  "items": [${items_json}
+  ],
+  "service": [
+    {
+      "id": "${hostname}/annosearch/${collection_name}/search",
+      "type": "SearchService2",
+      "service": [
+        {
+          "id": "${hostname}/annosearch/${collection_name}/autocomplete",
+          "type": "AutoCompleteService2"
+        }
+      ]
+    }
+  ]
+}
+EOF
+    
+    log_success "Generated Collection '${collection_name}' with ${item_count} item(s)"
+}
+
+# Generate a nested collection for a subdirectory (with path prefixes)
+# Used for multiple top-level directories
 # $1: subdirectory path
 # $2: subdirectory name (for labeling)
 # $3: collection filename
@@ -581,7 +934,7 @@ generate_nested_collection() {
         # Check if this has further nesting
         if has_subdirectories_with_images "$nested_dir"; then
             # Create another nested Collection
-            local nested_collection_filename="collection-${path_parts}.json"
+            local nested_collection_filename="${path_parts}.json"
             generate_nested_collection "$nested_dir" "$path_parts" "$nested_collection_filename" "$hostname"
             
             # Add to items
@@ -597,7 +950,7 @@ ITEM_EOF
 )
         else
             # Create a Manifest for this directory
-            local manifest_filename="manifest-${path_parts}.json"
+            local manifest_filename="${path_parts}.json"
             generate_manifest_for_subdir "$nested_dir" "$path_parts" "$manifest_filename" "$hostname"
             
             # Add to items
@@ -659,9 +1012,8 @@ generate_manifest_for_subdir() {
         local image_rel_path="${image_file#$images_dir/}"
         local image_rel_dir=$(dirname "$image_rel_path")
         local canvas_rel_path="${image_rel_dir}/${image_name}"
-        
-        # Container name for Miiify (replace / with -)
-        local container_name=$(echo "${image_rel_dir}/${image_name}" | tr '/' '-')
+        # Container name for Miiify (convert / to -)
+        local container_name=$(echo "$canvas_rel_path" | tr '/' '-')
         ((canvas_count++))
         
         # Get image dimensions
@@ -741,15 +1093,16 @@ MANIFEST_EOF
 
 # Function to generate HTML viewer page from template
 generate_viewer_page() {
-    local project_name="$1"
-    local project_title="$2"
-    local project_description="$3"
-    local hostname="$4"
+    local page_name="$1"
+    local manifest_name="$2"
+    local project_title="$3"
+    local project_description="$4"
+    local hostname="$5"
     
-    log_info "Generating viewer page for project: $project_name"
+    log_info "Generating viewer page: ${page_name}.html (loading manifest: ${manifest_name}.json)"
     
     mkdir -p "${OUTPUT_DIR}/web/pages"
-    local page_path="${OUTPUT_DIR}/web/pages/${project_name}.html"
+    local page_path="${OUTPUT_DIR}/web/pages/${page_name}.html"
     local template_path="templates/pages/_template.html"
     
     if [ ! -f "$template_path" ]; then
@@ -758,13 +1111,14 @@ generate_viewer_page() {
     fi
     
     # Replace placeholders in template
+    # Note: 'demo' in the manifest URL gets replaced with the manifest name
     sed -e "s/Demo/${project_title}/g" \
-        -e "s/demo/${project_name}/g" \
+        -e "s/demo/${manifest_name}/g" \
         -e "s|https://digitaldomesday.org|${hostname}|g" \
         "$template_path" > "$page_path"
     
     log_success "Generated viewer page: ${page_path}"
-    log_info "View at: ${hostname}/pages/${project_name}.html"
+    log_info "View at: ${hostname}/pages/${page_name}.html"
 }
 
 # Function to setup web content
@@ -860,13 +1214,30 @@ build_project() {
     fi
     
     # Step 7: Generate IIIF manifests
-    if ! generate_manifest "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME"; then
+    if ! generate_manifest "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME" "$INPUT_DIR"; then
         log_error "Manifest generation failed"
         exit 1
     fi
     
     # Step 8: Generate HTML viewer pages
-    if ! generate_viewer_page "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME"; then
+    # Derive manifest/collection name from directory structure
+    MANIFEST_NAME="$PROJECT_NAME"
+    VIEWER_MANIFEST="$PROJECT_NAME"
+    
+    if [ -d "${OUTPUT_DIR}/web/images" ]; then
+        # Check if there are subdirectories (which means we generated a collection)
+        if find "${OUTPUT_DIR}/web/images" -mindepth 2 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | head -1 | grep -q .; then
+            # Find first subdirectory name for the collection/manifest name
+            first_subdir=$(find "${OUTPUT_DIR}/web/images" -mindepth 1 -maxdepth 1 -type d | sort | head -1)
+            if [ -n "$first_subdir" ]; then
+                MANIFEST_NAME=$(basename "$first_subdir")
+                VIEWER_MANIFEST=$(basename "$first_subdir")
+            fi
+        fi
+    fi
+    
+    # Page uses project name, but loads the derived manifest
+    if ! generate_viewer_page "$PROJECT_NAME" "$VIEWER_MANIFEST" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME"; then
         log_error "Page generation failed"
         exit 1
     fi
@@ -894,8 +1265,9 @@ build_project() {
         log_warning "AnnoSearch not ready, skipping search indexing"
     else
         # Step 13: Create search index and load data
-        if create_annosearch_index "$PROJECT_NAME"; then
-            load_annosearch_data "$PROJECT_NAME" "$HOSTNAME" || log_warning "Failed to load data into AnnoSearch"
+        # Use the derived manifest name for indexing, not the project name
+        if create_annosearch_index "$MANIFEST_NAME"; then
+            load_annosearch_data "$MANIFEST_NAME" "$HOSTNAME" || log_warning "Failed to load data into AnnoSearch"
         fi
     fi
     
@@ -910,7 +1282,7 @@ build_project() {
     log_info "  - Manifests:   ${HOSTNAME}/iiif/"
     log_info "  - Images:      ${HOSTNAME}/iiif/image/"
     log_info "  - Annotations: ${HOSTNAME}/miiify/"
-    log_info "  - Search:      ${HOSTNAME}/annosearch/"
+    log_info "  - Search:      ${HOSTNAME}/annosearch/${MANIFEST_NAME}/search"
     log_info "============================================"
 }
 

@@ -410,6 +410,12 @@ provider:
         en: ["Visit our website"]
 ```
 
+**Metadata and Provider are automatically included** in your top-level Collection or Manifest. They are converted to IIIF-compliant JSON and added to the generated IIIF resources.
+
+**Requirements:**
+- Install `yq` for full metadata/provider support: `brew install yq` (macOS) or `snap install yq` (Linux)
+- Without `yq`, basic project fields (name, title, description) still work, but complex metadata/provider blocks will be skipped
+
 ## Commands
 
 ```bash

@@ -315,8 +315,12 @@ generate_collection_from_dashed_files() {
     
     log_info "Generating Collection structure for: $collection_name (depth: $hierarchy_depth)"
     
+    # Get metadata and provider from config if available
+    local metadata_json=$(get_config_metadata "${input_dir}/config.yml")
+    local provider_json=$(get_config_provider "${input_dir}/config.yml")
+    
     # Build the collection recursively
-    build_dashed_collection_recursive "$images_dir" "$collection_name" "$hostname" 1 "$hierarchy_depth"
+    build_dashed_collection_recursive "$images_dir" "$collection_name" "$hostname" 1 "$hierarchy_depth" "$metadata_json" "$provider_json"
     
     # Set MANIFEST_NAME and VIEWER_MANIFEST for later use (top-level collection)
     export MANIFEST_NAME="$collection_name"
@@ -329,12 +333,16 @@ generate_collection_from_dashed_files() {
 # $3: hostname
 # $4: current_depth (1-based)
 # $5: max_depth
+# $6: metadata_json (optional, for top-level only)
+# $7: provider_json (optional, for top-level only)
 build_dashed_collection_recursive() {
     local images_dir="$1"
     local prefix="$2"
     local hostname="$3"
     local current_depth="$4"
     local max_depth="$5"
+    local metadata_json="$6"
+    local provider_json="$7"
     
     # Get the simple name (last segment of prefix)
     local simple_name="${prefix##*-}"
@@ -342,7 +350,7 @@ build_dashed_collection_recursive() {
     
     # If we're at the second-to-last level, create Manifest
     if [ "$current_depth" -eq "$max_depth" ]; then
-        build_dashed_manifest "$images_dir" "$prefix" "$simple_name" "$hostname"
+        build_dashed_manifest "$images_dir" "$prefix" "$simple_name" "$hostname" "$metadata_json" "$provider_json"
         return
     fi
     
@@ -369,8 +377,8 @@ build_dashed_collection_recursive() {
         local child_prefix="$prefix-$child"
         local next_depth=$((current_depth + 1))
         
-        # Recursively build child
-        build_dashed_collection_recursive "$images_dir" "$child_prefix" "$hostname" "$next_depth" "$max_depth"
+        # Recursively build child (pass metadata/provider through all levels)
+        build_dashed_collection_recursive "$images_dir" "$child_prefix" "$hostname" "$next_depth" "$max_depth" "$metadata_json" "$provider_json"
         
         # Determine type
         local child_type="Manifest"
@@ -394,8 +402,10 @@ ITEM_EOF
     # Create the collection JSON
     local collection_path="${OUTPUT_DIR}/web/iiif/${simple_name}.json"
     local service_block=""
+    local metadata_block=""
+    local provider_block=""
     
-    # Add search service only to top-level (depth 1)
+    # Add search service, metadata, and provider only to top-level (depth 1)
     if [ "$current_depth" -eq 1 ]; then
         service_block=",
   \"service\": [
@@ -410,6 +420,18 @@ ITEM_EOF
       ]
     }
   ]"
+        
+        # Add metadata if present
+        if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+            metadata_block=",
+  \"metadata\": $metadata_json"
+        fi
+        
+        # Add provider if present
+        if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+            provider_block=",
+  \"provider\": $provider_json"
+        fi
     fi
     
     cat > "$collection_path" << EOF
@@ -421,7 +443,7 @@ ITEM_EOF
     "en": ["$(echo $simple_name | sed 's/.*/\u&/')"]
   },
   "items": [${items_json}
-  ]${service_block}
+  ]${service_block}${metadata_block}${provider_block}
 }
 EOF
     
@@ -433,11 +455,15 @@ EOF
 # $2: prefix (e.g., "domesday-lincolnshire")
 # $3: simple_name (e.g., "lincolnshire")
 # $4: hostname
+# $5: metadata_json (optional)
+# $6: provider_json (optional)
 build_dashed_manifest() {
     local images_dir="$1"
     local prefix="$2"
     local simple_name="$3"
     local hostname="$4"
+    local metadata_json="$5"
+    local provider_json="$6"
     
     local manifest_path="${OUTPUT_DIR}/web/iiif/${simple_name}.json"
     local canvases_json=""
@@ -514,6 +540,20 @@ CANVAS_EOF
         fi
     done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
     
+    # Build optional blocks
+    local metadata_block=""
+    local provider_block=""
+    
+    if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+        metadata_block=",
+  \"metadata\": $metadata_json"
+    fi
+    
+    if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+        provider_block=",
+  \"provider\": $provider_json"
+    fi
+    
     # Create Manifest
     cat > "$manifest_path" << EOF
 {
@@ -524,7 +564,7 @@ CANVAS_EOF
     "en": ["$(echo $simple_name | sed 's/.*/\u&/')"]
   },
   "items": [${canvases_json}
-  ]
+  ]${metadata_block}${provider_block}
 }
 EOF
     
@@ -661,6 +701,24 @@ CANVAS_EOF
         done
     fi
     
+    # Get metadata and provider from config if available
+    local metadata_json=$(get_config_metadata "${input_dir}/config.yml")
+    local provider_json=$(get_config_provider "${input_dir}/config.yml")
+    
+    # Build optional blocks
+    local metadata_block=""
+    local provider_block=""
+    
+    if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+        metadata_block=",
+  \"metadata\": $metadata_json"
+    fi
+    
+    if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+        provider_block=",
+  \"provider\": $provider_json"
+    fi
+    
     # Create single Manifest with all Canvases
     cat > "$manifest_path" << EOF
 {
@@ -686,7 +744,7 @@ CANVAS_EOF
         }
       ]
     }
-  ]
+  ]${metadata_block}${provider_block}
 }
 EOF
     
@@ -723,7 +781,7 @@ generate_collection_with_manifests() {
         log_info "Single top-level directory detected, using '$collection_name' as collection"
         # For single top-level, we want lincolnshire.json, not domesday-lincolnshire.json
         # So we call with empty prefix
-        generate_simple_nested_collection "$first_subdir" "$collection_name" "${collection_name}.json" "$hostname" "$project_title" "$project_description"
+        generate_simple_nested_collection "$first_subdir" "$collection_name" "${collection_name}.json" "$hostname" "$project_title" "$project_description" "$input_dir" "" ""
         return 0
     fi
     
@@ -737,6 +795,10 @@ generate_collection_with_manifests() {
     local items_json=""
     local item_count=0
     
+    # Get metadata and provider from config if available
+    local metadata_json=$(get_config_metadata "${input_dir}/config.yml")
+    local provider_json=$(get_config_provider "${input_dir}/config.yml")
+    
     # Process each subdirectory - could be a Manifest or nested Collection
     for subdir in $(find "$images_dir" -mindepth 1 -maxdepth 1 -type d | sort); do
         local subdir_name=$(basename "$subdir")
@@ -746,7 +808,7 @@ generate_collection_with_manifests() {
         if has_subdirectories_with_images "$subdir"; then
             # Create a nested Collection
             local collection_filename="${subdir_name}.json"
-            generate_nested_collection "$subdir" "$subdir_name" "$collection_filename" "$hostname"
+            generate_nested_collection "$subdir" "$subdir_name" "$collection_filename" "$hostname" "$metadata_json" "$provider_json"
             
             # Add to items
             [ $item_count -gt 1 ] && items_json+=","
@@ -836,6 +898,20 @@ CANVAS_EOF
 )
         done
         
+        # Build optional blocks for manifest
+        local manifest_metadata_block=""
+        local manifest_provider_block=""
+        
+        if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+            manifest_metadata_block=",
+  \"metadata\": $metadata_json"
+        fi
+        
+        if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+            manifest_provider_block=",
+  \"provider\": $provider_json"
+        fi
+        
         # Create manifest for this subdirectory
         cat > "$manifest_path" << MANIFEST_EOF
 {
@@ -846,7 +922,7 @@ CANVAS_EOF
     "en": ["${subdir_name}"]
   },
   "items": [${canvases_json}
-  ]
+  ]${manifest_metadata_block}${manifest_provider_block}
 }
 MANIFEST_EOF
         
@@ -863,6 +939,20 @@ ITEM_EOF
 )
         fi
     done
+    
+    # Build optional blocks for collection
+    local metadata_block=""
+    local provider_block=""
+    
+    if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+        metadata_block=",
+  \"metadata\": $metadata_json"
+    fi
+    
+    if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+        provider_block=",
+  \"provider\": $provider_json"
+    fi
     
     # Create the collection
     cat > "$collection_path" << EOF
@@ -889,7 +979,7 @@ ITEM_EOF
         }
       ]
     }
-  ]
+  ]${metadata_block}${provider_block}
 }
 EOF
     
@@ -904,6 +994,9 @@ EOF
 # $4: hostname
 # $5: project title
 # $6: project description
+# $7: input_dir (for getting config metadata/provider)
+# $8: metadata_json (optional, passed through recursion)
+# $9: provider_json (optional, passed through recursion)
 generate_simple_nested_collection() {
     local subdir_path="$1"
     local collection_name="$2"
@@ -911,10 +1004,19 @@ generate_simple_nested_collection() {
     local hostname="$4"
     local project_title="$5"
     local project_description="$6"
+    local input_dir="$7"
+    local metadata_json="$8"
+    local provider_json="$9"
     
     local collection_path="${OUTPUT_DIR}/web/iiif/${collection_filename}"
     local items_json=""
     local item_count=0
+    
+    # Get metadata and provider from config if available (only on first call with input_dir)
+    if [ -n "$input_dir" ] && [ -z "$metadata_json" ]; then
+        metadata_json=$(get_config_metadata "${input_dir}/config.yml")
+        provider_json=$(get_config_provider "${input_dir}/config.yml")
+    fi
     
     # Process each subdirectory within this directory
     for nested_dir in $(find "$subdir_path" -mindepth 1 -maxdepth 1 -type d | sort); do
@@ -925,7 +1027,7 @@ generate_simple_nested_collection() {
         if has_subdirectories_with_images "$nested_dir"; then
             # Create another nested Collection with simple name
             local nested_collection_filename="${nested_name}.json"
-            generate_simple_nested_collection "$nested_dir" "$nested_name" "$nested_collection_filename" "$hostname" "$project_title" "$project_description"
+            generate_simple_nested_collection "$nested_dir" "$nested_name" "$nested_collection_filename" "$hostname" "$project_title" "$project_description" "" "$metadata_json" "$provider_json"
             
             # Add to items
             [ $item_count -gt 1 ] && items_json+=","
@@ -941,7 +1043,7 @@ ITEM_EOF
         else
             # Create a Manifest for this directory with simple name
             local manifest_filename="${nested_name}.json"
-            generate_manifest_for_subdir "$nested_dir" "$nested_name" "$manifest_filename" "$hostname"
+            generate_manifest_for_subdir "$nested_dir" "$nested_name" "$manifest_filename" "$hostname" "$metadata_json" "$provider_json"
             
             # Add to items
             [ $item_count -gt 1 ] && items_json+=","
@@ -956,6 +1058,25 @@ ITEM_EOF
 )
         fi
     done
+    
+    # Get metadata and provider from config if available (only for top-level)
+    local metadata_block=""
+    local provider_block=""
+    
+    if [ -n "$input_dir" ]; then
+        local metadata_json=$(get_config_metadata "${input_dir}/config.yml")
+        local provider_json=$(get_config_provider "${input_dir}/config.yml")
+        
+        if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+            metadata_block=",
+  \"metadata\": $metadata_json"
+        fi
+        
+        if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+            provider_block=",
+  \"provider\": $provider_json"
+        fi
+    fi
     
     # Create the collection JSON
     cat > "$collection_path" << EOF
@@ -982,7 +1103,7 @@ ITEM_EOF
         }
       ]
     }
-  ]
+  ]${metadata_block}${provider_block}
 }
 EOF
     
@@ -995,11 +1116,15 @@ EOF
 # $2: subdirectory name (for labeling)
 # $3: collection filename
 # $4: hostname
+# $5: metadata_json (optional)
+# $6: provider_json (optional)
 generate_nested_collection() {
     local subdir_path="$1"
     local subdir_name="$2"
     local collection_filename="$3"
     local hostname="$4"
+    local metadata_json="$5"
+    local provider_json="$6"
     
     local collection_path="${OUTPUT_DIR}/web/iiif/${collection_filename}"
     local items_json=""
@@ -1015,7 +1140,7 @@ generate_nested_collection() {
         if has_subdirectories_with_images "$nested_dir"; then
             # Create another nested Collection
             local nested_collection_filename="${path_parts}.json"
-            generate_nested_collection "$nested_dir" "$path_parts" "$nested_collection_filename" "$hostname"
+            generate_nested_collection "$nested_dir" "$path_parts" "$nested_collection_filename" "$hostname" "$metadata_json" "$provider_json"
             
             # Add to items
             [ $item_count -gt 1 ] && items_json+=","
@@ -1031,7 +1156,7 @@ ITEM_EOF
         else
             # Create a Manifest for this directory
             local manifest_filename="${path_parts}.json"
-            generate_manifest_for_subdir "$nested_dir" "$path_parts" "$manifest_filename" "$hostname"
+            generate_manifest_for_subdir "$nested_dir" "$path_parts" "$manifest_filename" "$hostname" "$metadata_json" "$provider_json"
             
             # Add to items
             [ $item_count -gt 1 ] && items_json+=","
@@ -1069,11 +1194,15 @@ EOF
 # $2: path parts (e.g., "volume1-chapter1")
 # $3: manifest filename
 # $4: hostname
+# $5: metadata_json (optional)
+# $6: provider_json (optional)
 generate_manifest_for_subdir() {
     local dir_path="$1"
     local path_parts="$2"
     local manifest_filename="$3"
     local hostname="$4"
+    local metadata_json="$5"
+    local provider_json="$6"
     
     local manifest_path="${OUTPUT_DIR}/web/iiif/${manifest_filename}"
     local canvases_json=""
@@ -1154,6 +1283,20 @@ CANVAS_EOF
 )
     done
     
+    # Build optional blocks
+    local metadata_block=""
+    local provider_block=""
+    
+    if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+        metadata_block=",
+  \"metadata\": $metadata_json"
+    fi
+    
+    if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+        provider_block=",
+  \"provider\": $provider_json"
+    fi
+    
     # Create manifest
     cat > "$manifest_path" << MANIFEST_EOF
 {
@@ -1164,7 +1307,7 @@ CANVAS_EOF
     "en": ["${path_parts}"]
   },
   "items": [${canvases_json}
-  ]
+  ]${metadata_block}${provider_block}
 }
 MANIFEST_EOF
     

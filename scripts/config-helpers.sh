@@ -34,7 +34,71 @@ read_project_config() {
     log_info "Project: $PROJECT_NAME"
     log_info "Title: $PROJECT_TITLE"
     
+    # Store config file path for later use
+    export CONFIG_FILE="$config_file"
+    
     return 0
+}
+
+# Function to extract metadata from config.yml as JSON
+# Returns IIIF-compliant metadata array
+get_config_metadata() {
+    local config_file="${CONFIG_FILE:-${1:-config.yml}}"
+    
+    if [ ! -f "$config_file" ]; then
+        echo ""
+        return
+    fi
+    
+    # Check if yq is available
+    if command -v yq &> /dev/null; then
+        # Use yq to extract metadata as JSON
+        local metadata_json=$(yq -o=json '.project.metadata' "$config_file" 2>/dev/null)
+        if [ "$metadata_json" != "null" ] && [ -n "$metadata_json" ]; then
+            echo "$metadata_json"
+            return
+        fi
+    fi
+    
+    # Fallback: check if metadata exists in file
+    if grep -q "metadata:" "$config_file"; then
+        log_warning "yq not available - metadata extraction limited. Install yq for full metadata support."
+    fi
+    
+    echo ""
+}
+
+# Function to extract provider from config.yml as JSON
+# Returns IIIF-compliant provider array
+get_config_provider() {
+    local config_file="${CONFIG_FILE:-${1:-config.yml}}"
+    
+    if [ ! -f "$config_file" ]; then
+        echo ""
+        return
+    fi
+    
+    # Check if yq is available
+    if command -v yq &> /dev/null; then
+        # Use yq to extract provider as JSON
+        local provider_json=$(yq -o=json '.provider' "$config_file" 2>/dev/null)
+        if [ "$provider_json" != "null" ] && [ -n "$provider_json" ]; then
+            # Wrap in array if it's a single provider object
+            if [[ "$provider_json" =~ ^\{ ]]; then
+                echo "[$provider_json]"
+            else
+                echo "$provider_json"
+            fi
+            return
+        fi
+    fi
+    
+    # Fallback: check if provider exists in file
+    if grep -q "provider:" "$config_file"; then
+        log_warning "yq not available - provider extraction limited. Install yq for full provider support."
+    fi
+    
+    echo ""
 }
 
 # Function to validate configuration

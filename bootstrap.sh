@@ -428,6 +428,9 @@ build_dashed_collection_recursive() {
             child_type="Collection"
         fi
         
+        # Capitalize first letter of child name for label (bash 3.2 compatible)
+        local child_label=$(echo "$child" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+        
         ((item_count++))
         [ $item_count -gt 1 ] && items_json+=","
         items_json+=$(cat << ITEM_EOF
@@ -435,7 +438,7 @@ build_dashed_collection_recursive() {
     {
       "id": "${hostname}/iiif/${child}.json",
       "type": "${child_type}",
-      "label": { "en": ["$(echo $child | sed 's/.*/\u&/')"] }
+      "label": { "en": ["${child_label}"] }
     }
 ITEM_EOF
 )
@@ -1393,6 +1396,12 @@ setup_web_content() {
     # Copy static template files to output
     cp templates/index.html "${OUTPUT_DIR}/web/"
     cp templates/maintenance.html "${OUTPUT_DIR}/web/"
+    
+    # Copy assets directory
+    if [ -d "assets" ]; then
+        cp -r assets "${OUTPUT_DIR}/web/"
+        log_info "Copied assets to web directory"
+    fi
     
     log_success "Web content setup complete"
 }

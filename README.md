@@ -462,9 +462,7 @@ provider:
 
 **Metadata and Provider are automatically included** in your top-level Collection or Manifest. They are converted to IIIF-compliant JSON and added to the generated IIIF resources.
 
-**Requirements:**
-- Install `yq` for full metadata/provider support: `brew install yq` (macOS) or `snap install yq` (Linux)
-- Without `yq`, basic project fields (name, title, description) still work, but complex metadata/provider blocks will be skipped
+**Note:** The `yq` tool is required to parse YAML configuration. The build will fail if yq is not installed and your config contains metadata or provider sections.
 
 ## Commands
 
@@ -524,27 +522,35 @@ output/
 
 - ✅ Docker & Docker Compose v2
 - ✅ Git
+- ✅ yq (YAML processor) - [Installation guide](https://github.com/mikefarah/yq)
 
 **That's it.** No Python, Node.js, Ruby, or language-specific toolchains required.
 
 Works on any platform: Linux servers, macOS, Windows, cloud VMs, Raspberry Pi, or your laptop.
 
+**Installing yq:**
+```bash
+# macOS
+brew install yq
+
+# Linux
+sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+sudo chmod +x /usr/local/bin/yq
+```
+
 **Apple Silicon Macs (M1/M2/M3):**
-- IIPImage server runs using AMD64 emulation (configured automatically)
-- Miiify and AnnoSearch: Use local ARM64 builds if available, otherwise pull AMD64 images
-- To build ARM64 images locally:
-  ```bash
-  # Clone and build miiify
-  git clone https://github.com/nationalarchives/miiify.git
-  cd miiify && docker build -t ghcr.io/nationalarchives/miiify:latest .
-  
-  # Clone and build annosearch  
-  git clone https://github.com/nationalarchives/annosearch.git
-  cd annosearch && docker build -t ghcr.io/nationalarchives/annosearch:latest .
-  ```
+- IIPImage, Miiify, and AnnoSearch use AMD64 emulation (configured automatically)
+- Tamerlane runs natively on ARM64
+- Docker Desktop uses Rosetta 2 for AMD64 emulation
+- Performance is excellent, no manual configuration needed
 
 **Tamerlane Viewer:**
 The bootstrap script automatically pulls Tamerlane from GitHub Container Registry (ghcr.io).
+
+**Note:** Tamerlane images may require authentication:
+```bash
+docker login ghcr.io -u YOUR_GITHUB_USERNAME
+```
 
 **First-time setup:**
 ```bash
@@ -575,12 +581,13 @@ The bootstrap script automatically:
 - Check manifest exists: `ls output/web/iiif/`
 
 **ARM64 architecture error (Apple Silicon Macs):**
-- IIPImage runs using AMD64 emulation (already configured)
-- If you still see platform errors, ensure Docker Desktop is updated
-- Performance may be slightly slower than native ARM64 images
+- IIPImage, Miiify, and AnnoSearch use AMD64 emulation (already configured)
+- Tamerlane runs natively on ARM64
+- Ensure Docker Desktop is updated to the latest version
 
 **Viewer not loading:**
 - Bootstrap script automatically pulls Tamerlane from ghcr.io
+- If Tamerlane fails to pull, authenticate with: `docker login ghcr.io -u YOUR_GITHUB_USERNAME`
 - Ensure the Tamerlane image is available for your architecture
 - Run `./bootstrap.sh stop && ./bootstrap.sh build --input-dir /path/to/input` to rebuild
 

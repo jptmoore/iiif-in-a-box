@@ -1,8 +1,9 @@
 # IIIF-In-A-Box Docker Compose Configuration
 #
 # ARM64 (Apple Silicon) Notes:
-# - IIPImage: Uses AMD64 emulation (platform: linux/amd64)
-# - All other images: Pull from respective registries (multi-arch support where available)
+# - IIPImage, Miiify, AnnoSearch: Use AMD64 emulation (only AMD64 available)
+# - Tamerlane: ARM64 available on ghcr.io
+# - Docker Desktop uses Rosetta 2 for AMD64 emulation
 #
 services:
   # IIPImage IIIF Image API server
@@ -38,6 +39,7 @@ services:
   annosearch:
     container_name: iiif-annosearch
     image: ghcr.io/nationalarchives/annosearch:latest
+    platform: linux/amd64  # Only AMD64 available on ghcr.io
     command: ["serve"]  # ENTRYPOINT already set to: node ./dist/index.js
     ports:
       - "127.0.0.1:3000:3000"
@@ -54,7 +56,8 @@ services:
   # Miiify v2 annotation server
   miiify:
     container_name: iiif-miiify
-    image: ghcr.io/nationalarchives/miiify:latest  # Use local ARM64 build
+    image: ghcr.io/nationalarchives/miiify:latest
+    platform: linux/amd64  # Only AMD64 available on ghcr.io
     command:
       - "/home/miiify/miiify-serve"
       - "--repository"
@@ -73,9 +76,12 @@ services:
       - iiif-network
 
   # Tamerlane IIIF Viewer
+  # Note: ghcr.io/tamerlaneviewer/tamerlane currently only available as ARM64
+  # May require authentication: docker login ghcr.io
   tamerlane:
     container_name: iiif-tamerlane
-    image: tamerlane_tamerlane:latest
+    image: ghcr.io/tamerlaneviewer/tamerlane:latest
+    pull_policy: always
     ports:
       - "127.0.0.1:3001:3001"
     networks:

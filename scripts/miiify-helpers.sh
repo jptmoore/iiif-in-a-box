@@ -31,6 +31,7 @@ miiify_import_annotations() {
     # Import annotations using Miiify v2
     log_info "Running miiify-import..."
     docker run --rm \
+        --platform linux/amd64 \
         -v "${input_dir}/annotations":/home/miiify/annotations:ro \
         -v "${output_dir}/miiify/git_store":/home/miiify/git_store \
         ghcr.io/nationalarchives/miiify:latest \
@@ -60,6 +61,7 @@ miiify_compile_pack() {
     # Compile git store to pack store
     log_info "Running miiify-compile..."
     docker run --rm \
+        --platform linux/amd64 \
         -v "${output_dir}/miiify/git_store":/home/miiify/git_store:ro \
         -v "${output_dir}/miiify/pack_store":/home/miiify/pack_store \
         ghcr.io/nationalarchives/miiify:latest \

@@ -2,6 +2,18 @@
 # Configuration Helper Functions
 # This script contains functions for reading and validating configuration
 
+# Function to check if yq is installed
+check_yq_dependency() {
+    if ! command -v yq &> /dev/null; then
+        log_error "yq is not installed but is required for YAML configuration parsing"
+        log_error "Install yq: https://github.com/mikefarah/yq"
+        log_error "  macOS: brew install yq"
+        log_error "  Linux: sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq"
+        return 1
+    fi
+    return 0
+}
+
 # Function to read project configuration from YAML
 read_project_config() {
     local input_dir="$1"
@@ -47,25 +59,27 @@ get_config_metadata() {
     
     if [ ! -f "$config_file" ]; then
         echo ""
-        return
+        return 0
     fi
     
-    # Check if yq is available
-    if command -v yq &> /dev/null; then
+    # Check if metadata exists in config
+    if grep -q "metadata:" "$config_file"; then
+        # yq is required for metadata extraction
+        if ! command -v yq &> /dev/null; then
+            log_error "Config contains metadata but yq is not installed" >&2
+            return 1
+        fi
+        
         # Use yq to extract metadata as JSON
         local metadata_json=$(yq -o=json '.project.metadata' "$config_file" 2>/dev/null)
         if [ "$metadata_json" != "null" ] && [ -n "$metadata_json" ]; then
             echo "$metadata_json"
-            return
+            return 0
         fi
     fi
     
-    # Fallback: check if metadata exists in file
-    if grep -q "metadata:" "$config_file"; then
-        log_warning "yq not available - metadata extraction limited. Install yq for full metadata support."
-    fi
-    
     echo ""
+    return 0
 }
 
 # Function to extract provider from config.yml as JSON
@@ -75,11 +89,17 @@ get_config_provider() {
     
     if [ ! -f "$config_file" ]; then
         echo ""
-        return
+        return 0
     fi
     
-    # Check if yq is available
-    if command -v yq &> /dev/null; then
+    # Check if provider exists in config
+    if grep -q "provider:" "$config_file"; then
+        # yq is required for provider extraction
+        if ! command -v yq &> /dev/null; then
+            log_error "Config contains provider but yq is not installed" >&2
+            return 1
+        fi
+        
         # Use yq to extract provider as JSON
         local provider_json=$(yq -o=json '.provider' "$config_file" 2>/dev/null)
         if [ "$provider_json" != "null" ] && [ -n "$provider_json" ]; then
@@ -89,16 +109,12 @@ get_config_provider() {
             else
                 echo "$provider_json"
             fi
-            return
+            return 0
         fi
     fi
     
-    # Fallback: check if provider exists in file
-    if grep -q "provider:" "$config_file"; then
-        log_warning "yq not available - provider extraction limited. Install yq for full provider support."
-    fi
-    
     echo ""
+    return 0
 }
 
 # Function to validate configuration

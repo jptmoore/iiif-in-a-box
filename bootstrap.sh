@@ -1439,6 +1439,12 @@ build_project() {
         exit 1
     fi
     
+    # Step 2a: Check if yq is installed (required for YAML parsing)
+    if ! check_yq_dependency; then
+        log_error "yq is required but not installed"
+        exit 1
+    fi
+    
     log_info "============================================"
     log_info "Project: $PROJECT_NAME"
     log_info "Title: $PROJECT_TITLE"

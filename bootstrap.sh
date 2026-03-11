@@ -649,22 +649,29 @@ generate_manifest() {
     fi
     
     if [ "$has_subdirs" = true ]; then
-        log_info "Detected subdirectory structure - generating Collection with multiple Manifests"
-        generate_collection_with_manifests "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir"
+        log_error "Subdirectory structure not supported - use dash-separated flat files"
+        log_error "Example: mybook-page01.jpg, mybook-page02.jpg"
+        return 1
     else
         # Check if flat files have dash-separated hierarchical naming
         local hierarchy_depth=$(detect_dash_hierarchy "$images_dir")
-        if [ "$hierarchy_depth" -ge 2 ]; then
+        if [ "$hierarchy_depth" -eq 0 ]; then
+            log_error "No dash-separated naming detected"
+            log_error "Images must use dash-separated names:"
+            log_error "  Single manifest: mybook-page01.jpg"
+            log_error "  Collection+Manifest: collection-mybook-page01.jpg"
+            return 1
+        elif [ "$hierarchy_depth" -eq 1 ]; then
+            log_info "Detected single manifest (depth: 1) - generating Manifest"
+            generate_single_manifest "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir"
+        else
             log_info "Detected dash-separated hierarchical naming (depth: $hierarchy_depth) - generating Collection structure"
             generate_collection_from_dashed_files "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir" "$hierarchy_depth"
-        else
-            log_info "Detected flat structure - generating single Manifest"
-            generate_single_manifest "$project_name" "$project_title" "$project_description" "$hostname" "$input_dir"
         fi
     fi
 }
 
-# Generate a single manifest (for flat image directory)
+# Generate a single manifest from dash-separated files (manifest-canvas pattern)
 generate_single_manifest() {
     local project_name="$1"
     local project_title="$2"
@@ -672,11 +679,22 @@ generate_single_manifest() {
     local hostname="$4"
     local input_dir="$5"
     
-    # For flat structure, use project name from config
-    local manifest_name="$project_name"
+    local images_dir="${OUTPUT_DIR}/web/images"
+    
+    # Extract manifest name from first file (first segment before dash)
+    local first_file=$(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | head -1)
+    if [ -z "$first_file" ]; then
+        log_error "No image files found"
+        return 1
+    fi
+    
+    local first_basename=$(basename "$first_file")
+    local first_name="${first_basename%.*}"
+    local manifest_name=$(echo "$first_name" | cut -d'-' -f1)
+    
+    log_info "Generating Manifest: ${manifest_name}.json"
     
     local manifest_path="${OUTPUT_DIR}/web/iiif/${manifest_name}.json"
-    local images_dir="${OUTPUT_DIR}/web/images"
     local canvases_json=""
     local canvas_count=0
     
@@ -685,6 +703,10 @@ generate_single_manifest() {
         for image_file in $(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | sort); do
             local image_basename=$(basename "$image_file")
             local image_name="${image_basename%.*}"
+            
+            # Extract canvas ID (everything after first dash)
+            local canvas_id=$(echo "$image_name" | cut -d'-' -f2-)
+            
             ((canvas_count++))
             
             # Get image dimensions
@@ -696,6 +718,9 @@ generate_single_manifest() {
                 height=$(echo "$dims" | awk '{print $2}')
             fi
             
+            # Capitalize first letter of canvas ID for label
+            local canvas_label=$(echo "$canvas_id" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+            
             # Add to canvases
             [ $canvas_count -gt 1 ] && canvases_json+=","
             canvases_json+=$(cat << CANVAS_EOF
@@ -703,7 +728,7 @@ generate_single_manifest() {
     {
       "id": "${hostname}/canvas/${image_name}",
       "type": "Canvas",
-      "label": { "en": ["${image_name}"] },
+      "label": { "en": ["${canvas_label}"] },
       "height": ${height},
       "width": ${width},
       "items": [
@@ -764,6 +789,9 @@ CANVAS_EOF
   \"provider\": $provider_json"
     fi
     
+    # Capitalize manifest name for label
+    local manifest_label=$(echo "$manifest_name" | awk '{print toupper(substr($0,1,1)) substr($0,2)}')
+    
     # Create single Manifest with all Canvases
     cat > "$manifest_path" << EOF
 {
@@ -771,7 +799,7 @@ CANVAS_EOF
   "id": "${hostname}/iiif/${manifest_name}.json",
   "type": "Manifest",
   "label": {
-    "en": ["${project_title}"]
+    "en": ["${manifest_label}"]
   },
   "summary": {
     "en": ["${project_description}"]
@@ -793,7 +821,7 @@ CANVAS_EOF
 }
 EOF
     
-    log_success "Generated single Manifest with ${canvas_count} canvas(es): ${manifest_path}"
+    log_success "Generated Manifest: ${manifest_name}.json with ${canvas_count} canvas(es)"
 }
 
 # Helper: Check if directory has subdirectories containing images

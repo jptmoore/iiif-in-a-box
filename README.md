@@ -46,9 +46,9 @@ project:
   description: "Testing IIIF-in-a-Box"
 EOF
 
-# 2. Add images
-cp your-image1.jpg /tmp/my-iiif-project/images/page01.jpg
-cp your-image2.jpg /tmp/my-iiif-project/images/page02.jpg
+# 2. Add images (use dash-separated names)
+cp your-image1.jpg /tmp/my-iiif-project/images/demo-page01.jpg
+cp your-image2.jpg /tmp/my-iiif-project/images/demo-page02.jpg
 
 # 3. Build and start
 ./bootstrap.sh build --input-dir /tmp/my-iiif-project
@@ -63,26 +63,26 @@ cp your-image2.jpg /tmp/my-iiif-project/images/page02.jpg
 Use dashes to encode hierarchy in flat filenames. This mirrors the Miiify annotation server's container structure.
 
 **The Simple Rule:**
-1. Name images: `collection-manifest-canvas.extension`
-2. Create annotation folders: `collection-manifest-canvas/`
+1. Name images: `manifest-canvas.extension` (or `collection-manifest-canvas.extension` for hierarchy)
+2. Create annotation folders: match the image basename exactly
 3. Done.
 
-**Simple Manifest (single level):**
+**Single Manifest:**
 ```
 my-project/
-├── config.yml          # Project configuration (required)
-├── images/             # Flat directory with simple names
-│   ├── page01.jpg
-│   └── page02.jpg
-└── annotations/        # Annotation folders match image names
-    ├── page01/
+├── config.yml
+├── images/
+│   ├── mybook-page01.jpg
+│   └── mybook-page02.jpg
+└── annotations/
+    ├── mybook-page01/
     │   └── annotation-1.json
-    └── page02/
+    └── mybook-page02/
         └── annotation-2.json
 ```
-→ Creates: **my-project.json** (Manifest with 2 canvases)
+→ Creates: **mybook.json** (Manifest with 2 canvases)
 
-**Collection with Manifest (two levels):**
+**Collection with Manifest:**
 ```
 domesday/
 ├── config.yml
@@ -141,14 +141,17 @@ archive/
 
 ### Structure Detection
 
-The system analyzes your image filenames to automatically create the correct IIIF structure:
-
-**Flat files (no dashes):** Single Manifest  
-**Flat files with dashes:** Detects hierarchy from dash patterns
+The system analyzes your image filenames to automatically create the correct IIIF structure based on dash-separated naming patterns.
 
 ### Dash-Separated Naming
 
-**Pattern (2 levels):** `{collection}-{manifest}-{canvas}.{ext}`
+**Pattern (single manifest):** `{manifest}-{canvas}.{ext}`
+
+Example: `mybook-page01.jpg`
+- Manifest: `mybook`
+- Canvas: `page01`
+
+**Pattern (collection + manifest):** `{collection}-{manifest}-{canvas}.{ext}`
 
 Example: `domesday-lincolnshire-0680.tif`
 - Collection: `domesday`

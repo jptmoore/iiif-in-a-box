@@ -1,38 +1,44 @@
 # IIIF-In-A-Box v2
 
-**The simplest way to publish IIIF content.**
+Transform images and annotations into a complete IIIF service with viewer, search, and annotation capabilities.
 
-Transform images and annotations into a complete IIIF service with viewer, search, and annotation capabilities - in minutes, not days.
+## Requirements
 
-## Why IIIF-in-a-Box?
+- Docker & Docker Compose v2
+- Git
+- yq (YAML processor) - [Installation guide](https://github.com/mikefarah/yq)
 
-✅ **One Dependency** - Just Docker. No language runtimes, no build chains, no complexity.  
-✅ **Flexible Structure** - Use flat files with dashes OR nested directories - your choice.  
-✅ **Automatic Organization** - System detects hierarchy and creates proper IIIF Collections/Manifests.  
-✅ **Deploy Anywhere** - Works on any VM, cloud instance, or local machine with Docker.  
-✅ **Complete Solution** - Image server, annotations, search, and viewer - all integrated.  
-✅ **Shell Scripts Only** - Easy to understand, modify, and maintain. No magic frameworks.
+**Installing yq:**
+```bash
+# macOS
+brew install yq
 
-## Perfect For
+# Linux
+sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+sudo chmod +x /usr/local/bin/yq
+```
 
-📚 **Digital Libraries** - Publish manuscript collections with transcriptions and annotations  
-🎓 **Academic Research** - Share annotated image datasets with collaborators  
-🏛️ **Archives & Museums** - Make collections accessible with minimal IT overhead  
-📖 **Digital Humanities** - Focus on content, not infrastructure  
-🔬 **Researchers** - Self-host your image collections with full IIIF compatibility  
+**First-time setup:**
+```bash
+# Create the shared Docker network (only needed once)
+docker network create iiif-network
+```
 
-If you have images and want to publish them with IIIF standards but don't want to become a DevOps expert - this is for you.
+**Apple Silicon (M1/M2/M3):**
+- Platform constraints configured automatically
+- Some services use AMD64 emulation via Rosetta 2
+
+**Authentication:**
+Tamerlane images may require GitHub authentication:
+```bash
+docker login ghcr.io -u YOUR_GITHUB_USERNAME
+```
 
 ## Quick Start
 
-**Go from zero to a working IIIF server in under 5 minutes.**
-
 ```bash
-# 1. Create Docker network (one-time setup)
-docker network create iiif-network
-
-# 2. Create a minimal test project
-mkdir -p /tmp/my-iiif-project
+# 1. Create a minimal project
+mkdir -p /tmp/my-iiif-project/images
 cat > /tmp/my-iiif-project/config.yml << 'EOF'
 project:
   name: demo
@@ -40,62 +46,26 @@ project:
   description: "Testing IIIF-in-a-Box"
 EOF
 
-# 3. Build and start services
-# (Tamerlane viewer will be pulled from ghcr.io automatically)
+# 2. Add images
+cp your-image1.jpg /tmp/my-iiif-project/images/page01.jpg
+cp your-image2.jpg /tmp/my-iiif-project/images/page02.jpg
+
+# 3. Build and start
 ./bootstrap.sh build --input-dir /tmp/my-iiif-project
 
-# 4. Open in browser
-# http://localhost:8080/pages/demo.html
-# Done! Your IIIF viewer is running.
+# 4. Open http://localhost:8080/pages/demo.html
 ```
-
-### Add Your Content
-
-**Use flat files with dash-separated names (recommended):**
-
-```bash
-# Simple manifest (flat files)
-mkdir -p /tmp/my-iiif-project/images
-mkdir -p /tmp/my-iiif-project/annotations/page01
-mkdir -p /tmp/my-iiif-project/annotations/page02
-
-cp image1.jpg /tmp/my-iiif-project/images/page01.jpg
-cp image2.jpg /tmp/my-iiif-project/images/page02.jpg
-
-# Collection + Manifest (dash-separated hierarchy)
-cp image1.tif /tmp/my-iiif-project/images/book-chapter1-001.tif
-cp image2.tif /tmp/my-iiif-project/images/book-chapter1-002.tif
-mkdir -p /tmp/my-iiif-project/annotations/book-chapter1-001
-mkdir -p /tmp/my-iiif-project/annotations/book-chapter1-002
-
-# Rebuild
-./bootstrap.sh build --input-dir /tmp/my-iiif-project
-
-# System automatically:
-# - Detects 'book-chapter1-' pattern
-# - Creates Collection: book.json
-# - Creates Manifest: chapter1.json
-# - Generates viewer, search indexes, etc.
-```
-
-## What You Get
-
-**A complete, production-ready IIIF publishing stack:**
-
-- 🖼️ **IIIF Image Server** - Zoomable deep-zoom images (IIPImage)
-- 📝 **Annotation Server** - W3C Web Annotations with version control (Miiify v2)
-- 🔍 **Full-text Search** - Fast annotation search (AnnoSearch + Quickwit)
-- 👀 **Modern Viewer** - Beautiful IIIF viewer with annotation support (Tamerlane)
-- 📋 **IIIF Manifests** - Automatic Manifest/Collection generation (IIIF Presentation API 3.0)
-- 🚀 **One Command Deploy** - Everything configured and integrated
 
 ## Input Directory Structure
 
-**The system supports two approaches for organizing your images:**
-
-### Approach 1: Flat Files with Dash-Separated Names (Recommended)
+### Organizing Your Images
 
 Use dashes to encode hierarchy in flat filenames. This mirrors the Miiify annotation server's container structure.
+
+**The Simple Rule:**
+1. Name images: `collection-manifest-canvas.extension`
+2. Create annotation folders: `collection-manifest-canvas/`
+3. Done.
 
 **Simple Manifest (single level):**
 ```
@@ -167,70 +137,16 @@ archive/
 **Pattern for arbitrary depth:** `{level1}-{level2}-{level3}-...-{canvas}.{ext}`  
 **System automatically detects** nesting depth and creates appropriate Collections/Manifests
 
-### Approach 2: Directory-Based Hierarchy
-
-Use actual directories to organize images. System preserves structure as-is.
-
-**Collection with subdirectories:**
-```
-my-book/
-├── config.yml
-├── images/
-│   ├── chapter1/
-│   │   ├── page01.jpg
-│   │   └── page02.jpg
-│   └── chapter2/
-│       ├── page01.jpg
-│       └── page02.jpg
-└── annotations/
-    ├── chapter1-page01/       # Note: flattened with dashes
-    │   └── annotation-1.json
-    ├── chapter1-page02/
-    │   └── annotation-1.json
-    ├── chapter2-page01/
-    │   └── annotation-1.json
-    └── chapter2-page02/
-        └── annotation-1.json
-```
-→ Creates Collection with 2 Manifests (chapter1.json, chapter2.json)
-
-**Nested structure:**
-```
-archive/
-├── config.yml
-├── images/
-│   ├── volume1/
-│   │   ├── chapter1/
-│   │   │   ├── page01.jpg
-│   │   │   └── page02.jpg
-│   │   └── chapter2/
-│   │       └── page01.jpg
-│   └── volume2/
-│       └── chapter1/
-│           └── page01.jpg
-└── annotations/
-    ├── volume1-chapter1-page01/   # Flattened: slashes → dashes
-    │   └── annotation-1.json
-    ├── volume1-chapter1-page02/
-    │   └── annotation-1.json
-    ├── volume1-chapter2-page01/
-    │   └── annotation-1.json
-    └── volume2-chapter1-page01/
-        └── annotation-1.json
-```
-→ Creates nested Collections and Manifests
-
 ## How It Works: Images → IIIF Hierarchy
 
 ### Structure Detection
 
-The system analyzes your image filenames/folders to automatically create the correct IIIF structure:
+The system analyzes your image filenames to automatically create the correct IIIF structure:
 
 **Flat files (no dashes):** Single Manifest  
-**Flat files with dashes:** Detects hierarchy from dash patterns  
-**Subdirectories:** Collection with Manifests per directory  
+**Flat files with dashes:** Detects hierarchy from dash patterns
 
-### Dash-Separated Naming (Flat Files)
+### Dash-Separated Naming
 
 **Pattern (2 levels):** `{collection}-{manifest}-{canvas}.{ext}`
 
@@ -516,53 +432,10 @@ output/
 - ✅ Easy to backup, version control, or move to another server
 - ✅ Switching projects automatically cleans the output directory to prevent mixed content
 
-## Requirements
-
-**Minimal dependencies for maximum portability:**
-
-- ✅ Docker & Docker Compose v2
-- ✅ Git
-- ✅ yq (YAML processor) - [Installation guide](https://github.com/mikefarah/yq)
-
-**That's it.** No Python, Node.js, Ruby, or language-specific toolchains required.
-
-Works on any platform: Linux servers, macOS, Windows, cloud VMs, Raspberry Pi, or your laptop.
-
-**Installing yq:**
-```bash
-# macOS
-brew install yq
-
-# Linux
-sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-sudo chmod +x /usr/local/bin/yq
-```
-
-**Apple Silicon Macs (M1/M2/M3):**
-- IIPImage, Miiify, and AnnoSearch use AMD64 emulation (configured automatically)
+**Apple Silicon (M1/M2/M3):**
+- Platform constraints configured automatically
+- IIPImage, Miiify, AnnoSearch use AMD64 emulation
 - Tamerlane runs natively on ARM64
-- Docker Desktop uses Rosetta 2 for AMD64 emulation
-- Performance is excellent, no manual configuration needed
-
-**Tamerlane Viewer:**
-The bootstrap script automatically pulls Tamerlane from GitHub Container Registry (ghcr.io).
-
-**Note:** Tamerlane images may require authentication:
-```bash
-docker login ghcr.io -u YOUR_GITHUB_USERNAME
-```
-
-**First-time setup:**
-```bash
-# Create the shared Docker network (only needed once)
-docker network create iiif-network
-```
-
-The bootstrap script automatically:
-- Pulls all required Docker images
-- Generates manifests and viewer pages
-- Starts all services
-- Indexes annotations for search
 
 ## Troubleshooting
 
@@ -572,43 +445,23 @@ The bootstrap script automatically:
 ./bootstrap.sh build --input-dir /path/to/input
 ```
 
-**Lock errors:**
-- Script automatically stops services before building
-- Use `./bootstrap.sh stop` to manually stop
-
 **Search not working:**
-- Wait ~10 seconds after services start for indexing
-- Check manifest exists: `ls output/web/iiif/`
-
-**ARM64 architecture error (Apple Silicon Macs):**
-- IIPImage, Miiify, and AnnoSearch use AMD64 emulation (already configured)
-- Tamerlane runs natively on ARM64
-- Ensure Docker Desktop is updated to the latest version
+- Wait ~10 seconds for indexing to complete
+- Verify manifest exists: `ls output/web/iiif/`
 
 **Viewer not loading:**
-- Bootstrap script automatically pulls Tamerlane from ghcr.io
-- If Tamerlane fails to pull, authenticate with: `docker login ghcr.io -u YOUR_GITHUB_USERNAME`
-- Ensure the Tamerlane image is available for your architecture
-- Run `./bootstrap.sh stop && ./bootstrap.sh build --input-dir /path/to/input` to rebuild
+- Authenticate with GitHub: `docker login ghcr.io -u YOUR_GITHUB_USERNAME`
+- Rebuild: `./bootstrap.sh stop && ./bootstrap.sh build --input-dir /path/to/input`
 
 ## Architecture
 
-**Battle-tested open source components, thoughtfully integrated:**
+**Components:**
 
-Pre-built Docker images:
 - **nginx** - Reverse proxy & static files
-- **IIPImage** (`iipsrv/iipsrv:latest`) - Fast IIIF Image API 2.0/3.0 server [AMD64]
-- **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server with Git storage
-- **AnnoSearch** (`ghcr.io/nationalarchives/annosearch:latest`) - IIIF Content Search API implementation
-- **Quickwit** (`quickwit/quickwit`) - High-performance search engine
-- **Tamerlane** (`ghcr.io/tamerlaneviewer/tamerlane:latest`) - Modern IIIF viewer with rich annotation support
+- **IIPImage** (`iipsrv/iipsrv:latest`) - IIIF Image API 2.0/3.0 server [AMD64]
+- **Miiify** (`ghcr.io/nationalarchives/miiify:latest`) - W3C Web Annotation server with Git storage [AMD64]
+- **AnnoSearch** (`ghcr.io/nationalarchives/annosearch:latest`) - IIIF Content Search API [AMD64]
+- **Quickwit** (`quickwit/quickwit`) - Search engine
+- **Tamerlane** (`ghcr.io/tamerlaneviewer/tamerlane:latest`) - IIIF viewer [ARM64/AMD64]
 
-**Design Philosophy:**
-- Shell scripts for transparency and hackability
-- Docker for isolation and portability  
-- **Volume mounts for content** - Generated content lives in `./output/` and is mounted into containers, not baked into images
-- Single network, single port (8080) for simplicity
-- Convention over configuration (smart defaults)
-- Fail fast with clear error messages
-
-All services communicate on Docker network `iiif-network`.
+All services communicate on Docker network `iiif-network`. Generated content is volume-mounted from `./output/`.

@@ -18,12 +18,6 @@ sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/
 sudo chmod +x /usr/local/bin/yq
 ```
 
-**First-time setup:**
-```bash
-# Create the shared Docker network (only needed once)
-docker network create iiif-network
-```
-
 **Apple Silicon (M1/M2/M3):**
 - Platform constraints configured automatically
 - Some services use AMD64 emulation via Rosetta 2

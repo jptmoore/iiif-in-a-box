@@ -495,18 +495,18 @@ build_dashed_manifest() {
             canvases_json+=$(cat << CANVAS_EOF
 
     {
-      "id": "${hostname}/iiif/canvas/${canvas_id}",
+      "id": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}",
       "type": "Canvas",
       "label": { "en": ["${canvas_id##*/}"] },
       "height": ${height},
       "width": ${width},
       "items": [
         {
-          "id": "${hostname}/iiif/canvas/${canvas_id}/page/1",
+          "id": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}/page/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "${hostname}/iiif/canvas/${canvas_id}/page/1/annotation/1",
+              "id": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}/page/1/annotation/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -523,7 +523,7 @@ build_dashed_manifest() {
                   }
                 ]
               },
-              "target": "${hostname}/iiif/canvas/${canvas_id}"
+              "target": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}"
             }
           ]
         }
@@ -656,18 +656,18 @@ generate_single_manifest() {
             canvases_json+=$(cat << CANVAS_EOF
 
     {
-      "id": "${hostname}/iiif/canvas/${image_name}",
+      "id": "${hostname}/canvas/${image_name}",
       "type": "Canvas",
       "label": { "en": ["${image_name}"] },
       "height": ${height},
       "width": ${width},
       "items": [
         {
-          "id": "${hostname}/iiif/canvas/${image_name}/page/1",
+          "id": "${hostname}/canvas/${image_name}/page/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "${hostname}/iiif/canvas/${image_name}/page/1/annotation/1",
+              "id": "${hostname}/canvas/${image_name}/page/1/annotation/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -684,7 +684,7 @@ generate_single_manifest() {
                   }
                 ]
               },
-              "target": "${hostname}/iiif/canvas/${image_name}"
+              "target": "${hostname}/canvas/${image_name}"
             }
           ]
         }
@@ -854,18 +854,18 @@ ITEM_EOF
             canvases_json+=$(cat << CANVAS_EOF
 
     {
-      "id": "${hostname}/iiif/canvas/${rel_path}",
+      "id": "${hostname}/${rel_path%/*}/canvas/${rel_path##*/}",
       "type": "Canvas",
       "label": { "en": ["${image_name}"] },
       "height": ${height},
       "width": ${width},
       "items": [
         {
-          "id": "${hostname}/iiif/canvas/${rel_path}/page/1",
+          "id": "${hostname}/${rel_path%/*}/canvas/${rel_path##*/}/page/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "${hostname}/iiif/canvas/${rel_path}/page/1/annotation/1",
+              "id": "${hostname}/${rel_path%/*}/canvas/${rel_path##*/}/page/1/annotation/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -882,7 +882,7 @@ ITEM_EOF
                   }
                 ]
               },
-              "target": "${hostname}/iiif/canvas/${rel_path}"
+              "target": "${hostname}/${rel_path%/*}/canvas/${rel_path##*/}"
             }
           ]
         }
@@ -1239,18 +1239,18 @@ generate_manifest_for_subdir() {
         canvases_json+=$(cat << CANVAS_EOF
 
     {
-      "id": "${hostname}/iiif/canvas/${canvas_rel_path}",
+      "id": "${hostname}/${canvas_rel_path%/*}/canvas/${canvas_rel_path##*/}",
       "type": "Canvas",
       "label": { "en": ["${image_name}"] },
       "height": ${height},
       "width": ${width},
       "items": [
         {
-          "id": "${hostname}/iiif/canvas/${canvas_rel_path}/page/1",
+          "id": "${hostname}/${canvas_rel_path%/*}/canvas/${canvas_rel_path##*/}/page/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "${hostname}/iiif/canvas/${canvas_rel_path}/page/1/annotation/1",
+              "id": "${hostname}/${canvas_rel_path%/*}/canvas/${canvas_rel_path##*/}/page/1/annotation/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -1267,7 +1267,7 @@ generate_manifest_for_subdir() {
                   }
                 ]
               },
-              "target": "${hostname}/iiif/canvas/${canvas_rel_path}"
+              "target": "${hostname}/${canvas_rel_path%/*}/canvas/${canvas_rel_path##*/}"
             }
           ]
         }

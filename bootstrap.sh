@@ -228,6 +228,44 @@ validate_annotation_naming() {
         return 1
     fi
     
+    # Check for orphaned annotation folders (annotations without corresponding images)
+    local orphaned_count=0
+    local expected_folders=()
+    
+    # Build list of expected annotation folder names from images
+    while IFS= read -r -d '' image_file; do
+        local rel_path="${image_file#$images_dir/}"
+        local rel_path_no_ext="${rel_path%.*}"
+        local folder_name=$(echo "$rel_path_no_ext" | tr '/' '-')
+        expected_folders+=("$folder_name")
+    done < <(find "$images_dir" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
+    
+    # Check all annotation folders
+    while IFS= read -r -d '' anno_folder; do
+        local folder_name=$(basename "$anno_folder")
+        
+        # Check if this folder corresponds to an image
+        local found=0
+        for expected in "${expected_folders[@]}"; do
+            if [ "$folder_name" = "$expected" ]; then
+                found=1
+                break
+            fi
+        done
+        
+        if [ $found -eq 0 ]; then
+            log_warning "Orphaned annotation folder (no corresponding image): ${folder_name}"
+            ((orphaned_count++))
+        fi
+    done < <(find "$annotations_dir" -mindepth 1 -maxdepth 1 -type d -print0)
+    
+    if [ $orphaned_count -gt 0 ]; then
+        log_error "Found $orphaned_count orphaned annotation folder(s) without corresponding images"
+        log_error "These folders will cause old/incorrect data to be imported"
+        log_error "Please remove annotation folders that don't match your current images"
+        return 1
+    fi
+    
     log_success "Annotation structure validation passed"
     return 0
 }
@@ -355,8 +393,8 @@ build_dashed_collection_recursive() {
     fi
     
     # Otherwise, create Collection and recurse
-    # Find all unique child prefixes
-    declare -A children
+    # Find all unique child prefixes (without using associative arrays for compatibility)
+    local children_list=""
     while IFS= read -r -d '' image_file; do
         local basename=$(basename "$image_file")
         local name="${basename%.*}"
@@ -366,14 +404,18 @@ build_dashed_collection_recursive() {
             # Extract the next segment
             local remainder="${name#$prefix-}"
             local next_segment=$(echo "$remainder" | cut -d'-' -f1)
-            children["$next_segment"]=1
+            children_list="${children_list}${next_segment}"$'\n'
         fi
     done < <(find "$images_dir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) -print0)
+    
+    # Get unique sorted children
+    local unique_children=$(echo "$children_list" | sort -u)
     
     # Build items for this collection
     local items_json=""
     local item_count=0
-    for child in $(echo "${!children[@]}" | tr ' ' '\n' | sort); do
+    for child in $unique_children; do
+        [ -z "$child" ] && continue
         local child_prefix="$prefix-$child"
         local next_depth=$((current_depth + 1))
         
@@ -1402,27 +1444,22 @@ build_project() {
     log_info "Title: $PROJECT_TITLE"
     log_info "============================================"
     
-    # Step 2.5: Auto-detect project change and clean if needed
-    LAST_PROJECT_FILE="$OUTPUT_DIR/.project"
-    if [ -f "$LAST_PROJECT_FILE" ]; then
-        LAST_PROJECT=$(cat "$LAST_PROJECT_FILE" 2>/dev/null || echo "")
-        if [ -n "$LAST_PROJECT" ] && [ "$LAST_PROJECT" != "$PROJECT_NAME" ]; then
-            log_warning "Detected project change: '$LAST_PROJECT' → '$PROJECT_NAME'"
-            log_info "Cleaning output directory to prevent mixed content..."
-            rm -rf "$OUTPUT_DIR"/{miiify,web,annosearch,logs} 2>/dev/null || true
-            log_success "Output directory cleaned"
-        fi
-    fi
-    
     # Step 3: Validate annotation naming
     if ! validate_annotation_naming "$INPUT_DIR"; then
         log_error "Annotation naming validation failed"
         exit 1
     fi
     
-    # Step 4: Create output directory structure
+    # Step 4: Clean and create output directory structure
+    log_info "Cleaning output directory..."
+    # Remove all contents to prevent any old data contamination
+    rm -rf "$OUTPUT_DIR"/* 2>/dev/null || true
+    
     log_info "Creating output directory structure..."
     mkdir -p "$OUTPUT_DIR"/{miiify/{git_store,pack_store},web/{iiif,pages,images},annosearch/qwdata,logs}
+    
+    # Store current project name for reference
+    echo "$PROJECT_NAME" > "$OUTPUT_DIR/.project"
     
     # Step 5: Process images
     if ! process_images "$INPUT_DIR" "$OUTPUT_DIR" "$PROJECT_NAME"; then

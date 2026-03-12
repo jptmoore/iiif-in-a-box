@@ -1596,7 +1596,7 @@ prepare_tamerlane_image() {
     
     log_info "Preparing Tamerlane viewer image..."
     
-    # Check if image already exists locally
+    # Check if ghcr.io image exists locally
     if docker image inspect "$ghcr_image" &> /dev/null; then
         log_info "Tamerlane image already exists locally"
         docker tag "$ghcr_image" "$local_image"

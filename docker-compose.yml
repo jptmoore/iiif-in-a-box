@@ -81,7 +81,7 @@ services:
   tamerlane:
     container_name: iiif-tamerlane
     image: ghcr.io/tamerlaneviewer/tamerlane:latest
-    pull_policy: always
+    pull_policy: if_not_present
     ports:
       - "127.0.0.1:3001:3001"
     networks:

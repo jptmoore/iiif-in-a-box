@@ -41,6 +41,9 @@ Options:
   --output-dir, -o DIR        Output directory for generated files
                                (default: ./output)
   --hostname, --host URL      Base URL for the IIIF service 
+                               Port defaults to 80 if not specified
+                               Examples: http://example.com (port 80)
+                                        http://localhost:8080 (port 8080)
                                (default: http://localhost:8080)
   --help, -h                   Show this help message
 
@@ -61,7 +64,10 @@ Examples:
   $0 build -i /home/john/git/domesday-in-a-box -o /home/john/iiif-output
   
   # Build for deployment with external hostname
-  $0 build -i ~/domesday-in-a-box --hostname http://192.168.1.100:8080
+  $0 build -i ~/domesday-in-a-box --hostname http://192.168.1.100
+  
+  # Build with custom port
+  $0 build -i ~/domesday-in-a-box --hostname http://example.com:8080
   
   # Check service status
   $0 status
@@ -1630,6 +1636,13 @@ prepare_tamerlane_image() {
 start_all_services() {
     log_info "Starting all IIIF services..."
     
+    # Extract port from hostname (default to 80 if not specified)
+    if [[ "$HOSTNAME" =~ :([0-9]+)$ ]]; then
+        export NGINX_PORT="${BASH_REMATCH[1]}"
+    else
+        export NGINX_PORT="80"
+    fi
+    
     # Export environment variables for docker-compose
     export OUTPUT_DIR
     export PROJECT_NAME
@@ -1637,6 +1650,7 @@ start_all_services() {
     export ANNOSEARCH_PUBLIC_URL="${HOSTNAME}/annosearch"
     
     log_info "Output directory: $OUTPUT_DIR"
+    log_info "Nginx port: $NGINX_PORT"
     log_info "Miiify base URL: $MIIIFY_BASE_URL"
     
     # Start all services using main docker-compose.yml

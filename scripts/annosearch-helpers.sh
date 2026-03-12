@@ -35,15 +35,16 @@ load_annosearch_data() {
     
     log_info "Loading from manifest URL: $manifest_url"
     
-    # Check if manifest exists via nginx (use the public hostname) and detect its type
-    local manifest_json=$(curl -s -f --max-time 10 "${hostname}/iiif/${project_name}.json")
-    if [ $? -ne 0 ] || [ -z "$manifest_json" ]; then
-        log_error "Manifest not found at: ${hostname}/iiif/${project_name}.json"
-        log_error "Please ensure the manifest has been generated and nginx service is running"
+    # Check if manifest file exists in the output directory
+    local manifest_file="${OUTPUT_DIR}/web/iiif/${project_name}.json"
+    if [ ! -f "$manifest_file" ]; then
+        log_error "Manifest file not found at: $manifest_file"
+        log_error "Please ensure the manifest has been generated"
         return 1
     fi
     
     # Detect whether this is a Manifest or Collection
+    local manifest_json=$(cat "$manifest_file")
     local manifest_type=$(echo "$manifest_json" | grep -o '"type"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
     
     if [ -z "$manifest_type" ]; then
@@ -59,7 +60,7 @@ load_annosearch_data() {
         log_success "IIIF $manifest_type loaded successfully into search index"
         
         # Get some stats about what was loaded
-        log_info "Manifest URL: $manifest_url"
+        log_info "Manifest URL (internal): $manifest_url"
         log_success "Search API available at: ${hostname}/annosearch/${project_name}/search"
         
         return 0

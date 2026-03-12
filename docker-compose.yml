@@ -70,8 +70,6 @@ services:
       - "127.0.0.1:10000:10000"
     volumes:
       - ${OUTPUT_DIR}/miiify/pack_store:/home/miiify/pack_store:rw
-    environment:
-      - MIIIFY_BASE_URL=${MIIIFY_BASE_URL:-http://localhost:8080/miiify}
     networks:
       - iiif-network
 

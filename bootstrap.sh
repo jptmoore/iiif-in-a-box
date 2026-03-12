@@ -1652,9 +1652,14 @@ start_all_services() {
     log_info "Output directory: $OUTPUT_DIR"
     log_info "Nginx port: $NGINX_PORT"
     log_info "Miiify base URL: $MIIIFY_BASE_URL"
+    log_info "AnnoSearch public URL: $ANNOSEARCH_PUBLIC_URL"
     
     # Start all services using main docker-compose.yml
     log_info "Starting IIIF-in-a-Box services..."
+    log_info "Environment variables for docker-compose:"
+    log_info "  NGINX_PORT=$NGINX_PORT"
+    log_info "  MIIIFY_BASE_URL=$MIIIFY_BASE_URL"
+    log_info "  OUTPUT_DIR=$OUTPUT_DIR"
     $DOCKER_COMPOSE_CMD up -d
     
     if [ $? -ne 0 ]; then
@@ -1667,6 +1672,15 @@ start_all_services() {
     # Wait for services to be ready
     log_info "Waiting for services to be ready..."
     sleep 8
+    
+    # Verify Miiify base-url configuration
+    log_info "Verifying Miiify configuration..."
+    local miiify_cmd=$(docker inspect iiif-miiify --format='{{.Config.Cmd}}' 2>/dev/null || echo "")
+    if [[ "$miiify_cmd" == *"$MIIIFY_BASE_URL"* ]]; then
+        log_success "Miiify base-url correctly set to: $MIIIFY_BASE_URL"
+    else
+        log_warning "Miiify base-url may not be set correctly. Command: $miiify_cmd"
+    fi
     
     # Show service status
     log_info "Service status:"

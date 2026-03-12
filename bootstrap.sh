@@ -363,6 +363,7 @@ generate_collection_from_dashed_files() {
     # Set MANIFEST_NAME and VIEWER_MANIFEST for later use (top-level collection)
     export MANIFEST_NAME="$collection_name"
     export VIEWER_MANIFEST="${collection_name}.json"
+    export MANIFEST_TYPE="Collection"
 }
 
 # Recursive function to build collections/manifests from dash-separated files
@@ -822,6 +823,11 @@ CANVAS_EOF
 EOF
     
     log_success "Generated Manifest: ${manifest_name}.json with ${canvas_count} canvas(es)"
+    
+    # Set MANIFEST_NAME, VIEWER_MANIFEST and MANIFEST_TYPE for later use
+    export MANIFEST_NAME="$manifest_name"
+    export VIEWER_MANIFEST="$manifest_name"
+    export MANIFEST_TYPE="Manifest"
 }
 
 # Helper: Check if directory has subdirectories containing images
@@ -1394,6 +1400,7 @@ generate_viewer_page() {
     local project_title="$3"
     local project_description="$4"
     local hostname="$5"
+    local manifest_type="${6:-Collection}"  # Default to Collection for backwards compatibility
     
     log_info "Generating viewer page: ${page_name}.html (loading manifest: ${manifest_name}.json)"
     
@@ -1411,6 +1418,7 @@ generate_viewer_page() {
     sed -e "s/Demo/${project_title}/g" \
         -e "s/demo/${manifest_name}/g" \
         -e "s|https://digitaldomesday.org|${hostname}|g" \
+        -e "s/IIIF Collection/IIIF ${manifest_type}/g" \
         "$template_path" > "$page_path"
     
     log_success "Generated viewer page: ${page_path}"
@@ -1540,7 +1548,7 @@ build_project() {
     fi
     
     # Page uses project name, but loads the derived manifest
-    if ! generate_viewer_page "$PROJECT_NAME" "$VIEWER_MANIFEST" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME"; then
+    if ! generate_viewer_page "$PROJECT_NAME" "$VIEWER_MANIFEST" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME" "${MANIFEST_TYPE:-Collection}"; then
         log_error "Page generation failed"
         exit 1
     fi

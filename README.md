@@ -40,31 +40,69 @@ project:
   description: "Testing IIIF-in-a-Box"
 EOF
 
-# 2. Add images (use dash-separated names)
-cp your-image1.jpg /tmp/my-iiif-project/images/demo-page01.jpg
-cp your-image2.jpg /tmp/my-iiif-project/images/demo-page02.jpg
+# 2. Add images (use dash-separated names starting with manifest name)
+cp your-image1.jpg /tmp/my-iiif-project/images/mybook-page01.jpg
+cp your-image2.jpg /tmp/my-iiif-project/images/mybook-page02.jpg
 
 # 3. Build and start
 ./bootstrap.sh build --input-dir /tmp/my-iiif-project
 
-# 4. Open http://localhost:8080/pages/demo.html
+# 4. Open http://localhost:8080/pages/demo.html (viewer)
+#    and http://localhost:8080/iiif/mybook.json (manifest)
 ```
 
+**Important:** The `project.name` in config.yml determines the viewer page filename (`demo.html`), while the **image filename prefix** determines the manifest filename (`mybook.json`). These can be different.
+
 ## Input Directory Structure
+
+### Project Name vs. File Naming
+
+**Key Concept:** The `project.name` in config.yml and the **file naming prefix** serve different purposes:
+
+- **`project.name`** (in config.yml): Determines the viewer page filename only (`{name}.html`)
+- **File naming prefix** (first dash-separated segment): Determines the manifest/collection JSON filenames
+
+**Example:**
+```yaml
+# config.yml
+project:
+  name: medieval-manuscript  # Creates: medieval-manuscript.html (viewer page)
+```
+```bash
+# Images named with different prefix:
+images/
+  ├── mybook-page01.jpg     # Creates: mybook.json (manifest)
+  └── mybook-page02.jpg
+```
+Result: Viewer at `medieval-manuscript.html` loads manifest from `mybook.json`
+
+**Best Practice:** Use the same value for both to avoid confusion:
+```yaml
+# config.yml
+project:
+  name: mybook  # Matches image prefix
+```
+```bash
+images/
+  ├── mybook-page01.jpg
+  └── mybook-page02.jpg
+```
+Result: `mybook.html` viewer loads `mybook.json` manifest ✓
 
 ### Organizing Your Images
 
 Use dashes to encode hierarchy in flat filenames. This mirrors the Miiify annotation server's container structure.
 
 **The Simple Rule:**
-1. Name images: `manifest-canvas.extension` (or `collection-manifest-canvas.extension` for hierarchy)
-2. Create annotation folders: match the image basename exactly
-3. Done.
+1. Name images: `{prefix}-{canvas}.ext` (or `{collection}-{manifest}-{canvas}.ext` for hierarchy)
+2. **All images must share the same prefix** for collection/manifest grouping
+3. Create annotation folders: match the image basename exactly
+4. Done.
 
 **Single Manifest:**
 ```
 my-project/
-├── config.yml
+├── config.yml          # project.name: mybook (matches image prefix)
 ├── images/
 │   ├── mybook-page01.jpg
 │   └── mybook-page02.jpg
@@ -74,38 +112,47 @@ my-project/
     └── mybook-page02/
         └── annotation-2.json
 ```
-→ Creates: **mybook.json** (Manifest with 2 canvases)
+→ Creates: 
+- **mybook.json** (Manifest with 2 canvases)
+- **mybook.html** (Viewer page)
 
-**Collection with Manifest:**
+**Collection with Multiple Manifests:**
 ```
 domesday/
-├── config.yml
-├── images/             # Dash-separated: collection-manifest-canvas
-│   ├── domesday-lincolnshire-0680.tif
+├── config.yml          # project.name: domesday (matches image prefix)  
+├── images/             # Dash-separated: {collection}-{manifest}-{canvas}
+│   ├── domesday-lincolnshire-0680.tif    # All start with "domesday"
 │   ├── domesday-lincolnshire-0714.tif
-│   └── domesday-lincolnshire-0740.tif
+│   ├── domesday-yorkshire-0001.tif       # Second manifest
+│   └── domesday-yorkshire-0002.tif
 └── annotations/        # Folders match image names exactly
     ├── domesday-lincolnshire-0680/
     │   ├── anno-001.json
     │   └── anno-002.json
     ├── domesday-lincolnshire-0714/
     │   └── anno-001.json
-    └── domesday-lincolnshire-0740/
+    ├── domesday-yorkshire-0001/
+    │   └── anno-001.json
+    └── domesday-yorkshire-0002/
         └── anno-001.json
 ```
 → Creates:
 - **domesday.json** (Collection) 
-- **lincolnshire.json** (Manifest with 3 canvases)
+- **lincolnshire.json** (Manifest with 2 canvases)
+- **yorkshire.json** (Manifest with 2 canvases)
+- **domesday.html** (Viewer page)
+
+**Key:** All images share the prefix `domesday-`, which becomes the Collection name.
 
 **Naming pattern:** `{collection}-{manifest}-{canvas}.{ext}`  
-**System parses dashes** to detect: collection=domesday, manifest=lincolnshire, canvas=0680
+**System parses dashes** to detect: collection=domesday, manifest=lincolnshire/yorkshire, canvas=0680/etc.
 
 **Nested Collections (arbitrary depth):**
 ```
 archive/
-├── config.yml
-├── images/             # Dash-separated: collection-subcollection-manifest-canvas
-│   ├── archive-volume1-chapter1-page01.tif
+├── config.yml          # project.name: archive (matches image prefix)
+├── images/             # Dash-separated: {collection}-{subcollection}-{manifest}-{canvas}
+│   ├── archive-volume1-chapter1-page01.tif   # All start with "archive"
 │   ├── archive-volume1-chapter1-page02.tif
 │   ├── archive-volume1-chapter2-page01.tif
 │   ├── archive-volume2-chapter1-page01.tif
@@ -127,6 +174,9 @@ archive/
 - **volume1.json** (Collection) → chapter1.json, chapter2.json
 - **volume2.json** (Collection) → chapter1.json
 - **chapter1.json**, **chapter2.json** (Manifests with canvases)
+- **archive.html** (Viewer page)
+
+**Key:** All images share the prefix `archive-`, which becomes the top Collection name.
 
 **Pattern for arbitrary depth:** `{level1}-{level2}-{level3}-...-{canvas}.{ext}`  
 **System automatically detects** nesting depth and creates appropriate Collections/Manifests
@@ -435,6 +485,35 @@ output/
 - Tamerlane runs natively on ARM64
 
 ## Troubleshooting
+
+**"No dash-separated naming detected" error:**
+
+This means your images don't share a common prefix. All images must start with the same prefix for collection/manifest grouping.
+
+❌ **Wrong:**
+```
+images/
+  ├── chapter1-page01.jpg     # Prefix: "chapter1"
+  └── chapter2-page01.jpg     # Prefix: "chapter2" (DIFFERENT!)
+```
+
+✅ **Fix Option 1 - Single Manifest:**
+```
+images/
+  ├── mybook-page01.jpg       # All start with "mybook"
+  └── mybook-page02.jpg
+```
+Creates: `mybook.json` (one manifest with 2 canvases)
+
+✅ **Fix Option 2 - Collection with Manifests:**
+```
+images/
+  ├── mybook-chapter1-page01.jpg    # All start with "mybook"
+  ├── mybook-chapter1-page02.jpg
+  ├── mybook-chapter2-page01.jpg
+  └── mybook-chapter2-page02.jpg
+```
+Creates: `mybook.json` (collection) → `chapter1.json`, `chapter2.json` (manifests)
 
 **Services won't start:**
 ```bash

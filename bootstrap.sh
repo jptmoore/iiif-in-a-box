@@ -45,6 +45,7 @@ Options:
                                Examples: http://example.com (port 80)
                                         http://localhost:8080 (port 8080)
                                (default: http://localhost:8080)
+  --pull                       Force pull latest Docker images before starting
   --help, -h                   Show this help message
 
 Commands:
@@ -113,6 +114,7 @@ parse_arguments() {
     INPUT_DIR=""
     OUTPUT_DIR="$DEFAULT_OUTPUT_DIR"
     HOSTNAME="$DEFAULT_HOSTNAME"
+    FORCE_PULL=false
     COMMAND=""
     
     while [[ $# -gt 0 ]]; do
@@ -128,6 +130,10 @@ parse_arguments() {
             --hostname|--host)
                 HOSTNAME="$2"
                 shift 2
+                ;;
+            --pull)
+                FORCE_PULL=true
+                shift
                 ;;
             --help|-h)
                 show_help
@@ -529,9 +535,37 @@ build_dashed_manifest() {
         # Check if this file matches our prefix
         if [[ "$image_name" == "$prefix-"* ]]; then
             ((canvas_count++))
-            
-            # Convert dashes to slashes for Canvas ID
-            local canvas_id=$(echo "$image_name" | tr '-' '/')
+
+            # Derive canvas ID from annotation target if available.
+            # This ensures the manifest canvas ID always matches what annotations reference,
+            # regardless of what hostname was used when annotations were authored.
+            local anno_folder="${INPUT_DIR}/annotations/${image_name}"
+            local canvas_id
+            local raw_target_source
+            raw_target_source=$(extract_annotation_target "$anno_folder")
+
+            if [ -n "$raw_target_source" ]; then
+                # Use target.source as-is — canvas IDs are opaque identifiers and don't need to resolve.
+                canvas_id="$raw_target_source"
+                # Warn if the hostname in the annotation differs from the current --hostname,
+                # so the user knows the canvas ID won't match the deployment hostname.
+                local annotation_host
+                annotation_host=$(echo "$raw_target_source" | sed -E 's|^(https?://[^/]+).*|\1|')
+                if [[ "$annotation_host" != "$hostname" ]]; then
+                    log_warning "Canvas ID hostname mismatch for ${image_name}:"
+                    log_warning "  annotation target.source: $raw_target_source"
+                    log_warning "  current --hostname:        $hostname"
+                    log_warning "  Canvas IDs are identifiers and don't need to resolve, but viewers"
+                    log_warning "  may use them to match annotations. Update target.source in your"
+                    log_warning "  annotation files if you want them to match the current hostname."
+                fi
+                log_info "Canvas ID from annotation target: $canvas_id"
+            else
+                # No annotations — fall back to generated canvas ID
+                local generated_id=$(echo "$image_name" | tr '-' '/')
+                canvas_id="${hostname}/${generated_id%/*}/canvas/${generated_id##*/}"
+                log_info "Canvas ID generated (no annotations): $canvas_id"
+            fi
             
             # Get image dimensions
             local width=3000
@@ -547,18 +581,18 @@ build_dashed_manifest() {
             canvases_json+=$(cat << CANVAS_EOF
 
     {
-      "id": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}",
+      "id": "${canvas_id}",
       "type": "Canvas",
       "label": { "en": ["${canvas_id##*/}"] },
       "height": ${height},
       "width": ${width},
       "items": [
         {
-          "id": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}/page/1",
+          "id": "${canvas_id}/page/1",
           "type": "AnnotationPage",
           "items": [
             {
-              "id": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}/page/1/annotation/1",
+              "id": "${canvas_id}/page/1/annotation/1",
               "type": "Annotation",
               "motivation": "painting",
               "body": {
@@ -575,7 +609,7 @@ build_dashed_manifest() {
                   }
                 ]
               },
-              "target": "${hostname}/${canvas_id%/*}/canvas/${canvas_id##*/}"
+              "target": "${canvas_id}"
             }
           ]
         }
@@ -1523,7 +1557,7 @@ build_project() {
         log_error "Image processing failed"
         exit 1
     fi
-    
+
     # Step 6: Run Miiify workflow (import → compile)
     if ! miiify_full_workflow "$INPUT_DIR" "$OUTPUT_DIR" "$HOSTNAME"; then
         log_error "Miiify workflow failed"
@@ -1635,20 +1669,20 @@ prepare_tamerlane_image() {
 # Function to start all services
 start_all_services() {
     log_info "Starting all IIIF services..."
-    
+
     # Extract port from hostname (default to 80 if not specified)
     if [[ "$HOSTNAME" =~ :([0-9]+)$ ]]; then
         export NGINX_PORT="${BASH_REMATCH[1]}"
     else
         export NGINX_PORT="80"
     fi
-    
+
     # Export environment variables for docker-compose
     export OUTPUT_DIR
     export PROJECT_NAME
     export MIIIFY_BASE_URL="${HOSTNAME}/miiify"
     export ANNOSEARCH_PUBLIC_URL="${HOSTNAME}/annosearch"
-    
+
     log_info "Output directory: $OUTPUT_DIR"
     log_info "Nginx port: $NGINX_PORT"
     log_info "Miiify base URL: $MIIIFY_BASE_URL"
@@ -1660,7 +1694,13 @@ start_all_services() {
     log_info "  NGINX_PORT=$NGINX_PORT"
     log_info "  MIIIFY_BASE_URL=$MIIIFY_BASE_URL"
     log_info "  OUTPUT_DIR=$OUTPUT_DIR"
-    $DOCKER_COMPOSE_CMD up -d
+
+    local compose_up_args="-d"
+    if [ "$FORCE_PULL" = true ]; then
+        compose_up_args="$compose_up_args --pull always"
+        log_info "Force pulling latest Docker images..."
+    fi
+    $DOCKER_COMPOSE_CMD up $compose_up_args
     
     if [ $? -ne 0 ]; then
         log_error "Failed to start services"

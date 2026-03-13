@@ -2,6 +2,34 @@
 # Miiify v2 Workflow Helper Functions
 # This script contains functions for managing the Miiify annotation workflow
 
+# Extract the canvas URL from the target field of the first annotation JSON found in a folder.
+# Handles all W3C Web Annotation target forms:
+#   1. Plain string:  "target": "http://example.org/canvas/page01"
+#   2. Object:        "target": { "source": "http://...", "selector": {...} }
+#   3. Array:         "target": ["http://..."] or [{ "source": "http://..." }]
+# Returns the first URL found, or empty string if none.
+extract_annotation_target() {
+    local anno_folder="$1"
+    local json_file
+    json_file=$(find "$anno_folder" -name "*.json" -type f 2>/dev/null | sort | head -1)
+    [ -z "$json_file" ] && return 0
+
+    local result
+
+    # Try "source" field first (covers object and array-of-objects forms)
+    result=$(grep -o '"source"[[:space:]]*:[[:space:]]*"[^"]*"' "$json_file" 2>/dev/null | \
+        head -1 | sed 's/.*"source"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    [ -n "$result" ] && { echo "$result"; return 0; }
+
+    # Fall back to plain string target: "target": "http://..."
+    # Match the target field value when it is a plain string (not an object/array)
+    result=$(grep -o '"target"[[:space:]]*:[[:space:]]*"[^"]*"' "$json_file" 2>/dev/null | \
+        head -1 | sed 's/.*"target"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    [ -n "$result" ] && { echo "$result"; return 0; }
+
+    return 0
+}
+
 # Function to import annotations into git store
 miiify_import_annotations() {
     local input_dir="$1"

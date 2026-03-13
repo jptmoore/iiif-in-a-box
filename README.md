@@ -97,7 +97,10 @@ Use dashes to encode hierarchy in flat filenames. This mirrors the Miiify annota
 1. Name images: `{prefix}-{canvas}.ext` (or `{collection}-{manifest}-{canvas}.ext` for hierarchy)
 2. **All images must share the same prefix** for collection/manifest grouping
 3. Create annotation folders: match the image basename exactly
-4. Done.
+4. Set `target.source` in each annotation JSON to the canvas URL you want
+5. Done.
+
+> **Canvas IDs follow annotation targets.** The `target.source` in your annotation files is used as-is for the canvas ID in the generated manifest. Canvas IDs are opaque identifiers — they don't need to resolve. This ensures annotations and canvases always match. If the hostname in your annotation files differs from the current `--hostname`, a warning is shown at build time but it is not an error.
 
 **Single Manifest:**
 ```

@@ -49,7 +49,7 @@ services:
       ANNOSEARCH_PUBLIC_URL: ${ANNOSEARCH_PUBLIC_URL:-http://localhost:8080/annosearch}
       QUICKWIT_BASE_URL: ${QUICKWIT_BASE_URL:-http://quickwit:7280/api/v1/}
     extra_hosts:
-      - "localhost:host-gateway"  # Allow container to reach host's localhost (for manifest URLs)
+      localhost: host-gateway
     networks:
       - iiif-network
 

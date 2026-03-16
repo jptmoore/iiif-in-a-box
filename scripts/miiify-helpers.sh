@@ -19,13 +19,13 @@ extract_annotation_target() {
     # Try "source" field first (covers object and array-of-objects forms)
     result=$(grep -o '"source"[[:space:]]*:[[:space:]]*"[^"]*"' "$json_file" 2>/dev/null | \
         head -1 | sed 's/.*"source"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-    [ -n "$result" ] && { echo "$result"; return 0; }
+    [ -n "$result" ] && { echo "${result%%#*}"; return 0; }
 
     # Fall back to plain string target: "target": "http://..."
     # Match the target field value when it is a plain string (not an object/array)
     result=$(grep -o '"target"[[:space:]]*:[[:space:]]*"[^"]*"' "$json_file" 2>/dev/null | \
         head -1 | sed 's/.*"target"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
-    [ -n "$result" ] && { echo "$result"; return 0; }
+    [ -n "$result" ] && { echo "${result%%#*}"; return 0; }
 
     return 0
 }

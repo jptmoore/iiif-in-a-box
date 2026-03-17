@@ -7,9 +7,14 @@
 #   1. Plain string:  "target": "http://example.org/canvas/page01"
 #   2. Object:        "target": { "source": "http://...", "selector": {...} }
 #   3. Array:         "target": ["http://..."] or [{ "source": "http://..." }]
-# Returns the first URL found, or empty string if none.
+#   4. Array of strings spanning multiple canvases (matched by canvas_key)
+# Returns the canvas URL, or empty string if none found.
+# $1: annotation folder path
+# $2: canvas_key (optional) — last dash-separated segment of image name, e.g. "0684"
+#     Used to select the right URL when target is an array referencing multiple canvases.
 extract_annotation_target() {
     local anno_folder="$1"
+    local canvas_key="${2:-}"
     local json_file
     json_file=$(find "$anno_folder" -name "*.json" -type f 2>/dev/null | sort | head -1)
     [ -z "$json_file" ] && return 0
@@ -21,10 +26,20 @@ extract_annotation_target() {
         head -1 | sed 's/.*"source"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
     [ -n "$result" ] && { echo "${result%%#*}"; return 0; }
 
-    # Fall back to plain string target: "target": "http://..."
-    # Match the target field value when it is a plain string (not an object/array)
+    # Try plain string target: "target": "http://..."
     result=$(grep -o '"target"[[:space:]]*:[[:space:]]*"[^"]*"' "$json_file" 2>/dev/null | \
         head -1 | sed 's/.*"target"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/')
+    [ -n "$result" ] && { echo "${result%%#*}"; return 0; }
+
+    # Handle array of string targets: "target": ["http://...", "http://..."]
+    # Some annotations span multiple canvases; use canvas_key to select the right URL.
+    if [ -n "$canvas_key" ]; then
+        result=$(grep -o '"http[s]*://[^"]*"' "$json_file" 2>/dev/null | \
+            grep "/${canvas_key}[\"#]" | head -1 | tr -d '"')
+        [ -n "$result" ] && { echo "${result%%#*}"; return 0; }
+    fi
+    # Fall back to the first HTTP URL in the file
+    result=$(grep -o '"http[s]*://[^"]*"' "$json_file" 2>/dev/null | head -1 | tr -d '"')
     [ -n "$result" ] && { echo "${result%%#*}"; return 0; }
 
     return 0

@@ -509,9 +509,10 @@ build_dashed_manifest() {
             # This ensures the manifest canvas ID always matches what annotations reference,
             # regardless of what hostname was used when annotations were authored.
             local anno_folder="${INPUT_DIR}/annotations/${image_name}"
+            local canvas_key="${image_name##*-}"
             local canvas_id
             local raw_target_source
-            raw_target_source=$(extract_annotation_target "$anno_folder")
+            raw_target_source=$(extract_annotation_target "$anno_folder" "$canvas_key")
 
             if [ -n "$raw_target_source" ]; then
                 # Use target.source as-is — canvas IDs are opaque identifiers and don't need to resolve.
@@ -702,9 +703,10 @@ generate_single_manifest() {
 
             # Derive canvas ID from annotation target if available.
             local anno_folder="${INPUT_DIR}/annotations/${image_name}"
+            local canvas_key="${image_name##*-}"
             local canvas_id
             local raw_target_source
-            raw_target_source=$(extract_annotation_target "$anno_folder")
+            raw_target_source=$(extract_annotation_target "$anno_folder" "$canvas_key")
 
             if [ -n "$raw_target_source" ]; then
                 canvas_id="$raw_target_source"

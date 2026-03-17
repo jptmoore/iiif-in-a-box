@@ -4,16 +4,15 @@ Transform images and annotations into a complete IIIF service with viewer, searc
 
 ## Requirements
 
-- Docker & Docker Compose v2
+- Docker
 - yq (YAML processor)
 
 ```bash
+# Debian/Ubuntu
+sudo apt-get install -y yq
+
 # macOS
 brew install yq
-
-# Linux
-sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-sudo chmod +x /usr/local/bin/yq
 ```
 
 ## Quick Start
@@ -107,22 +106,12 @@ All services run on port 8080:
 
 | URL | Description |
 |---|---|
-| `/pages/{name}.html` | IIIF viewer |
-| `/iiif/{name}.json` | IIIF manifest or collection |
-| `/iiif/` | IIIF Image API |
-| `/miiify/` | Annotation server |
-| `/annosearch/{name}/search` | Content search |
+| `/pages/mybook.html` | IIIF viewer |
+| `/iiif/mybook.json` | IIIF manifest or collection |
+| `/miiify/mybook-page01/?page=0` | Annotations for a canvas |
+| `/annosearch/mybook/search?q=hello` | Content search |
 
-## Architecture
+## License
 
-- **nginx** — reverse proxy and static files
-- **IIPImage** — IIIF Image API server
-- **Miiify** — W3C Web Annotation server (Git-backed)
-- **AnnoSearch** — IIIF Content Search API
-- **Quickwit** — search engine
-- **Tamerlane** — IIIF viewer
-
-Generated content is written to `./output/` and volume-mounted into containers. Content persists across restarts and rebuilds.
-
-**Apple Silicon:** IIPImage, Miiify, and AnnoSearch run under AMD64 emulation. Tamerlane runs natively.
+MIT
 

@@ -102,7 +102,7 @@ provider:               # optional
 
 ## Services
 
-All services run on port 8080:
+All services are accessed through nginx (default port 8080, configurable via `NGINX_PORT`):
 
 | URL | Description |
 |---|---|

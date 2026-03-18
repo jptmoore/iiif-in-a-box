@@ -529,7 +529,7 @@ build_dashed_manifest() {
             local width=3000
             local height=2000
             if command -v identify &> /dev/null; then
-                local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
+                local dims=$(identify -format "%w %h\n" "$image_file" 2>/dev/null | head -1 2>/dev/null || echo "3000 2000")
                 width=$(echo "$dims" | awk '{print $1}')
                 height=$(echo "$dims" | awk '{print $2}')
             fi
@@ -720,7 +720,7 @@ generate_single_manifest() {
             local width=3000
             local height=2000
             if command -v identify &> /dev/null; then
-                local dims=$(identify -format "%w %h" "$image_file" 2>/dev/null || echo "3000 2000")
+                local dims=$(identify -format "%w %h\n" "$image_file" 2>/dev/null | head -1 2>/dev/null || echo "3000 2000")
                 width=$(echo "$dims" | awk '{print $1}')
                 height=$(echo "$dims" | awk '{print $2}')
             fi

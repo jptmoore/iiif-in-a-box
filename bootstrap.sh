@@ -876,7 +876,6 @@ setup_web_content() {
     cp templates/services.html "${OUTPUT_DIR}/web/"
     sed -i "s/__VERSION__/${IIIF_VERSION}/g" "${OUTPUT_DIR}/web/services.html"
     cp templates/maintenance.html "${OUTPUT_DIR}/web/"
-    cp VERSION "${OUTPUT_DIR}/web/"
 
     # Generate index.html that redirects to the project viewer page
     cat > "${OUTPUT_DIR}/web/index.html" << EOF

@@ -870,8 +870,24 @@ setup_web_content() {
     log_info "Setting up web content..."
     
     # Copy static template files to output
-    cp templates/index.html "${OUTPUT_DIR}/web/"
+    cp templates/services.html "${OUTPUT_DIR}/web/"
     cp templates/maintenance.html "${OUTPUT_DIR}/web/"
+
+    # Generate index.html that redirects to the project viewer page
+    cat > "${OUTPUT_DIR}/web/index.html" << EOF
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="refresh" content="0;url=/pages/${PROJECT_NAME}.html">
+  <title>Redirecting...</title>
+</head>
+<body>
+  <script>window.location.replace('/pages/${PROJECT_NAME}.html');</script>
+  <p><a href="/pages/${PROJECT_NAME}.html">Click here</a> if you are not redirected.</p>
+</body>
+</html>
+EOF
     
     # Copy assets directory
     if [ -d "assets" ]; then

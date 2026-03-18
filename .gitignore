@@ -1,6 +1,11 @@
 # Ignore macOS metadata
 .DS_Store
 
+# Ignore output directory (contains generated deployment files)
+output/
+
+
+
 # Ignore Cantaloupe JAR file
 cantaloupe-5.0.7.jar
 
@@ -21,12 +26,4 @@ node_modules/
 
 # Ignore local environment config
 .env
-
-# Ignore dynamically generated project files
-#web/iiif/*.json
-#web/pages/*.html
-#web/images/*
-
-# miiify db
-miiify/db/
 

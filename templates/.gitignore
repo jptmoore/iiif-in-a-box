@@ -1,0 +1,12 @@
+# This is the templates directory - only HTML templates should be here
+# Generated content goes to output/web/
+
+# Ignore generated HTML pages (keep only _template.html)
+pages/*.html
+!pages/_template.html
+
+# Ignore any accidentally created generated content
+*.json
+images/
+iiif/
+annotations/

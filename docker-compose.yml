@@ -1,0 +1,107 @@
+# IIIF-In-A-Box Docker Compose Configuration
+#
+# ARM64 (Apple Silicon) Notes:
+# - IIPImage, Miiify, AnnoSearch: Use AMD64 emulation (only AMD64 available)
+# - Tamerlane: ARM64 available on ghcr.io
+# - Docker Desktop uses Rosetta 2 for AMD64 emulation
+#
+services:
+  # IIPImage IIIF Image API server
+  iipimage:
+    container_name: iiif-iipimage
+    image: iipsrv/iipsrv:latest
+    platform: linux/amd64  # Required for Apple Silicon Macs (ARM64)
+    volumes:
+      - ${OUTPUT_DIR}/web/images:/images:ro
+    environment:
+      - FILESYSTEM_PREFIX=/images/
+      - MAX_IMAGE_CACHE_SIZE=1000
+      - JPEG_QUALITY=90
+      - MAX_CVT=5000
+    networks:
+      - iiif-network
+    expose:
+      - "9000"
+
+  # Quickwit search backend
+  quickwit:
+    container_name: iiif-quickwit
+    image: quickwit/quickwit
+    command: run
+    ports:
+      - "127.0.0.1:7280:7280"
+    volumes:
+      - ${OUTPUT_DIR}/annosearch/qwdata:/quickwit/qwdata
+    networks:
+      - iiif-network
+
+  # AnnoSearch API
+  annosearch:
+    container_name: iiif-annosearch
+    image: ghcr.io/nationalarchives/annosearch:latest
+    platform: linux/amd64  # Only AMD64 available on ghcr.io
+    command: ["serve"]  # ENTRYPOINT already set to: node ./dist/index.js
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - quickwit
+    environment:
+      ANNOSEARCH_PUBLIC_URL: ${ANNOSEARCH_PUBLIC_URL:-http://localhost:8080/annosearch}
+      QUICKWIT_BASE_URL: ${QUICKWIT_BASE_URL:-http://quickwit:7280/api/v1/}
+    extra_hosts:
+      localhost: host-gateway
+    networks:
+      - iiif-network
+
+  # Miiify v2 annotation server
+  miiify:
+    container_name: iiif-miiify
+    image: ghcr.io/nationalarchives/miiify:latest
+    platform: linux/amd64  # Only AMD64 available on ghcr.io
+    command:
+      - "/home/miiify/miiify-serve"
+      - "--repository"
+      - "./pack_store"
+      - "--port"
+      - "10000"
+      - "--base-url"
+      - "${MIIIFY_BASE_URL:-http://localhost:8080/miiify}"
+    ports:
+      - "127.0.0.1:10000:10000"
+    volumes:
+      - ${OUTPUT_DIR}/miiify/pack_store:/home/miiify/pack_store:rw
+    networks:
+      - iiif-network
+
+  # Tamerlane IIIF Viewer
+  # Note: ghcr.io/tamerlaneviewer/tamerlane currently only available as ARM64
+  # May require authentication: docker login ghcr.io
+  tamerlane:
+    container_name: iiif-tamerlane
+    image: ghcr.io/tamerlaneviewer/tamerlane:latest
+    pull_policy: if_not_present
+    ports:
+      - "127.0.0.1:3001:3001"
+    networks:
+      - iiif-network
+
+  # Nginx reverse proxy and static file server
+  nginx:
+    container_name: iiif-nginx
+    image: nginx:alpine
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - ./nginx/conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ${OUTPUT_DIR}/web:/var/www/html:ro
+    depends_on:
+      - iipimage
+      - miiify
+      - annosearch
+      - tamerlane
+    networks:
+      - iiif-network
+
+networks:
+  iiif-network:
+    external: true

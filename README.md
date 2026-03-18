@@ -1,121 +1,118 @@
 # IIIF-In-A-Box
 
-Transforms images and annotations into IIIF Collections with viewer, search, and annotation capabilities.
+Transform images and annotations into a complete IIIF service with viewer, search, and annotation capabilities.
 
-**Input:** Images + Annotation files + YAML configuration  
-**Output:** IIIF Collections with manifests, viewer, and search
+## Requirements
+
+- Docker
+- yq (YAML processor)
+
+```bash
+# Debian/Ubuntu (do NOT use apt — it installs an incompatible Python wrapper)
+sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+sudo chmod +x /usr/local/bin/yq
+
+# macOS
+brew install yq
+```
 
 ## Quick Start
 
 ```bash
-# 1. Configure your project in config/projects.yml
-# 2. Add images to web/images/
-# 3. Add annotation files to web/annotations/
-# 4. Build
-./bootstrap.sh build
+# 1. Create a project directory
+mkdir -p my-project/images
+
+cat > my-project/config.yml << 'EOF'
+project:
+  name: mybook
+  title: "My Book"
+  description: "A digitised book"
+EOF
+
+# 2. Add images using dash-separated names: {manifest}-{canvas}.ext
+cp page01.jpg my-project/images/mybook-page01.jpg
+cp page02.jpg my-project/images/mybook-page02.jpg
+
+# 3. Build and start
+./bootstrap.sh build --input-dir my-project
+
+# 4. Open http://localhost:8080/pages/mybook.html
 ```
 
-## Architecture
+## Image Naming
 
-- **📄 Annotation Preservation** - Files in `web/annotations/` are used exactly as provided
-- **📋 Manifest Generation** - Annotations processed into IIIF manifests in `web/iiif/`
-- **🔍 Integrated Search** - Full-text search across all annotations
-- **🐳 Project-specific Naming** - Docker containers use your project name
+Images use dash-separated names. The number of dashes determines the IIIF structure:
 
-## Content Structure
+| Pattern | Example | Output |
+|---|---|---|
+| `{manifest}-{canvas}` | `mybook-page01.jpg` | `mybook.json` (Manifest) |
+| `{collection}-{manifest}-{canvas}` | `domesday-lincoln-0001.tif` | `domesday.json` (Collection) → `lincoln.json` (Manifest) |
+| `{col}-{sub}-{manifest}-{canvas}` | `archive-vol1-ch1-page01.tif` | `archive.json` → `vol1.json` → `ch1.json` (Manifest) |
+
+The last segment is always the canvas name. All other segments become Collections, except the second-to-last which becomes the Manifest.
+
+**Use zero-padded numbers** to ensure correct canvas order: `page001`, `page002`, not `page1`, `page2`.
+
+## Canvas IDs
+
+Canvas IDs are taken directly from the `target` (or `target.source`) in your annotation files, with any fragment selector stripped. This guarantees the manifest canvas IDs always match what your annotations reference.
+
+If a canvas has no annotations, an ID is generated from the hostname and image name.
+
+## Annotations
+
+Annotation folders must match the full image name (without extension):
+
 ```
-config/projects.yml      ← Project configuration (exactly one project required)
-web/images/             ← Your image files (TIFF, JPG, PNG, etc.)
-web/annotations/        ← Your annotation files (placed here by you, preserved as-is)
-web/iiif/              ← Generated IIIF collections + manifests (auto-created)
+images/domesday-lincoln-0001.tif  →  annotations/domesday-lincoln-0001/
 ```
 
-**Important**: 
-- Place annotation files directly in `web/annotations/` - they will NOT be modified
-- The system generates IIIF manifests in `web/iiif/` from your source annotations
+Each folder can contain one or more annotation JSON files in W3C Web Annotation format.
+
+## config.yml
+
+```yaml
+project:
+  name: mybook          # determines viewer page filename (mybook.html)
+  title: "My Book"
+  description: "..."
+
+  metadata:             # optional, added to top-level manifest/collection
+    - label:
+        en: ["Creator"]
+      value:
+        none: ["Your Name"]
+
+provider:               # optional
+  id: "https://your-institution.org"
+  type: "Agent"
+  label:
+    en: ["Your Institution"]
+```
 
 ## Commands
 
 ```bash
-# Basic commands
-./bootstrap.sh build                           # Build your project (auto-detected from YAML)
-./bootstrap.sh build --force                   # Force complete rebuild (slow)
-./bootstrap.sh status                          # Show service status  
-./bootstrap.sh stop                            # Stop services
-./bootstrap.sh restart                         # Restart services
-./bootstrap.sh logs                            # View logs
-
-# Maintenance mode
-./bootstrap.sh maintenance                     # Enable maintenance mode (stops services, shows maintenance page)
-
-# Hostname configuration for deployment
-./bootstrap.sh build --hostname http://localhost:8080     # Local development (default)
-./bootstrap.sh build --hostname http://18.135.130.106:8080  # VM deployment
-./bootstrap.sh build --hostname https://your-domain.com     # Custom domain deployment
+./bootstrap.sh build --input-dir /path/to/project   # build and start
+./bootstrap.sh build --input-dir /path --hostname https://yourdomain.com
+./bootstrap.sh status     # service status
+./bootstrap.sh stop       # stop all services
+./bootstrap.sh restart    # restart services
+./bootstrap.sh logs       # view logs
 ```
-
-## Configuration
-
-YAML configuration in `config/projects.yml`:
-
-```yaml
-defaults:
-  base_url: "http://localhost:8080"
-  provider:
-    id: "https://your-institution.org"
-    label:
-      en: ["Your Institution"]
-
-projects:
-  your-project-name:                            # Change this to your project name
-    title: "My IIIF Collection"                 # Used exactly as collection title
-    description: "Description for the viewer"
-    metadata:                                   # Applied to both collection AND individual manifests
-      - label:
-          en: ["Creator"]
-        value:
-          none: ["Creator Name"]
-      - label:
-          en: ["Date"]
-        value:
-          none: ["2024"]
-      - label:
-          en: ["Subjects"]                     # Will be automatically populated with manifest names
-        value:
-          en: ["Topic 1", "Topic 2"]           # Your subjects + manifest names will be combined
-```
-
 
 ## Services
 
-- **🌐 nginx** (8080) - Main access point
-- **📄 Apache** - Viewer at `/viewer/`
-- **🖼️ IIPImage** - IIIF Image API at `/iiif/`
-- **🔍 AnnoSearch** - Search at `/annosearch/`
-- **📝 Miiify** - Annotation server at `/miiify/`
+All services are accessed through nginx (default port 8080, configurable via `NGINX_PORT`):
 
+| URL | Description |
+|---|---|
+| `/pages/mybook.html` | IIIF viewer |
+| `/iiif/mybook.json` | IIIF manifest or collection |
+| `/miiify/mybook-page01/?page=0` | Annotations for a canvas |
+| `/annosearch/mybook/search?q=hello` | Content search |
 
-## Requirements
+## License
 
-- **git, docker, docker-compose**
-- **At least one annotation file** in `web/annotations/` (build will fail if empty)
+MIT
 
-## Maintenance Mode
-
-Put your service into maintenance mode during updates or troubleshooting:
-
-```bash
-# Enable maintenance mode (stops all services, shows maintenance page)
-./bootstrap.sh maintenance
-
-# Bring services back online
-./bootstrap.sh build
-```
-
-Maintenance mode:
-- ✅ Stops all IIIF services gracefully
-- ✅ Shows users a professional maintenance page
-- ✅ Returns proper HTTP 503 status codes
-- ✅ Runs only minimal nginx (very lightweight)
-
-See [proxy/MAINTENANCE.md](proxy/MAINTENANCE.md) for details.

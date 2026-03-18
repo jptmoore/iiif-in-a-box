@@ -226,3 +226,29 @@ EOF
     log_success "Default configuration created at $config_file"
     log_warning "Please edit the configuration to add your project details"
 }
+
+# Print build summary and embed snippet after a successful build
+print_build_summary() {
+    local project_name="$1"
+    local manifest_name="$2"
+    local project_title="$3"
+    local hostname="$4"
+
+    log_info "============================================"
+    log_success "Build completed successfully!"
+    log_info "============================================"
+    log_info ""
+    log_info "Embed snippet — paste into your static site:"
+    echo ""
+    echo '<iframe'
+    echo "  src=\"${hostname}/viewer/?iiif-content=${hostname}/iiif/${manifest_name}.json\""
+    echo '  width="100%" height="600"'
+    echo '  style="border:none;"'
+    echo "  title=\"${project_title}\""
+    echo '  allowfullscreen>'
+    echo '</iframe>'
+    echo ""
+    log_info "An example of the viewer embedded in a static page:"
+    log_info "  ${hostname}/pages/${project_name}.html"
+    log_info "============================================"
+}

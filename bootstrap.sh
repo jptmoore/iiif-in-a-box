@@ -1040,17 +1040,8 @@ build_project() {
     
     # Store current project name for future builds
     echo "$PROJECT_NAME" > "$OUTPUT_DIR/.project"
-    
-    log_info "============================================"
-    log_success "Build completed successfully!"
-    log_info "============================================"
-    log_info "Services:"
-    log_info "  - Viewer:      ${HOSTNAME}/pages/${PROJECT_NAME}.html"
-    log_info "  - Manifests:   ${HOSTNAME}/iiif/"
-    log_info "  - Images:      ${HOSTNAME}/iiif/image/"
-    log_info "  - Annotations: ${HOSTNAME}/miiify/"
-    log_info "  - Search:      ${HOSTNAME}/annosearch/${MANIFEST_NAME}/search"
-    log_info "============================================"
+
+    print_build_summary "$PROJECT_NAME" "$MANIFEST_NAME" "$PROJECT_TITLE" "$HOSTNAME"
 }
 
 # Function to prepare Tamerlane image (pull from ghcr or use local)

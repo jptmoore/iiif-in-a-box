@@ -432,7 +432,7 @@ ITEM_EOF
     local metadata_block=""
     local provider_block=""
     
-    # Add search service, metadata, and provider only to top-level (depth 1)
+    # Add search service only to top-level (depth 1)
     if [ "$current_depth" -eq 1 ]; then
         service_block=",
   \"service\": [
@@ -447,18 +447,17 @@ ITEM_EOF
       ]
     }
   ]"
-        
-        # Add metadata if present
-        if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
-            metadata_block=",
+    fi
+
+    # Always add metadata and provider at every level
+    if [ -n "$metadata_json" ] && [ "$metadata_json" != "null" ]; then
+        metadata_block=",
   \"metadata\": $metadata_json"
-        fi
-        
-        # Add provider if present
-        if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
-            provider_block=",
+    fi
+    
+    if [ -n "$provider_json" ] && [ "$provider_json" != "null" ]; then
+        provider_block=",
   \"provider\": $provider_json"
-        fi
     fi
     
     cat > "$collection_path" << EOF

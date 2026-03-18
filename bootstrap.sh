@@ -89,30 +89,6 @@ Examples:
   # Clean everything (stop services, remove output)
   $0 clean
 
-Input Directory Structure:
-  <input-dir>/
-  ├── config.yml          # Project configuration (required)
-  ├── images/             # Source images (optional)
-  │   ├── image1.jpg
-  │   └── image2.jpg
-  └── annotations/        # W3C Web Annotations (optional)
-      ├── canvas-1/
-      │   ├── annotation-1.json
-      │   └── annotation-2.json
-      └── canvas-2/
-          └── annotation-3.json
-
-Output Directory Structure:
-  <output-dir>/
-  ├── miiify/
-  │   ├── git_store/      # Miiify git storage
-  │   └── pack_store/     # Miiify pack storage (served)
-  ├── web/
-  │   ├── iiif/           # Generated IIIF manifests
-  │   ├── pages/          # Generated HTML pages
-  │   └── images/         # Processed images
-  └── logs/               # Service logs
-
 EOF
 }
 

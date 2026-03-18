@@ -8,8 +8,9 @@ Transform images and annotations into a complete IIIF service with viewer, searc
 - yq (YAML processor)
 
 ```bash
-# Debian/Ubuntu
-sudo apt-get install -y yq
+# Debian/Ubuntu (do NOT use apt — it installs an incompatible Python wrapper)
+sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+sudo chmod +x /usr/local/bin/yq
 
 # macOS
 brew install yq

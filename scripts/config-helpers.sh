@@ -2,11 +2,20 @@
 # Configuration Helper Functions
 # This script contains functions for reading and validating configuration
 
-# Function to check if yq is installed
+# Function to check if yq (mikefarah/yq v4+) is installed
 check_yq_dependency() {
     if ! command -v yq &> /dev/null; then
         log_error "yq is not installed but is required for YAML configuration parsing"
         log_error "Install yq: https://github.com/mikefarah/yq"
+        log_error "  macOS: brew install yq"
+        log_error "  Linux: sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq"
+        return 1
+    fi
+    # Verify it's mikefarah/yq (not the Python kislyuk/yq which has incompatible syntax)
+    if ! yq --version 2>&1 | grep -q "mikefarah\|github.com/mikefarah"; then
+        log_error "Wrong version of yq detected ($(yq --version 2>&1 | head -1))"
+        log_error "This project requires mikefarah/yq v4+, not the Python yq wrapper"
+        log_error "Install the correct yq:"
         log_error "  macOS: brew install yq"
         log_error "  Linux: sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 && sudo chmod +x /usr/local/bin/yq"
         return 1

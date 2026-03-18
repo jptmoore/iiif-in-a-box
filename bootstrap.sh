@@ -11,7 +11,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Logging functions
-log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+log_info() { [[ "${VERBOSE:-false}" == "true" ]] && echo -e "${BLUE}[INFO]${NC} $1" || true; }
+log_step() { echo -e "  ${BLUE}→${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 log_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
@@ -19,6 +20,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 # Default configuration
 DEFAULT_OUTPUT_DIR="./output"
 DEFAULT_HOSTNAME="http://localhost:8080"
+VERBOSE=false
 DOCKER_COMPOSE_CMD="docker compose"
 
 # Version
@@ -50,6 +52,7 @@ Options:
                                         http://localhost:8080 (port 8080)
                                (default: http://localhost:8080)
   --pull                       Force pull latest Docker images before starting
+  --verbose, -v                Show detailed build output (default: minimal progress)
   --help, -h                   Show this help message
 
 Commands:
@@ -119,6 +122,7 @@ parse_arguments() {
     OUTPUT_DIR="$DEFAULT_OUTPUT_DIR"
     HOSTNAME="$DEFAULT_HOSTNAME"
     FORCE_PULL=false
+    VERBOSE=false
     COMMAND=""
     
     while [[ $# -gt 0 ]]; do
@@ -137,6 +141,10 @@ parse_arguments() {
                 ;;
             --pull)
                 FORCE_PULL=true
+                shift
+                ;;
+            --verbose|-v)
+                VERBOSE=true
                 shift
                 ;;
             --help|-h)
@@ -917,28 +925,29 @@ create_docker_network() {
 
 # Function to build project
 build_project() {
-    log_info "============================================"
-    log_info "IIIF-in-a-Box v${IIIF_VERSION} Build Process"
-    log_info "============================================"
-    log_info "Input Directory:  $INPUT_DIR"
-    log_info "Output Directory: $OUTPUT_DIR"
-    log_info "Hostname:         $HOSTNAME"
-    log_info "============================================"
+    echo ""
+    echo -e "${BLUE}IIIF-in-a-Box v${IIIF_VERSION}${NC}"
+    echo -e "  Input:    $INPUT_DIR"
+    echo -e "  Output:   $OUTPUT_DIR"
+    echo -e "  Hostname: $HOSTNAME"
+    echo ""
     
     # Step 0: Stop any running services to avoid lock file issues
-    log_info "Stopping any running services (including maintenance mode)..."
+    log_step "Stopping any running services..."
     stop_services
     
     # Also stop maintenance mode if it's running
     docker compose -f nginx/docker-compose.maintenance.yml down 2>/dev/null || true
     
     # Step 1: Validate input directory
+    log_step "Validating input directory..."
     if ! validate_input_directory "$INPUT_DIR"; then
         log_error "Input directory validation failed"
         exit 1
     fi
     
     # Step 2: Read configuration
+    log_step "Reading configuration..."
     if ! read_project_config "$INPUT_DIR"; then
         log_error "Failed to read project configuration"
         exit 1
@@ -950,41 +959,40 @@ build_project() {
         exit 1
     fi
     
-    log_info "============================================"
-    log_info "Project: $PROJECT_NAME"
-    log_info "Title: $PROJECT_TITLE"
-    log_info "============================================"
+    log_info "Project: $PROJECT_NAME | Title: $PROJECT_TITLE"
     
     # Step 3: Validate annotation naming
+    log_step "Validating annotations..."
     if ! validate_annotation_naming "$INPUT_DIR"; then
         log_error "Annotation naming validation failed"
         exit 1
     fi
     
     # Step 4: Clean and create output directory structure
-    log_info "Cleaning output directory..."
+    log_step "Preparing output directory..."
     # Remove all contents to prevent any old data contamination
     rm -rf "$OUTPUT_DIR"/* 2>/dev/null || true
-    
-    log_info "Creating output directory structure..."
     mkdir -p "$OUTPUT_DIR"/{miiify/{git_store,pack_store},web/{iiif,pages,images},annosearch/qwdata,logs}
     
     # Store current project name for reference
     echo "$PROJECT_NAME" > "$OUTPUT_DIR/.project"
     
     # Step 5: Process images
+    log_step "Processing images..."
     if ! process_images "$INPUT_DIR" "$OUTPUT_DIR" "$PROJECT_NAME"; then
         log_error "Image processing failed"
         exit 1
     fi
 
     # Step 6: Run Miiify workflow (import → compile)
+    log_step "Running Miiify workflow..."
     if ! miiify_full_workflow "$INPUT_DIR" "$OUTPUT_DIR" "$HOSTNAME"; then
         log_error "Miiify workflow failed"
         exit 1
     fi
     
     # Step 7: Generate IIIF manifests
+    log_step "Generating IIIF manifests..."
     if ! generate_manifest "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME" "$INPUT_DIR"; then
         log_error "Manifest generation failed"
         exit 1
@@ -1007,35 +1015,41 @@ build_project() {
         fi
     fi
     
-    # Page uses project name, but loads the derived manifest
+    # Step 8: Generate HTML viewer page
+    log_step "Generating viewer page..."
     if ! generate_viewer_page "$PROJECT_NAME" "$VIEWER_MANIFEST" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME" "${MANIFEST_TYPE:-Collection}"; then
         log_error "Page generation failed"
         exit 1
     fi
     
     # Step 9: Setup web content
+    log_step "Setting up web content..."
     setup_web_content
     
     # Step 10: Create Docker network
     create_docker_network
     
     # Step 10.5: Prepare Tamerlane image
+    log_step "Preparing Tamerlane image..."
     if ! prepare_tamerlane_image; then
         log_error "Failed to prepare Tamerlane image"
         exit 1
     fi
     
     # Step 11: Start all services
+    log_step "Starting services..."
     if ! start_all_services; then
         log_error "Failed to start all services"
         exit 1
     fi
     
     # Step 12: Wait for AnnoSearch to be ready
+    log_step "Waiting for AnnoSearch..."
     if ! wait_for_annosearch; then
         log_warning "AnnoSearch not ready, skipping search indexing"
     else
         # Step 13: Create search index and load data
+        log_step "Indexing search data..."
         # Use the derived manifest name for indexing, not the project name
         if create_annosearch_index "$MANIFEST_NAME"; then
             load_annosearch_data "$MANIFEST_NAME" "$HOSTNAME" || log_warning "Failed to load data into AnnoSearch"

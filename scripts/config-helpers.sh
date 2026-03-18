@@ -243,11 +243,10 @@ print_build_summary() {
     local project_title="$3"
     local hostname="$4"
 
-    log_info "============================================"
+    echo ""
     log_success "Build completed successfully! (iiif-in-a-box v${IIIF_VERSION})"
-    log_info "============================================"
-    log_info ""
-    log_info "Embed snippet — paste into your static site:"
+    echo ""
+    echo "Embed snippet — paste into your static site:"
     echo ""
     echo '<iframe'
     echo "  src=\"${hostname}/viewer/?iiif-content=${hostname}/iiif/${manifest_name}.json\""
@@ -257,10 +256,7 @@ print_build_summary() {
     echo '  allowfullscreen>'
     echo '</iframe>'
     echo ""
-    log_info "Example page (viewer embedded in a static page):"
-    log_info "  ${hostname}/pages/${project_name}.html"
-    log_info ""
-    log_info "Viewer (standalone):"
-    log_info "  ${hostname}/viewer/?iiif-content=${hostname}/iiif/${manifest_name}.json"
-    log_info "============================================"
+    echo "Example page:  ${hostname}/pages/${project_name}.html"
+    echo "Viewer:        ${hostname}/viewer/?iiif-content=${hostname}/iiif/${manifest_name}.json"
+    echo ""
 }

@@ -21,6 +21,10 @@ DEFAULT_OUTPUT_DIR="./output"
 DEFAULT_HOSTNAME="http://localhost:8080"
 DOCKER_COMPOSE_CMD="docker compose"
 
+# Version
+SCRIPT_DIR_EARLY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IIIF_VERSION=$(cat "${SCRIPT_DIR_EARLY}/VERSION" 2>/dev/null || echo "unknown")
+
 # Source helper scripts
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/scripts/config-helpers.sh"
@@ -870,7 +874,9 @@ setup_web_content() {
     
     # Copy static template files to output
     cp templates/services.html "${OUTPUT_DIR}/web/"
+    sed -i "s/__VERSION__/${IIIF_VERSION}/g" "${OUTPUT_DIR}/web/services.html"
     cp templates/maintenance.html "${OUTPUT_DIR}/web/"
+    cp VERSION "${OUTPUT_DIR}/web/"
 
     # Generate index.html that redirects to the project viewer page
     cat > "${OUTPUT_DIR}/web/index.html" << EOF
@@ -913,7 +919,7 @@ create_docker_network() {
 # Function to build project
 build_project() {
     log_info "============================================"
-    log_info "IIIF-in-a-Box Build Process"
+    log_info "IIIF-in-a-Box v${IIIF_VERSION} Build Process"
     log_info "============================================"
     log_info "Input Directory:  $INPUT_DIR"
     log_info "Output Directory: $OUTPUT_DIR"
@@ -1037,8 +1043,9 @@ build_project() {
         fi
     fi
     
-    # Store current project name for future builds
+    # Store current project name and build version for future reference
     echo "$PROJECT_NAME" > "$OUTPUT_DIR/.project"
+    echo "$IIIF_VERSION" > "$OUTPUT_DIR/.version"
 
     print_build_summary "$PROJECT_NAME" "$MANIFEST_NAME" "$PROJECT_TITLE" "$HOSTNAME"
 }

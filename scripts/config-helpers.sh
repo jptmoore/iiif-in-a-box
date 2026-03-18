@@ -235,7 +235,7 @@ print_build_summary() {
     local hostname="$4"
 
     log_info "============================================"
-    log_success "Build completed successfully!"
+    log_success "Build completed successfully! (iiif-in-a-box v${IIIF_VERSION})"
     log_info "============================================"
     log_info ""
     log_info "Embed snippet — paste into your static site:"

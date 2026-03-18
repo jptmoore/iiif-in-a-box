@@ -257,7 +257,10 @@ print_build_summary() {
     echo '  allowfullscreen>'
     echo '</iframe>'
     echo ""
-    log_info "An example of the viewer embedded in a static page:"
+    log_info "Example page (viewer embedded in a static page):"
     log_info "  ${hostname}/pages/${project_name}.html"
+    log_info ""
+    log_info "Viewer (standalone):"
+    log_info "  ${hostname}/viewer/?iiif-content=${hostname}/iiif/${manifest_name}.json"
     log_info "============================================"
 }

@@ -562,7 +562,7 @@ build_dashed_manifest() {
                 "service": [
                   {
                     "id": "${hostname}/iiif/${image_basename}",
-                    "type": "ImageService2",
+                    "type": "ImageService3",
                     "profile": "level1"
                   }
                 ]
@@ -753,7 +753,7 @@ generate_single_manifest() {
                 "service": [
                   {
                     "id": "${hostname}/iiif/${image_basename}",
-                    "type": "ImageService2",
+                    "type": "ImageService3",
                     "profile": "level1"
                   }
                 ]

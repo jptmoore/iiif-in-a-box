@@ -21,6 +21,8 @@ brew install yq
 ```bash
 # 1. Create a project directory
 mkdir -p my-project/images
+mkdir -p my-project/annotations/mybook-page01
+mkdir -p my-project/annotations/mybook-page02
 
 cat > my-project/config.yml << 'EOF'
 project:
@@ -33,10 +35,13 @@ EOF
 cp page01.jpg my-project/images/mybook-page01.jpg
 cp page02.jpg my-project/images/mybook-page02.jpg
 
-# 3. Build and start
+# 3. Add at least one annotation JSON (W3C Web Annotation format) per image
+# my-project/annotations/mybook-page01/ must contain a .json file
+
+# 4. Build and start
 ./bootstrap.sh build --input-dir my-project
 
-# 4. Open http://localhost:8080/pages/mybook.html
+# 5. Open http://localhost:8080/pages/mybook.html
 ```
 
 ## Image Naming
@@ -95,15 +100,16 @@ provider:               # optional
 ```bash
 ./bootstrap.sh build --input-dir /path/to/project   # build and start
 ./bootstrap.sh build --input-dir /path --hostname https://yourdomain.com
-./bootstrap.sh status     # service status
-./bootstrap.sh stop       # stop all services
-./bootstrap.sh restart    # restart services
-./bootstrap.sh logs       # view logs
+./bootstrap.sh status       # service status
+./bootstrap.sh stop         # stop all services
+./bootstrap.sh restart      # restart services
+./bootstrap.sh logs         # view logs
+./bootstrap.sh maintenance  # enable maintenance mode (shows maintenance page)
 ```
 
 ## Services
 
-All services are accessed through nginx (default port 8080, configurable via `NGINX_PORT`):
+All services are accessed through nginx. The port defaults to 8080 locally and is derived from the `--hostname` argument (e.g. `--hostname https://example.com` uses port 80):
 
 | URL | Description |
 |---|---|

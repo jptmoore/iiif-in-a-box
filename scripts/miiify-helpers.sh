@@ -119,28 +119,10 @@ miiify_compile_pack() {
     return 0
 }
 
-# Legacy functions removed - services are now managed via main docker-compose.yml
-# Use start_all_services() and stop_services() in bootstrap.sh instead
-
-# Function to get annotation count from pack store
-miiify_get_annotation_count() {
-    local output_dir="$1"
-    
-    # This is a simple check - could be enhanced
-    if [ -d "${output_dir}/miiify/pack_store" ]; then
-        # Count container directories (rough estimate)
-        local count=$(find "${output_dir}/miiify/pack_store" -type d -mindepth 1 -maxdepth 1 2>/dev/null | wc -l)
-        echo "$count containers"
-    else
-        echo "0 containers"
-    fi
-}
-
 # Function to run full Miiify workflow (import → compile)
 miiify_full_workflow() {
     local input_dir="$1"
     local output_dir="$2"
-    local base_url="$3"
     
     log_info "Running full Miiify workflow..."
     

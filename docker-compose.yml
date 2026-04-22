@@ -18,6 +18,7 @@ services:
       - MAX_IMAGE_CACHE_SIZE=1000
       - JPEG_QUALITY=90
       - MAX_CVT=5000
+      - ALLOW_UPSCALING=0  # prevent requests for images larger than originals
     networks:
       - iiif-network
     expose:
@@ -48,6 +49,7 @@ services:
     environment:
       ANNOSEARCH_PUBLIC_URL: ${ANNOSEARCH_PUBLIC_URL:-http://localhost:8080/annosearch}
       QUICKWIT_BASE_URL: ${QUICKWIT_BASE_URL:-http://quickwit:7280/api/v1/}
+      NODE_OPTIONS: "--no-warnings"  # suppress MaxListenersExceededWarning from concurrent Quickwit connections
     extra_hosts:
       localhost: host-gateway
     networks:

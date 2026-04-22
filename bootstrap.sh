@@ -23,12 +23,9 @@ DEFAULT_HOSTNAME="http://localhost:8080"
 VERBOSE=false
 DOCKER_COMPOSE_CMD="docker compose"
 
-# Version
-SCRIPT_DIR_EARLY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-IIIF_VERSION=$(cat "${SCRIPT_DIR_EARLY}/VERSION" 2>/dev/null || echo "unknown")
-
-# Source helper scripts
+# Version and script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+IIIF_VERSION=$(cat "${SCRIPT_DIR}/VERSION" 2>/dev/null || echo "unknown")
 source "${SCRIPT_DIR}/scripts/config-helpers.sh"
 source "${SCRIPT_DIR}/scripts/miiify-helpers.sh"
 source "${SCRIPT_DIR}/scripts/image-helpers.sh"
@@ -331,7 +328,7 @@ generate_collection_from_dashed_files() {
     
     # Set MANIFEST_NAME and VIEWER_MANIFEST for later use (top-level collection)
     export MANIFEST_NAME="$collection_name"
-    export VIEWER_MANIFEST="${collection_name}.json"
+    export VIEWER_MANIFEST="$collection_name"
     export MANIFEST_TYPE="Collection"
 }
 
@@ -962,7 +959,7 @@ build_project() {
 
     # Step 6: Run Miiify workflow (import → compile)
     log_step "Running Miiify workflow..."
-    if ! miiify_full_workflow "$INPUT_DIR" "$OUTPUT_DIR" "$HOSTNAME"; then
+    if ! miiify_full_workflow "$INPUT_DIR" "$OUTPUT_DIR"; then
         log_error "Miiify workflow failed"
         exit 1
     fi
@@ -972,23 +969,6 @@ build_project() {
     if ! generate_manifest "$PROJECT_NAME" "$PROJECT_TITLE" "$PROJECT_DESCRIPTION" "$HOSTNAME" "$INPUT_DIR"; then
         log_error "Manifest generation failed"
         exit 1
-    fi
-    
-    # Step 8: Generate HTML viewer pages
-    # Derive manifest/collection name from directory structure
-    MANIFEST_NAME="$PROJECT_NAME"
-    VIEWER_MANIFEST="$PROJECT_NAME"
-    
-    if [ -d "${OUTPUT_DIR}/web/images" ]; then
-        # Check if there are subdirectories (which means we generated a collection)
-        if find "${OUTPUT_DIR}/web/images" -mindepth 2 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.tif" -o -iname "*.tiff" -o -iname "*.png" \) | head -1 | grep -q .; then
-            # Find first subdirectory name for the collection/manifest name
-            first_subdir=$(find "${OUTPUT_DIR}/web/images" -mindepth 1 -maxdepth 1 -type d | sort | head -1)
-            if [ -n "$first_subdir" ]; then
-                MANIFEST_NAME=$(basename "$first_subdir")
-                VIEWER_MANIFEST=$(basename "$first_subdir")
-            fi
-        fi
     fi
     
     # Step 8: Generate HTML viewer page

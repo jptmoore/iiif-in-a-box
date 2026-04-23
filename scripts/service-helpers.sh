@@ -77,9 +77,10 @@ start_all_services() {
         log_info "Force pulling latest Docker images..."
     else
         # Pull latest tags on every build for consistency across VMs.
+        # Progress is shown so first-time pulls (~1GB) don't look like a hang.
         # Falls back to cached images if offline or pull fails.
-        log_info "Pulling latest Docker images..."
-        $DOCKER_COMPOSE_CMD pull --quiet 2>/dev/null || \
+        log_info "Pulling latest Docker images (first run downloads ~1GB)..."
+        $DOCKER_COMPOSE_CMD pull || \
             log_warning "Could not pull latest images (continuing with cached images)"
     fi
     $DOCKER_COMPOSE_CMD up $compose_up_args

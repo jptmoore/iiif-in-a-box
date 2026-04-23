@@ -2,6 +2,8 @@
 
 Transform images and annotations into a complete IIIF service with viewer, search, and annotation capabilities.
 
+A single bash script — [bootstrap.sh](bootstrap.sh) — wires together five existing open-source containers ([IIPImage](https://iipimage.sourceforge.io/), [Miiify](https://github.com/nationalarchives/miiify), [AnnoSearch](https://github.com/nationalarchives/annosearch), [Quickwit](https://quickwit.io/), [Tamerlane](https://github.com/tamerlaneviewer/tamerlane)) behind nginx. There is no custom server, no database to administer, and no application code to deploy. The script reads your project, generates IIIF manifests and viewer pages, and runs `docker compose up`. That's it.
+
 ## Requirements
 
 - Docker

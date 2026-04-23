@@ -1,18 +1,12 @@
 # IIIF-In-A-Box Docker Compose Configuration
 #
-# ARM64 (Apple Silicon) Notes:
-# - IIPImage, Miiify, AnnoSearch: Use AMD64 emulation (only AMD64 available)
-# - Tamerlane: ARM64 available on ghcr.io
-# - Docker Desktop uses Rosetta 2 for AMD64 emulation
-#
-# Production deployment notes:
-# - For reproducible deploys, pin image tags to specific versions or digests
-#   (e.g. iipsrv/iipsrv:1.3 or iipsrv/iipsrv@sha256:...).
-# - Backend host port bindings (127.0.0.1:7280, :3000, :10000, :3001) are
-#   debug aids only. Remove the `ports:` block on those services in production
-#   — nginx reaches them on the iiif-network.
-# - All services apply no-new-privileges and have a restart policy so the
-#   stack recovers from individual container crashes.
+# This configuration defines the services for a complete IIIF server stack, including:
+# - iipimage: IIIF Image API server
+# - quickwit: Search backend for annotations
+# - annosearch: API for searching annotations
+# - miiify: IIIF Annotation server
+# - tamerlane: IIIF viewer
+# - nginx: Reverse proxy and static file server
 
 x-common: &common
   restart: unless-stopped

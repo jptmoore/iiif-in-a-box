@@ -143,6 +143,8 @@ All services are accessed through nginx. The port defaults to 8080 locally and i
 | `/miiify/mybook-page01/?page=0` | Annotations for a canvas |
 | `/annosearch/mybook/search?q=hello` | Content search |
 
+Search results may take a minute or two to appear after a build completes. AnnoSearch hands annotations to Quickwit, which indexes them in the background — the viewer and manifests are available immediately, but `/annosearch/.../search` will return empty results until the first commit lands.
+
 ## License
 
 MIT

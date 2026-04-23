@@ -21,55 +21,16 @@ brew install yq
 ## Quick Start
 
 ```bash
-# 1. Create a project directory
-mkdir -p my-project/images
-mkdir -p my-project/annotations/mybook-page01
-mkdir -p my-project/annotations/mybook-page02
+# 1. Clone the example project (a small medieval manuscript with annotations)
+git clone https://github.com/jptmoore/example-iiif-in-a-box-project.git
 
-cat > my-project/config.yml << 'EOF'
-project:
-  name: mybook
-  title: "My Book"
-  description: "A digitised book"
-EOF
+# 2. Build and start
+./bootstrap.sh build --input-dir example-iiif-in-a-box-project
 
-# 2. Add images using dash-separated names: {manifest}-{canvas}.ext
-cp page01.jpg my-project/images/mybook-page01.jpg
-cp page02.jpg my-project/images/mybook-page02.jpg
-
-# 3. Add a minimal W3C Web Annotation for each canvas
-#    (miiify injects the annotation id at serve time, so you don't set it here)
-cat > my-project/annotations/mybook-page01/note.json << 'EOF'
-{
-  "type": "Annotation",
-  "motivation": "commenting",
-  "body": {
-    "type": "TextualBody",
-    "value": "First page",
-    "purpose": "commenting"
-  },
-  "target": "http://localhost:8080/canvas/mybook-page01"
-}
-EOF
-
-cat > my-project/annotations/mybook-page02/note.json << 'EOF'
-{
-  "type": "Annotation",
-  "motivation": "commenting",
-  "body": {
-    "type": "TextualBody",
-    "value": "Second page",
-    "purpose": "commenting"
-  },
-  "target": "http://localhost:8080/canvas/mybook-page02"
-}
-EOF
-
-# 4. Build and start
-./bootstrap.sh build --input-dir my-project
-
-# 5. Open http://localhost:8080/pages/mybook.html
+# 3. Open http://localhost:8080/pages/book.html
 ```
+
+To build your own project, copy the layout of [example-iiif-in-a-box-project](https://github.com/jptmoore/example-iiif-in-a-box-project): a `config.yml`, an `images/` folder, and one annotation folder per image.
 
 ## Image Naming
 
@@ -77,7 +38,7 @@ Images use dash-separated names. The number of dashes determines the IIIF struct
 
 | Pattern | Example | Output |
 |---|---|---|
-| `{manifest}-{canvas}` | `mybook-page01.jpg` | `mybook.json` (Manifest) |
+| `{manifest}-{canvas}` | `book-page01.jpg` | `book.json` (Manifest) |
 | `{collection}-{manifest}-{canvas}` | `domesday-lincoln-0001.tif` | `domesday.json` (Collection) → `lincoln.json` (Manifest) |
 | `{col}-{sub}-{manifest}-{canvas}` | `archive-vol1-ch1-page01.tif` | `archive.json` → `vol1.json` → `ch1.json` (Manifest) |
 
@@ -105,7 +66,7 @@ Each folder can contain one or more annotation JSON files in W3C Web Annotation 
 
 ```yaml
 project:
-  name: mybook          # determines viewer page filename (mybook.html)
+  name: book            # determines viewer page filename (book.html)
   title: "My Book"
   description: "..."
 
@@ -140,10 +101,10 @@ All services are accessed through nginx. The port defaults to 8080 locally and i
 
 | URL | Description |
 |---|---|
-| `/pages/mybook.html` | IIIF viewer |
-| `/iiif/mybook.json` | IIIF manifest or collection |
-| `/miiify/mybook-page01/?page=0` | Annotations for a canvas |
-| `/annosearch/mybook/search?q=hello` | Content search |
+| `/pages/book.html` | IIIF viewer |
+| `/iiif/book.json` | IIIF manifest or collection |
+| `/miiify/book-page01/?page=0` | Annotations for a canvas |
+| `/annosearch/book/search?q=hello` | Content search |
 
 Search results may take a minute or two to appear after a build completes. AnnoSearch hands annotations to Quickwit, which indexes them in the background — the viewer and manifests are available immediately, but `/annosearch/.../search` will return empty results until the first commit lands.
 

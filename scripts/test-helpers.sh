@@ -163,6 +163,25 @@ run_smoke_tests() {
     _assert "Referrer-Policy header present" \
         grep -qi 'Referrer-Policy:' <<< "$headers" || ((failures++))
 
+    # --- CORS: IIIF spec requires Access-Control-Allow-Origin: * on manifests,
+    #     image responses, and annotations so external viewers work.
+    _assert "CORS header present on manifest" \
+        grep -qi 'Access-Control-Allow-Origin:[[:space:]]*\*' <<< "$headers" || ((failures++))
+    if [ -n "$first_image" ]; then
+        local image_headers
+        image_headers=$(docker exec iiif-nginx wget -S --spider \
+            "http://nginx/iiif/${image_basename}/info.json" 2>&1)
+        _assert "CORS header present on image info.json" \
+            grep -qi 'Access-Control-Allow-Origin:[[:space:]]*\*' <<< "$image_headers" || ((failures++))
+    fi
+    if [ -n "$anno_name" ]; then
+        local miiify_headers
+        miiify_headers=$(docker exec iiif-nginx wget -S --spider \
+            "http://nginx/miiify/${anno_name}/?page=0" 2>&1)
+        _assert "CORS header present on miiify annotations" \
+            grep -qi 'Access-Control-Allow-Origin:[[:space:]]*\*' <<< "$miiify_headers" || ((failures++))
+    fi
+
     # --- Viewer page ---
     body=$(_nginx_get "http://nginx/pages/${manifest_name}.html")
     _assert "viewer page /pages/${manifest_name}.html reachable" \

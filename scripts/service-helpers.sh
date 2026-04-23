@@ -75,6 +75,12 @@ start_all_services() {
     if [ "$FORCE_PULL" = true ]; then
         compose_up_args="$compose_up_args --pull always"
         log_info "Force pulling latest Docker images..."
+    else
+        # Pull latest tags on every build for consistency across VMs.
+        # Falls back to cached images if offline or pull fails.
+        log_info "Pulling latest Docker images..."
+        $DOCKER_COMPOSE_CMD pull --quiet 2>/dev/null || \
+            log_warning "Could not pull latest images (continuing with cached images)"
     fi
     $DOCKER_COMPOSE_CMD up $compose_up_args
 

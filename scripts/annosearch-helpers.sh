@@ -70,23 +70,51 @@ load_annosearch_data() {
     fi
 }
 
-# Function to wait for annosearch service to be ready
-wait_for_annosearch() {
-    log_info "Waiting for AnnoSearch service to be ready..."
-    
-    local max_attempts=30
+# Generic readiness probe: GET an HTTP URL from inside the iiif-nginx container.
+# Avoids the need for each upstream image to ship its own probe tool
+# (miiify is FROM scratch, quickwit is debian-slim without wget, etc.).
+# $1: human-readable service name
+# $2: URL to probe (e.g. http://miiify:10000/)
+# $3: max_attempts (optional, default 15)
+wait_for_http() {
+    local name="$1"
+    local url="$2"
+    local max_attempts="${3:-15}"
     local attempt=0
-    
+
+    log_info "Verifying ${name} HTTP endpoint..."
+
     while [ $attempt -lt $max_attempts ]; do
-        if docker exec iiif-annosearch test -f /app/package.json 2>/dev/null; then
-            log_success "AnnoSearch service is ready"
+        if docker exec iiif-nginx wget -q -O - "$url" >/dev/null 2>&1; then
+            log_success "${name} is ready"
             return 0
         fi
-        
         attempt=$((attempt + 1))
         sleep 1
     done
-    
-    log_error "AnnoSearch service failed to become ready"
+
+    log_error "${name} HTTP endpoint did not respond within ${max_attempts}s ($url)"
     return 1
+}
+
+# Function to wait for annosearch service to be ready.
+wait_for_annosearch() {
+    wait_for_http "AnnoSearch" "http://annosearch:3000/"
+}
+
+# Function to wait for miiify service to be ready.
+# Miiify ships FROM scratch with no probe tools, so it has no in-container
+# healthcheck. We probe it externally from the nginx container.
+wait_for_miiify() {
+    wait_for_http "Miiify" "http://miiify:10000/"
+}
+
+# Function to wait for tamerlane viewer to be ready.
+wait_for_tamerlane() {
+    wait_for_http "Tamerlane" "http://tamerlane:3001/"
+}
+
+# Function to wait for quickwit search backend to be ready.
+wait_for_quickwit() {
+    wait_for_http "Quickwit" "http://quickwit:7280/health/livez"
 }

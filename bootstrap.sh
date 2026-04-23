@@ -1086,15 +1086,33 @@ start_all_services() {
     
     if [ $? -ne 0 ]; then
         log_error "Failed to start services"
+        log_info "Run '$0 logs' to investigate"
         return 1
     fi
     
-    log_success "All services started"
-    
-    # Wait for services to be ready
-    log_info "Waiting for services to be ready..."
-    sleep 8
-    
+    log_success "All containers started"
+
+    # The probes below run via `docker exec iiif-nginx wget ...`, so verify
+    # the prober itself is up first — otherwise a broken nginx surfaces as
+    # "Quickwit not ready" instead of the real cause.
+    if [ "$(docker inspect iiif-nginx --format '{{.State.Running}}' 2>/dev/null)" != "true" ]; then
+        log_error "iiif-nginx container is not running — cannot probe other services"
+        log_info "Run '$0 logs' to investigate"
+        return 1
+    fi
+
+    # Probe every HTTP-speaking service from inside the iiif-nginx container.
+    # This works regardless of host port publishing and uses the same network
+    # path that production traffic takes — a passing probe means real readiness.
+    wait_for_quickwit   || return 1
+    wait_for_annosearch || return 1
+    wait_for_miiify     || return 1
+    wait_for_tamerlane  || return 1
+    # iipimage is FastCGI, not HTTP, so it has no direct probe. It is verified
+    # transitively when the AnnoSearch indexing step below fetches manifests
+    # through nginx — those manifests reference image URLs served by iipimage.
+    log_success "All services are ready"
+
     # Verify Miiify base-url configuration
     log_info "Verifying Miiify configuration..."
     local miiify_cmd=$(docker inspect iiif-miiify --format='{{.Config.Cmd}}' 2>/dev/null || echo "")

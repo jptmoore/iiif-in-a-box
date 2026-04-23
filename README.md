@@ -35,8 +35,33 @@ EOF
 cp page01.jpg my-project/images/mybook-page01.jpg
 cp page02.jpg my-project/images/mybook-page02.jpg
 
-# 3. Add at least one annotation JSON (W3C Web Annotation format) per image
-# my-project/annotations/mybook-page01/ must contain a .json file
+# 3. Add a minimal W3C Web Annotation for each canvas
+#    (miiify injects the annotation id at serve time, so you don't set it here)
+cat > my-project/annotations/mybook-page01/note.json << 'EOF'
+{
+  "type": "Annotation",
+  "motivation": "commenting",
+  "body": {
+    "type": "TextualBody",
+    "value": "First page",
+    "purpose": "commenting"
+  },
+  "target": "http://localhost:8080/canvas/mybook-page01"
+}
+EOF
+
+cat > my-project/annotations/mybook-page02/note.json << 'EOF'
+{
+  "type": "Annotation",
+  "motivation": "commenting",
+  "body": {
+    "type": "TextualBody",
+    "value": "Second page",
+    "purpose": "commenting"
+  },
+  "target": "http://localhost:8080/canvas/mybook-page02"
+}
+EOF
 
 # 4. Build and start
 ./bootstrap.sh build --input-dir my-project

@@ -45,6 +45,7 @@ source "${SCRIPT_DIR}/scripts/annosearch-helpers.sh"
 source "${SCRIPT_DIR}/scripts/manifest-helpers.sh"
 source "${SCRIPT_DIR}/scripts/web-helpers.sh"
 source "${SCRIPT_DIR}/scripts/service-helpers.sh"
+source "${SCRIPT_DIR}/scripts/test-helpers.sh"
 
 # Function to show help
 show_help() {
@@ -74,6 +75,7 @@ Commands:
   restart                      - Restart all services
   logs                         - Show service logs
   clean                        - Stop services and clean output directory
+  test                         - Run smoke tests against the running stack
   maintenance                  - Enable maintenance mode (stops services, shows maintenance page)
 
 Examples:
@@ -139,7 +141,7 @@ parse_arguments() {
                 show_help
                 exit 0
                 ;;
-            build|status|stop|restart|logs|clean|maintenance)
+            build|status|stop|restart|logs|clean|test|maintenance)
                 COMMAND="$1"
                 shift
                 ;;
@@ -311,6 +313,12 @@ build_project() {
     echo "$PROJECT_NAME" > "$OUTPUT_DIR/.project"
     echo "$IIIF_VERSION" > "$OUTPUT_DIR/.version"
 
+    # Step 14: Smoke test the running stack (non-fatal)
+    log_step "Running smoke tests..."
+    if ! run_smoke_tests "$MANIFEST_NAME"; then
+        log_warning "Some smoke tests failed — service is up but not fully healthy"
+    fi
+
     print_build_summary "$PROJECT_NAME" "$MANIFEST_NAME" "$PROJECT_TITLE" "$HOSTNAME"
 }
 
@@ -350,6 +358,9 @@ main() {
             ;;
         clean)
             clean_output
+            ;;
+        test)
+            run_smoke_tests
             ;;
         maintenance)
             enable_maintenance

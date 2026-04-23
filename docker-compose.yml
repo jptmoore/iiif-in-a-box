@@ -12,6 +12,14 @@ x-common: &common
   restart: unless-stopped
   security_opt:
     - no-new-privileges:true
+  # Cap container logs at ~30 MB each (3 × 10 MB) so /var/lib/docker doesn't
+  # grow unbounded on long-running deployments. Older lines are dropped, not
+  # archived — ship logs off-host if you need full retention.
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
 
 services:
   # IIPImage IIIF Image API server

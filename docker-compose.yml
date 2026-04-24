@@ -35,7 +35,9 @@ services:
       - ${OUTPUT_DIR}/web/images:/images:ro
     environment:
       - FILESYSTEM_PREFIX=/images/
-      - MAX_IMAGE_CACHE_SIZE=1000
+      # MAX_IMAGE_CACHE_SIZE is in MB (default 10). Keep modest for small VMs;
+      # raise on hosts with more RAM if you serve many large images.
+      - MAX_IMAGE_CACHE_SIZE=64
       - JPEG_QUALITY=90
       - MAX_CVT=5000
       - ALLOW_UPSCALING=0  # prevent requests for images larger than originals
@@ -46,7 +48,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 512m
 
   # Quickwit search backend
   quickwit:
@@ -64,7 +66,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 512m
 
   # AnnoSearch API
   annosearch:
@@ -137,7 +139,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 256m
+          memory: 512m
 
   # Nginx reverse proxy and static file server
   nginx:

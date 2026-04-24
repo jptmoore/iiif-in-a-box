@@ -42,7 +42,12 @@ setup_web_content() {
     log_info "Setting up web content..."
 
     cp templates/services.html "${OUTPUT_DIR}/web/"
-    sed -i "s/__VERSION__/${IIIF_VERSION}/g" "${OUTPUT_DIR}/web/services.html"
+    # Portable in-place sed (BSD/macOS requires an extension arg after -i; GNU does not)
+    if sed --version >/dev/null 2>&1; then
+        sed -i "s/__VERSION__/${IIIF_VERSION}/g" "${OUTPUT_DIR}/web/services.html"
+    else
+        sed -i '' "s/__VERSION__/${IIIF_VERSION}/g" "${OUTPUT_DIR}/web/services.html"
+    fi
     cp templates/maintenance.html "${OUTPUT_DIR}/web/"
 
     cat > "${OUTPUT_DIR}/web/index.html" << EOF
